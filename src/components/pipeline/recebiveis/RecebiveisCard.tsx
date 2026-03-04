@@ -2,19 +2,150 @@ import { useDraggable } from "@dnd-kit/core";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Clock, AlertTriangle, GripVertical, Building2, DollarSign, Trash2 } from "lucide-react";
+import { AlertCircle, Clock, AlertTriangle, GripVertical, Building2, Trash2, FileText, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAssignWorkflow } from "@/hooks/useProspection";
 import { toast } from "@/hooks/use-toast";
 import type { ProspectionWorkflow } from "@/lib/api/prospectionService";
+import type { RecebivelStatus } from "@/data/recebiveisPipelineConfig";
 import { RECEBIVEIS_COLUMNS, isRecebivelTerminal } from "@/data/recebiveisPipelineConfig";
+
+const SEGMENT_LABELS: Record<string, string> = {
+  comercio: "Comércio",
+  industria: "Indústria",
+  servicos: "Serviços",
+  agronegocio: "Agronegócio",
+  varejo: "Varejo",
+  insumos: "Insumos",
+};
 
 interface RecebiveisCardProps {
   workflow: ProspectionWorkflow;
   checklist: Record<string, string[]>;
   onOpenDetails?: (workflow: ProspectionWorkflow) => void;
   onDelete?: (workflow: ProspectionWorkflow) => void;
+}
+
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
+function StatusBody({
+  workflow,
+  checklist,
+  formatCurrency,
+}: {
+  workflow: ProspectionWorkflow;
+  checklist: Record<string, string[]>;
+  formatCurrency: (v: number) => string;
+}) {
+  const status = workflow.status as RecebivelStatus;
+  const totalItems = checklist[workflow.status]?.length ?? 0;
+  const completedCount = totalItems > 0 ? totalItems - (workflow.pending_items?.length ?? 0) : 0;
+  const signatureStatus = totalItems > 0 ? `${completedCount} de ${totalItems} itens` : null;
+
+  switch (status) {
+    case "recepcao_bordero":
+      return (
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-2">
+            {(workflow.receivable_value ?? 0) > 0 && (
+              <span className="text-sm font-medium">{formatCurrency(workflow.receivable_value ?? 0)}</span>
+            )}
+            {workflow.estimated_volume > 0 && (
+              <span className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume)}</span>
+            )}
+          </div>
+        </div>
+      );
+
+    case "checagem_lastro":
+      return (
+        <div className="space-y-1.5">
+          {workflow.invoice_number && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <FileText className="h-3 w-3 text-muted-foreground" />
+              <span>NF: {workflow.invoice_number}</span>
+            </div>
+          )}
+          {workflow.due_date && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Calendar className="h-3 w-3 text-muted-foreground" />
+              <span>Venc.: {formatDate(workflow.due_date)}</span>
+            </div>
+          )}
+        </div>
+      );
+
+    case "enquadramento_alocacao":
+      return (
+        <div className="space-y-1.5">
+          <div className="font-medium text-sm">
+            {workflow.fund_name ?? "Aguardando seleção"}
+          </div>
+          {workflow.cedente_segment && (
+            <Badge variant="secondary" className="text-xs">
+              {SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}
+            </Badge>
+          )}
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+        </div>
+      );
+
+    case "formalizacao_cessao":
+      return (
+        <div className="space-y-1">
+          <div className="text-sm font-medium">
+            Status: {signatureStatus ?? "—"}
+          </div>
+        </div>
+      );
+
+    case "aguardando_liquidacao":
+      return (
+        <div className="space-y-1.5">
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.sla_deadline && (
+            <div className="text-xs text-muted-foreground">
+              SLA: {formatDate(workflow.sla_deadline)}
+            </div>
+          )}
+        </div>
+      );
+
+    case "liquidado":
+      return (
+        <div className="space-y-1">
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+        </div>
+      );
+
+    case "reprovado_cancelado":
+      return (
+        <div className="space-y-1">
+          {workflow.rejection_reason ? (
+            <p className="text-sm text-red-700 font-medium">{workflow.rejection_reason}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Reprovado / Cancelado</p>
+          )}
+        </div>
+      );
+
+    default:
+      return null;
+  }
 }
 
 export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }: RecebiveisCardProps) {
@@ -168,22 +299,14 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
               {workflow.cedente_cnpj ? formatCnpj(workflow.cedente_cnpj) : "—"}
             </span>
           </div>
-          {workflow.cedente_segment && (
+          {(workflow.status === "recepcao_bordero" || workflow.status === "checagem_lastro") && workflow.cedente_segment && (
             <div>{getSegmentBadge(workflow.cedente_segment)}</div>
           )}
         </div>
       </CardHeader>
 
       <CardContent className="space-y-3 pb-3">
-        {workflow.estimated_volume > 0 && (
-          <div className="space-y-0.5">
-            <span className="text-xs text-muted-foreground">Vol. estimado</span>
-            <div className="flex items-center gap-1.5">
-              <DollarSign className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="font-medium text-sm">{formatCurrency(workflow.estimated_volume)}</span>
-            </div>
-          </div>
-        )}
+        <StatusBody workflow={workflow} checklist={checklist} formatCurrency={formatCurrency} />
 
         <div className="flex flex-wrap gap-2 text-xs">
           {workflow.assigned_to ? (

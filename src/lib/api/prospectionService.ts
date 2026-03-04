@@ -36,6 +36,10 @@ export interface ProspectionWorkflow {
   cedente_segment: Segment | null;
   fund_name: string | null;
   receivable_value: number;
+  invoice_number: string | null;
+  due_date: string | null;
+  debtor_name: string | null;
+  rejection_reason: string | null;
   total_steps: number;
   completed_steps: number;
   days_in_progress: number;
