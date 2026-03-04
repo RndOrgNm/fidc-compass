@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, Clock, AlertTriangle, GripVertical, FileText, Building2, Briefcase, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AllocationWorkflow } from "@/lib/api/allocationService";
-import { isAllocationTerminal } from "@/data/allocationPipelineConfig";
+import { ALLOCATION_STATUS_LABELS, isAllocationTerminal } from "@/data/allocationPipelineConfig";
 
 interface MatchingCardProps {
   workflow: AllocationWorkflow;
@@ -48,17 +48,6 @@ export function MatchingCard({ workflow, onOpenDetails, onDelete }: MatchingCard
   const getProgressPercentage = () => {
     if (!workflow.total_steps) return 0;
     return Math.round((workflow.completed_steps / workflow.total_steps) * 100);
-  };
-
-  const getCurrentStepLabel = () => {
-    const steps: Record<string, string> = {
-      awaiting_selection: "Aguardando seleção",
-      fund_evaluation: "Avaliação do fundo",
-      compliance_verification: "Verificação compliance",
-      final_approval: "Aprovação final",
-      completed: "Concluído",
-    };
-    return steps[workflow.current_step] || workflow.current_step || "—";
   };
 
   const getSLABadge = () => {
@@ -211,8 +200,8 @@ export function MatchingCard({ workflow, onOpenDetails, onDelete }: MatchingCard
         </div>
 
         <div className="text-sm">
-          <span className="text-muted-foreground">Etapa atual:</span>
-          <div className="font-medium mt-1">{getCurrentStepLabel()}</div>
+          <span className="text-muted-foreground">Status:</span>
+          <div className="font-medium mt-1">{ALLOCATION_STATUS_LABELS[workflow.status] ?? workflow.status}</div>
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">

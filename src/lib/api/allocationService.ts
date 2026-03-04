@@ -11,13 +11,6 @@ export type AllocationStatus =
   | "withdrawn"
   | "superseded";
 
-export type AllocationStep =
-  | "awaiting_selection"
-  | "fund_evaluation"
-  | "compliance_verification"
-  | "final_approval"
-  | "completed";
-
 export type Segment =
   | "comercio"
   | "industria"
@@ -33,7 +26,6 @@ export interface AllocationWorkflow {
   receivable_id: string;
   fund_id: string | null;
   status: AllocationStatus;
-  current_step: AllocationStep;
   assigned_to: string | null;
   pending_items: string[];
   sla_deadline: string | null;
@@ -61,7 +53,6 @@ export interface AllocationWorkflowListResponse {
 
 export interface TransitionAllocationRequest {
   status: AllocationStatus;
-  current_step?: AllocationStep;
   pending_items?: string[];
 }
 
@@ -80,7 +71,6 @@ export interface AllocationUpdateRequest {
   fund_id?: string | null;
   sla_deadline?: string | null;
   status?: AllocationStatus;
-  current_step?: AllocationStep;
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────────
@@ -184,7 +174,6 @@ export async function updateAllocationWorkflow(
   if (data.fund_id !== undefined) body.fund_id = data.fund_id;
   if (data.sla_deadline !== undefined) body.sla_deadline = data.sla_deadline;
   if (data.status !== undefined) body.status = data.status;
-  if (data.current_step !== undefined) body.current_step = data.current_step;
 
   const response = await fetch(`${FUNDS_API_BASE_URL}/alocacao/${workflowId}`, {
     method: "PUT",

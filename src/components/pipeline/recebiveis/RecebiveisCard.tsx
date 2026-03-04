@@ -128,18 +128,6 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
     onOpenDetails?.(workflow);
   };
 
-  const getCurrentStepLabel = () => {
-    const steps: Record<string, string> = {
-      initial_contact: "Contato inicial",
-      proposal_sent: "Proposta enviada",
-      document_collection: "Coleta de documentos",
-      risk_assessment: "Avaliação de risco",
-      committee_review: "Revisão do comitê",
-      completed: "Concluído",
-    };
-    return steps[workflow.current_step] || workflow.current_step;
-  };
-
   return (
     <Card
       ref={setNodeRef}

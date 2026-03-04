@@ -9,14 +9,6 @@ export type { RecebivelStatus };
 /** @deprecated Use RecebivelStatus. Kept for backwards compatibility. */
 export type ProspectionStatus = RecebivelStatus;
 
-export type ProspectionStep =
-  | "initial_contact"
-  | "proposal_sent"
-  | "document_collection"
-  | "risk_assessment"
-  | "committee_review"
-  | "completed";
-
 export type Segment =
   | "comercio"
   | "industria"
@@ -33,7 +25,6 @@ export interface ProspectionWorkflow {
   fund_id: string | null;
   receivable_id: string | null;
   status: RecebivelStatus;
-  current_step: ProspectionStep;
   assigned_to: string | null;
   pending_items: string[];
   sla_deadline: string | null;
@@ -78,7 +69,6 @@ export interface NewLeadResponse {
 
 export interface TransitionRequest {
   status: RecebivelStatus;
-  current_step?: ProspectionStep;
   pending_items?: string[];
 }
 
@@ -93,7 +83,6 @@ export interface RecebivelUpdateRequest {
   sla_deadline?: string | null;
   estimated_volume?: number;
   status?: RecebivelStatus;
-  current_step?: ProspectionStep;
 }
 
 export interface RecebivelCreatePayload {
@@ -238,7 +227,6 @@ export async function updateRecebivel(
   if (data.sla_deadline !== undefined) body.sla_deadline = data.sla_deadline;
   if (data.estimated_volume !== undefined) body.estimated_volume = data.estimated_volume;
   if (data.status !== undefined) body.status = data.status;
-  if (data.current_step !== undefined) body.current_step = data.current_step;
 
   const response = await fetch(`${FUNDS_API_BASE_URL}/recebiveis/${workflowId}`, {
     method: "PUT",
