@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Plus, LayoutList, LayoutGrid, Loader2, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -112,11 +111,9 @@ export function RecebiveisTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Pipeline de Recebíveis</CardTitle>
-            <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
+        <div />
+        <div className="flex items-center gap-2">
               <div className="flex border rounded-md">
                 <Button
                   size="sm"
@@ -151,10 +148,9 @@ export function RecebiveisTab() {
                 Novo Recebível
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
+      </div>
+
+      <div className="flex flex-wrap gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -219,8 +215,6 @@ export function RecebiveisTab() {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
       {/* Loading / Error states */}
       {isLoading && (

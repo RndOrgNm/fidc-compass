@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Card, CardContent } from "@/components/ui/card";
 import { CedentesTab } from "@/components/pipeline/cedentes/CedentesTab";
 import { RecebiveisTab } from "@/components/pipeline/recebiveis/RecebiveisTab";
 import { MonitoramentoTab } from "@/components/pipeline/monitoramento/MonitoramentoTab";
@@ -13,27 +14,29 @@ export default function Pipeline() {
         <p className="text-muted-foreground">Esteira de Crédito e Operações</p>
       </div>
 
-      <Tabs defaultValue="cedentes" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-3xl">
-          <TabsTrigger value="cedentes">Gestão de Cedentes</TabsTrigger>
-          <TabsTrigger value="recebiveis">Mesa de Operações</TabsTrigger>
-          <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardContent className="pt-6">
+          <Tabs defaultValue="cedentes" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 max-w-3xl mb-6">
+              <TabsTrigger value="cedentes">Gestão de Cedentes</TabsTrigger>
+              <TabsTrigger value="recebiveis">Mesa de Operações</TabsTrigger>
+              <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
+            </TabsList>
 
-        <div className="mt-6">
-          <TabsContent value="cedentes">
-            <CedentesTab />
-          </TabsContent>
+            <TabsContent value="cedentes" className="mt-0">
+              <CedentesTab />
+            </TabsContent>
 
-          <TabsContent value="recebiveis">
-            <RecebiveisTab />
-          </TabsContent>
+            <TabsContent value="recebiveis" className="mt-0">
+              <RecebiveisTab />
+            </TabsContent>
 
-          <TabsContent value="monitoramento">
-            <MonitoramentoTab />
-          </TabsContent>
-        </div>
-      </Tabs>
+            <TabsContent value="monitoramento" className="mt-0">
+              <MonitoramentoTab />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
     </TooltipProvider>
   );

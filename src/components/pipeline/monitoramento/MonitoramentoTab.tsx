@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { LayoutList, LayoutGrid, RefreshCw, Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -106,11 +105,9 @@ export function MonitoramentoTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Monitoramento</CardTitle>
-            <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
+        <div />
+        <div className="flex items-center gap-2">
               <div className="flex border rounded-md">
                 <Button
                   size="sm"
@@ -145,10 +142,9 @@ export function MonitoramentoTab() {
                 Novo Monitoramento
               </Button>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
+      </div>
+
+      <div className="flex flex-wrap gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -179,8 +175,6 @@ export function MonitoramentoTab() {
               </Select>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
       {error && (
         <div className="text-sm text-destructive bg-destructive/10 p-4 rounded-md">
