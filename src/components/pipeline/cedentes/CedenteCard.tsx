@@ -49,14 +49,20 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-const SEGMENT_LABELS: Record<string, string> = {
-  comercio: "Comércio",
-  industria: "Indústria",
-  servicos: "Serviços",
-  agronegocio: "Agronegócio",
-  varejo: "Varejo",
-  insumos: "Insumos",
+const SEGMENT_BADGES: Record<string, { label: string; className: string }> = {
+  comercio: { label: "Comércio", className: "bg-blue-100 text-blue-800" },
+  industria: { label: "Indústria", className: "bg-purple-100 text-purple-800" },
+  servicos: { label: "Serviços", className: "bg-cyan-100 text-cyan-800" },
+  agronegocio: { label: "Agronegócio", className: "bg-green-100 text-green-800" },
+  varejo: { label: "Varejo", className: "bg-orange-100 text-orange-800" },
+  insumos: { label: "Insumos", className: "bg-amber-100 text-amber-800" },
 };
+
+function getSegmentBadge(segment: string | null) {
+  if (!segment) return null;
+  const seg = SEGMENT_BADGES[segment] || { label: segment, className: "bg-gray-100 text-gray-800" };
+  return <Badge className={seg.className}>{seg.label}</Badge>;
+}
 
 const STATUS_BORDER: Record<CedentePipelineStatus, string> = {
   em_prospeccao: "border-l-4 border-slate-500",
@@ -76,23 +82,14 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
             <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
             <span className="text-sm truncate">{cedente.contactName}</span>
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {SEGMENT_LABELS[cedente.segment] ?? cedente.segment}
-          </Badge>
-          {cedente.approvedLimit > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
-            </p>
-          )}
+          {getSegmentBadge(cedente.segment)}
         </>
       );
 
     case "coleta_documentos":
       return (
         <>
-          <Badge variant="secondary" className="text-xs">
-            {SEGMENT_LABELS[cedente.segment] ?? cedente.segment}
-          </Badge>
+          {getSegmentBadge(cedente.segment)}
           {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
               Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
@@ -104,9 +101,7 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
     case "analise_credito":
       return (
         <>
-          <Badge variant="secondary" className="text-xs">
-            {SEGMENT_LABELS[cedente.segment] ?? cedente.segment}
-          </Badge>
+          {getSegmentBadge(cedente.segment)}
           {cedente.creditScore > 0 && (
             <p className="text-xs text-muted-foreground">
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
@@ -123,6 +118,7 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
     case "comite_credito":
       return (
         <>
+          {getSegmentBadge(cedente.segment)}
           {cedente.creditScore > 0 && (
             <p className="text-xs text-muted-foreground">
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
@@ -139,6 +135,7 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
     case "habilitado":
       return (
         <div className="space-y-1">
+          {getSegmentBadge(cedente.segment)}
           {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
               Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
@@ -154,6 +151,7 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
     case "bloqueado_desistencia":
       return (
         <div className="space-y-1">
+          {getSegmentBadge(cedente.segment)}
           <div className="flex items-center gap-1.5 text-xs text-red-700">
             <Ban className="h-3.5 w-3.5" />
             <span className="font-medium">Bloqueado / Desistência</span>

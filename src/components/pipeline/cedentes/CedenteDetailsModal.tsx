@@ -14,14 +14,20 @@ import type { CedentePipelineItem } from "./CedenteCard";
 import type { CedentePipelineStatus } from "@/data/pipelineData";
 import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
 
-const SEGMENT_LABELS: Record<string, string> = {
-  comercio: "Comércio",
-  industria: "Indústria",
-  servicos: "Serviços",
-  agronegocio: "Agronegócio",
-  varejo: "Varejo",
-  insumos: "Insumos",
+const SEGMENT_BADGES: Record<string, { label: string; className: string }> = {
+  comercio: { label: "Comércio", className: "bg-blue-100 text-blue-800" },
+  industria: { label: "Indústria", className: "bg-purple-100 text-purple-800" },
+  servicos: { label: "Serviços", className: "bg-cyan-100 text-cyan-800" },
+  agronegocio: { label: "Agronegócio", className: "bg-green-100 text-green-800" },
+  varejo: { label: "Varejo", className: "bg-orange-100 text-orange-800" },
+  insumos: { label: "Insumos", className: "bg-amber-100 text-amber-800" },
 };
+
+function getSegmentBadge(segment: string | null) {
+  if (!segment) return null;
+  const seg = SEGMENT_BADGES[segment] || { label: segment, className: "bg-gray-100 text-gray-800" };
+  return <Badge className={seg.className}>{seg.label}</Badge>;
+}
 
 function formatCnpj(cnpj: string) {
   if (!cnpj) return "—";
@@ -80,7 +86,7 @@ export function CedenteDetailsModal({
           <div className="space-y-3 shrink-0">
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary">{CEDENTES_STATUS_LABELS[cedente.status]}</Badge>
-              <Badge variant="outline">{SEGMENT_LABELS[cedente.segment] ?? cedente.segment}</Badge>
+              {getSegmentBadge(cedente.segment)}
               {cedente.assigned_to && (
                 <Badge variant="outline">Atribuído a: {cedente.assigned_to}</Badge>
               )}
