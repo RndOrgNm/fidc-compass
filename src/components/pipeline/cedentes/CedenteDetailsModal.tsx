@@ -107,18 +107,11 @@ export function CedenteDetailsModal({
                   <span>{cedente.contactPhone}</span>
                 </div>
               )}
-              {(cedente.creditScore > 0 || cedente.approvedLimit > 0 || cedente.proposedLimit > 0) && (
-                <div className="pt-2 space-y-1 text-muted-foreground">
-                  {cedente.status === "bloqueado_desistencia" && cedente.approvedLimit > 0 && (
-                    <p className="font-medium text-foreground">Limite aprovado: {formatCurrency(cedente.approvedLimit)}</p>
-                  )}
-                  {cedente.creditScore > 0 && <p>Score: {cedente.creditScore}</p>}
-                  {cedente.proposedLimit > 0 && <p>Limite proposto: {formatCurrency(cedente.proposedLimit)}</p>}
-                  {cedente.approvedLimit > 0 && cedente.status !== "bloqueado_desistencia" && (
-                    <p>Limite aprovado: {formatCurrency(cedente.approvedLimit)}</p>
-                  )}
-                </div>
-              )}
+              <div className="pt-2 space-y-1 text-muted-foreground">
+                {cedente.creditScore > 0 && <p>Score: {cedente.creditScore}</p>}
+                <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>
+                <p>Limite aprovado: {formatCurrency(cedente.approvedLimit ?? 0)}</p>
+              </div>
             </div>
           </div>
 

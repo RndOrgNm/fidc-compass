@@ -63,7 +63,7 @@ export function CedentesListView({ cedentes, checklist, onOpenDetails, onDelete 
               <TableHead>Dias</TableHead>
               <TableHead>Atribuído a</TableHead>
               <TableHead>Pendências</TableHead>
-              <TableHead>Recebíveis / Limite</TableHead>
+              <TableHead>Recebíveis / Proposto / Aprovado</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -145,10 +145,12 @@ export function CedentesListView({ cedentes, checklist, onOpenDetails, onDelete 
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {cedente.totalReceivables > 0 || cedente.approvedLimit > 0 ? (
+                    {cedente.totalReceivables > 0 || cedente.proposedLimit > 0 || cedente.approvedLimit > 0 ? (
                       <>
                         {cedente.totalReceivables > 0 && formatCurrency(cedente.totalReceivables)}
-                        {cedente.totalReceivables > 0 && cedente.approvedLimit > 0 && " / "}
+                        {cedente.totalReceivables > 0 && (cedente.proposedLimit > 0 || cedente.approvedLimit > 0) && " / "}
+                        {cedente.proposedLimit > 0 && formatCurrency(cedente.proposedLimit)}
+                        {cedente.proposedLimit > 0 && cedente.approvedLimit > 0 && " / "}
                         {cedente.approvedLimit > 0 && formatCurrency(cedente.approvedLimit)}
                       </>
                     ) : (
