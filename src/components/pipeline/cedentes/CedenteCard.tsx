@@ -79,9 +79,9 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
           <Badge variant="secondary" className="text-xs">
             {SEGMENT_LABELS[cedente.segment] ?? cedente.segment}
           </Badge>
-          {cedente.proposedLimit > 0 && (
+          {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
+              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
             </p>
           )}
         </>
@@ -93,9 +93,9 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
           <Badge variant="secondary" className="text-xs">
             {SEGMENT_LABELS[cedente.segment] ?? cedente.segment}
           </Badge>
-          {cedente.proposedLimit > 0 && (
+          {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
+              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
             </p>
           )}
         </>
@@ -112,9 +112,9 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
             </p>
           )}
-          {cedente.proposedLimit > 0 && (
+          {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
+              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
             </p>
           )}
         </>
@@ -128,9 +128,9 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
             </p>
           )}
-          {cedente.proposedLimit > 0 && (
+          {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
+              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
             </p>
           )}
         </>
@@ -139,11 +139,6 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
     case "habilitado":
       return (
         <div className="space-y-1">
-          {cedente.proposedLimit > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
-            </p>
-          )}
           {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
               Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
@@ -163,11 +158,6 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
             <Ban className="h-3.5 w-3.5" />
             <span className="font-medium">Bloqueado / Desistência</span>
           </div>
-          {cedente.proposedLimit > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
-            </p>
-          )}
           {cedente.approvedLimit > 0 && (
             <p className="text-xs text-muted-foreground">
               Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
