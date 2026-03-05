@@ -115,6 +115,9 @@ export function CedenteDetailsModal({
               )}
               <div className="pt-2 space-y-1 text-muted-foreground">
                 {cedente.creditScore > 0 && <p>Score: {cedente.creditScore}</p>}
+                {cedente.status === "comite_credito" && (
+                  <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>
+                )}
                 {["habilitado", "bloqueado_desistencia"].includes(cedente.status) && (
                   <>
                     <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>

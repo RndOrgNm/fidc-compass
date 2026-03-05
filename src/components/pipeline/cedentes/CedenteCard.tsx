@@ -110,6 +110,11 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
             </p>
           )}
+          {cedente.proposedLimit > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Limite proposto: <span className="font-medium text-foreground">{formatCurrency(cedente.proposedLimit)}</span>
+            </p>
+          )}
         </>
       );
 
