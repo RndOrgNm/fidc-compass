@@ -87,16 +87,7 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
       );
 
     case "coleta_documentos":
-      return (
-        <>
-          {getSegmentBadge(cedente.segment)}
-          {cedente.approvedLimit > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
-            </p>
-          )}
-        </>
-      );
+      return <>{getSegmentBadge(cedente.segment)}</>;
 
     case "analise_credito":
       return (
@@ -105,11 +96,6 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
           {cedente.creditScore > 0 && (
             <p className="text-xs text-muted-foreground">
               Score: <span className="font-medium text-foreground">{cedente.creditScore}</span>
-            </p>
-          )}
-          {cedente.approvedLimit > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
             </p>
           )}
         </>
