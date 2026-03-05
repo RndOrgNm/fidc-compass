@@ -136,9 +136,16 @@ function StatusBody({ cedente }: { cedente: CedentePipelineItem }) {
 
     case "bloqueado_desistencia":
       return (
-        <div className="flex items-center gap-1.5 text-xs text-red-700">
-          <Ban className="h-3.5 w-3.5" />
-          <span className="font-medium">Bloqueado / Desistência</span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-xs text-red-700">
+            <Ban className="h-3.5 w-3.5" />
+            <span className="font-medium">Bloqueado / Desistência</span>
+          </div>
+          {cedente.approvedLimit > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Limite aprovado: <span className="font-medium text-foreground">{formatCurrency(cedente.approvedLimit)}</span>
+            </p>
+          )}
         </div>
       );
 
