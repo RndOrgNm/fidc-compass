@@ -98,6 +98,9 @@ export interface RecebivelCreatePayload {
   debtor_cnpj: string;
   segment: Segment;
   risk_score?: number;
+  estimated_volume?: number;
+  assigned_to?: string | null;
+  sla_deadline?: string | null;
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────────
@@ -166,6 +169,9 @@ export async function createRecebivel(
     status: "recepcao_bordero",
   };
   if (payload.risk_score != null) body.risk_score = payload.risk_score;
+  if (payload.estimated_volume != null && payload.estimated_volume > 0) body.estimated_volume = payload.estimated_volume;
+  if (payload.assigned_to != null && payload.assigned_to.trim() !== "") body.assigned_to = payload.assigned_to.trim();
+  if (payload.sla_deadline != null && payload.sla_deadline.trim() !== "") body.sla_deadline = payload.sla_deadline;
 
   const response = await fetch(`${FUNDS_API_BASE_URL}/recebiveis`, {
     method: "POST",
