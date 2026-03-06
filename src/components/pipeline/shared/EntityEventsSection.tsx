@@ -64,7 +64,9 @@ export function EntityEventsSection({
     );
   }
 
-  const events = data?.items ?? [];
+  const events = (data?.items ?? []).filter(
+    (e) => e.field_name !== "pending_items"
+  );
 
   if (events.length === 0) {
     return (

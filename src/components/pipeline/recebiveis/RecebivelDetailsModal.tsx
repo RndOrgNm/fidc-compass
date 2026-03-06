@@ -102,8 +102,8 @@ export function RecebivelDetailsModal({
         <Tabs defaultValue="detalhes" className="flex-1 min-h-0 flex flex-col">
           <TabsList className="shrink-0 w-full">
             <TabsTrigger value="detalhes" className="flex-1">Detalhes</TabsTrigger>
-            <TabsTrigger value="notas" className="flex-1">Notas Livres</TabsTrigger>
             <TabsTrigger value="eventos" className="flex-1">Eventos</TabsTrigger>
+            <TabsTrigger value="notas" className="flex-1">Notas Livres</TabsTrigger>
           </TabsList>
 
           <TabsContent value="detalhes" className="flex-1 min-h-0 flex flex-col">
