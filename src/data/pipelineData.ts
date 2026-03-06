@@ -173,14 +173,6 @@ export type CedentePipelineStatus =
   | "habilitado"
   | "bloqueado_desistencia";
 
-/** Monitoramento pipeline: status values for the Monitoramento Kanban. */
-export type MonitoramentoPipelineStatus =
-  | "alertas_deteccao"
-  | "correcoes_acoes"
-  | "relatorios_em_andamento"
-  | "em_conformidade_auditoria"
-  | "encerrado";
-
 /** Cedentes for the Gestão de Cedentes pipeline tab. assigned_to, pending_items, days_in_status. Transition to next status only when pending_items is empty (backend will enforce same rule). */
 export const cedentesPipelineData: Array<{
   id: string;
@@ -300,99 +292,6 @@ export const cedentesPipelineData: Array<{
       "Blacklist Interna: Marcar o CNPJ para que não entre novamente no pipeline sem um alerta de segurança.",
     ],
     days_in_status: 42,
-  },
-];
-
-/** Monitoramento pipeline: monitoring cycles/workflows. Same pattern as Cedentes (pending_items blocks advance). */
-export const monitoramentoPipelineData: Array<{
-  id: string;
-  title: string;
-  fundName: string | null;
-  period: string;
-  status: MonitoramentoPipelineStatus;
-  assigned_to: string | null;
-  pending_items: string[];
-  days_in_status: number;
-}> = [
-  {
-    id: "MON-001",
-    title: "Fundo Alpha",
-    fundName: "FIDC Multissetorial Alpha",
-    period: "Nov/2025",
-    status: "alertas_deteccao",
-    assigned_to: "Maria Silva",
-    pending_items: [
-      "Alerta de Recompra: Detectar títulos vencidos que ainda não foram recomprados pelo cedente conforme contrato.",
-      "Inconsistência de Lastro: Cruzar dados com a SEFAZ para verificar se alguma nota fiscal foi cancelada após a cessão.",
-    ],
-    days_in_status: 3,
-  },
-  {
-    id: "MON-002",
-    title: "Fundo Agro",
-    fundName: "FIDC Agro Premium",
-    period: "Nov/2025",
-    status: "alertas_deteccao",
-    assigned_to: null,
-    pending_items: [],
-    days_in_status: 1,
-  },
-  {
-    id: "MON-003",
-    title: "Fundo Varejo",
-    fundName: "FIDC Varejo Plus",
-    period: "Out/2025",
-    status: "correcoes_acoes",
-    assigned_to: "Pedro Santos",
-    pending_items: [
-      "Notificação ao Cedente: Formalizar o pedido de esclarecimento ou a solicitação de recompra de títulos.",
-    ],
-    days_in_status: 8,
-  },
-  {
-    id: "MON-004",
-    title: "Fundo High Yield",
-    fundName: "FIDC High Yield",
-    period: "Out/2025",
-    status: "relatorios_em_andamento",
-    assigned_to: "Ana Costa",
-    pending_items: [
-      "Boletim de Desempenho: Consolidar a rentabilidade (Yield) do fundo versus o benchmark (ex: CDI + %).",
-      "Relatório de Inadimplência: Detalhar o aging (idade da dívida) por faixas de atraso (1-15 dias, 16-30, etc.).",
-    ],
-    days_in_status: 12,
-  },
-  {
-    id: "MON-005",
-    title: "Ciclo Multi - Out/2025",
-    fundName: "FIDC Multissetorial Alpha",
-    period: "Out/2025",
-    status: "em_conformidade_auditoria",
-    assigned_to: "Maria Silva",
-    pending_items: [
-      "Validação de Compliance: Confirmar que nenhuma ação de cobrança ou correção feriu as normas de PLD (Prevenção à Lavagem de Dinheiro).",
-    ],
-    days_in_status: 5,
-  },
-  {
-    id: "MON-006",
-    title: "Agro - Set/2025",
-    fundName: "FIDC Agro Premium",
-    period: "Set/2025",
-    status: "encerrado",
-    assigned_to: "Ana Costa",
-    pending_items: [],
-    days_in_status: 28,
-  },
-  {
-    id: "MON-007",
-    title: "Varejo - Set/2025",
-    fundName: "FIDC Varejo Plus",
-    period: "Set/2025",
-    status: "encerrado",
-    assigned_to: "Pedro Santos",
-    pending_items: [],
-    days_in_status: 35,
   },
 ];
 

@@ -3,7 +3,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { CedentesTab } from "@/components/pipeline/cedentes/CedentesTab";
 import { RecebiveisTab } from "@/components/pipeline/recebiveis/RecebiveisTab";
-import { MonitoramentoTab } from "@/components/pipeline/monitoramento/MonitoramentoTab";
 
 export default function Pipeline() {
   return (
@@ -17,10 +16,9 @@ export default function Pipeline() {
       <Card>
         <CardContent className="pt-6">
           <Tabs defaultValue="cedentes" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 max-w-3xl mb-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-2xl mb-6">
               <TabsTrigger value="cedentes">Gestão de Cedentes</TabsTrigger>
               <TabsTrigger value="recebiveis">Mesa de Operações</TabsTrigger>
-              <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
             </TabsList>
 
             <TabsContent value="cedentes" className="mt-0">
@@ -29,10 +27,6 @@ export default function Pipeline() {
 
             <TabsContent value="recebiveis" className="mt-0">
               <RecebiveisTab />
-            </TabsContent>
-
-            <TabsContent value="monitoramento" className="mt-0">
-              <MonitoramentoTab />
             </TabsContent>
           </Tabs>
         </CardContent>

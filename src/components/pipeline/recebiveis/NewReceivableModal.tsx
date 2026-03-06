@@ -280,38 +280,57 @@ export function NewReceivableModal({ open, onOpenChange }: NewReceivableModalPro
           {/* Cedente */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-muted-foreground">Cedente</h4>
-            <div className="grid gap-2">
-              <Label htmlFor="cedente">
-                Cedente <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={cedenteId}
-                onValueChange={setCedenteId}
-                disabled={isLoadingOptions}
-              >
-                <SelectTrigger id="cedente">
-                  <SelectValue
-                    placeholder={
-                      loadingCedentes
-                        ? "Carregando..."
-                        : "Selecione o cedente (Habilitado)"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {cedentes.length === 0 && !loadingCedentes ? (
-                    <SelectItem value="__none__" disabled>
-                      Nenhum cedente disponível
-                    </SelectItem>
-                  ) : (
-                    cedentes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.companyName} — {c.cnpj}
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="cedente">
+                  Cedente <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={cedenteId}
+                  onValueChange={setCedenteId}
+                  disabled={isLoadingOptions}
+                >
+                  <SelectTrigger id="cedente">
+                    <SelectValue
+                      placeholder={
+                        loadingCedentes
+                          ? "Carregando..."
+                          : "Selecione o cedente (Habilitado)"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cedentes.length === 0 && !loadingCedentes ? (
+                      <SelectItem value="__none__" disabled>
+                        Nenhum cedente disponível
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ) : (
+                      cedentes.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.companyName} — {c.cnpj}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="segment">
+                  Segmento <span className="text-red-500">*</span>
+                </Label>
+                <Select value={segment} onValueChange={setSegment}>
+                  <SelectTrigger id="segment">
+                    <SelectValue placeholder="Selecione o segmento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEGMENT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -382,24 +401,6 @@ export function NewReceivableModal({ open, onOpenChange }: NewReceivableModalPro
                   placeholder="00.000.000/0000-00"
                   maxLength={18}
                 />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="segment">
-                  Segmento <span className="text-red-500">*</span>
-                </Label>
-                <Select value={segment} onValueChange={setSegment}>
-                  <SelectTrigger id="segment">
-                    <SelectValue placeholder="Selecione o segmento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SEGMENT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>

@@ -46,9 +46,6 @@ function StatusBody({
   formatCurrency: (v: number) => string;
 }) {
   const status = workflow.status as RecebivelStatus;
-  const totalItems = checklist[workflow.status]?.length ?? 0;
-  const completedCount = totalItems > 0 ? totalItems - (workflow.pending_items?.length ?? 0) : 0;
-  const signatureStatus = totalItems > 0 ? `${completedCount} de ${totalItems} itens` : null;
 
   switch (status) {
     case "recepcao_bordero":
@@ -101,13 +98,7 @@ function StatusBody({
       );
 
     case "formalizacao_cessao":
-      return (
-        <div className="space-y-1">
-          <div className="text-sm font-medium">
-            Status: {signatureStatus ?? "—"}
-          </div>
-        </div>
-      );
+      return null;
 
     case "aguardando_liquidacao":
       return (
@@ -328,7 +319,7 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
                   <Badge className="bg-red-100 text-red-800 pointer-events-none">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     {(checklist[workflow.status]?.length ?? 0) > 0
-                      ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length}`
+                      ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items.length !== 1 ? "s" : ""}`
                       : `${workflow.pending_items.length} ${workflow.pending_items.length === 1 ? "pendência" : "pendências"}`}
                   </Badge>
                 </button>

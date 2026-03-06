@@ -5,7 +5,7 @@ Sistema de gestão para fundos de direitos creditórios (FIDC), focado em **Pipe
 ## Funcionalidades
 
 - **Home** – Página inicial com acesso aos módulos
-- **Pipeline** – Mesa de Crédito com Gestão de Cedentes, Mesa de Operações e Monitoramento
+- **Pipeline** – Mesa de Crédito com Gestão de Cedentes e Mesa de Operações
 - **Chatbot** – Assistente inteligente para consultas e análises
 
 ## Tecnologias
@@ -34,7 +34,7 @@ npm run build
 
 O fidc-compass é uma versão enxuta do fidic-compass, mantendo apenas:
 
-- Pipeline (Cedentes, Recebíveis/Mesa de Operações, Monitoramento)
+- Pipeline (Cedentes, Recebíveis/Mesa de Operações)
 - Agente/Chatbot
 - Página inicial
 

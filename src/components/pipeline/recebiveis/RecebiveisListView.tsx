@@ -160,7 +160,7 @@ export function RecebiveisListView({ workflows, checklist, onOpenDetails, onDele
                             <AlertCircle className="h-4 w-4 text-red-600" />
                             <span className="text-sm font-medium text-red-600">
                               {(checklist[workflow.status]?.length ?? 0) > 0
-                                ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length}`
+                                ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items.length !== 1 ? "s" : ""}`
                                 : `${workflow.pending_items.length} ${workflow.pending_items.length === 1 ? "pendência" : "pendências"}`}
                             </span>
                           </button>
