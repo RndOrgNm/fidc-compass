@@ -64,9 +64,7 @@ export function EntityEventsSection({
     );
   }
 
-  const events = (data?.items ?? []).filter(
-    (e) => e.field_name !== "pending_items"
-  );
+  const events = data?.items ?? [];
 
   if (events.length === 0) {
     return (
@@ -103,9 +101,11 @@ export function EntityEventsSection({
               </span>
             </div>
 
-            {event.field_name && (
+            {(event.field_name || event.old_value != null || event.new_value != null) && (
               <div className="text-xs text-muted-foreground">
-                <span className="font-medium">{event.field_name}</span>
+                {event.field_name && event.field_name !== "pending_items" && (
+                  <span className="font-medium">{event.field_name}</span>
+                )}
                 {event.old_value != null && event.new_value != null && (
                   <span className="inline-flex items-center gap-1 ml-1">
                     <span className="line-through">{event.old_value}</span>
