@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowRight } from "lucide-react";
 import { listEvents, type EntityType } from "@/lib/api/eventService";
+import { RECEBIVEIS_STATUS_LABELS } from "@/data/recebiveisPipelineConfig";
+import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
+import { ALLOCATION_STATUS_LABELS } from "@/data/allocationPipelineConfig";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   created: "Criado",
@@ -27,6 +29,33 @@ const CHANNEL_LABELS: Record<string, string> = {
   slack: "Slack",
 };
 
+/** Human-readable labels for technical field names. Never show raw field names. */
+const FIELD_NAME_LABELS: Record<string, string> = {
+  status: "Status",
+  fund_id: "Fundo",
+  assigned_to: "Atribuído a",
+  cedente_id: "Cedente",
+  segment: "Segmento",
+  credit_score: "Score de crédito",
+  approved_limit: "Limite aprovado",
+  proposed_limit: "Limite proposto",
+  sla_deadline: "Prazo de SLA",
+  estimated_volume: "Volume estimado",
+  nominal_value: "Valor nominal",
+  due_date: "Data de vencimento",
+  debtor_name: "Sacado",
+  debtor_cnpj: "CNPJ do sacado",
+  invoice_number: "Número da nota",
+  risk_score: "Score de risco",
+};
+
+/** Merged status labels from all pipelines for translating raw values. */
+const STATUS_VALUE_LABELS: Record<string, string> = {
+  ...RECEBIVEIS_STATUS_LABELS,
+  ...CEDENTES_STATUS_LABELS,
+  ...ALLOCATION_STATUS_LABELS,
+};
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -35,6 +64,17 @@ function formatDate(dateStr: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatEventValue(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const label = STATUS_VALUE_LABELS[value];
+  return label ?? value;
+}
+
+function formatFieldName(fieldName: string | null | undefined): string {
+  if (!fieldName || fieldName === "pending_items") return "";
+  return FIELD_NAME_LABELS[fieldName] ?? "";
 }
 
 interface EntityEventsSectionProps {
@@ -75,8 +115,8 @@ export function EntityEventsSection({
   }
 
   return (
-    <ScrollArea className="flex-1 min-h-[200px] max-h-[400px]">
-      <div className="space-y-3 pr-3">
+    <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+      <div className="space-y-3">
         {events.map((event) => (
           <div
             key={event.id}
@@ -103,21 +143,21 @@ export function EntityEventsSection({
 
             {(event.field_name || event.old_value != null || event.new_value != null) && (
               <div className="text-xs text-muted-foreground">
-                {event.field_name && event.field_name !== "pending_items" && (
-                  <span className="font-medium">{event.field_name}</span>
+                {formatFieldName(event.field_name) && event.event_type !== "status_changed" && (
+                  <span className="font-medium">{formatFieldName(event.field_name)}</span>
                 )}
                 {event.old_value != null && event.new_value != null && (
                   <span className="inline-flex items-center gap-1 ml-1">
-                    <span className="line-through">{event.old_value}</span>
+                    <span className="line-through">{formatEventValue(event.old_value)}</span>
                     <ArrowRight className="h-3 w-3 inline" />
                     <span className="font-medium text-foreground">
-                      {event.new_value}
+                      {formatEventValue(event.new_value)}
                     </span>
                   </span>
                 )}
                 {event.old_value == null && event.new_value != null && (
                   <span className="ml-1 font-medium text-foreground">
-                    {event.new_value}
+                    {formatEventValue(event.new_value)}
                   </span>
                 )}
               </div>
@@ -131,6 +171,6 @@ export function EntityEventsSection({
           </div>
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
