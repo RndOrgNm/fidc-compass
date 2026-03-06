@@ -107,6 +107,24 @@ export function RecebiveisTab() {
     }
   };
 
+  const handleUpdateFund = async (workflowId: string, fundId: string | null) => {
+    try {
+      await updateRecebivel.mutateAsync({
+        workflowId,
+        data: { fund_id: fundId },
+      });
+      const { toast } = await import("@/hooks/use-toast");
+      toast({ title: "Fundo atualizado", description: "O fundo comprador foi definido com sucesso." });
+    } catch {
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o fundo comprador.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const selectedWorkflow = filteredWorkflows.find((wf) => wf.id === selectedWorkflowId) ?? null;
 
   return (
@@ -258,6 +276,7 @@ export function RecebiveisTab() {
         open={selectedWorkflowId != null}
         onOpenChange={(open) => !open && setSelectedWorkflowId(null)}
         onUpdatePendingItems={handleUpdatePendingItems}
+        onUpdateFund={handleUpdateFund}
       />
 
       <NewReceivableModal

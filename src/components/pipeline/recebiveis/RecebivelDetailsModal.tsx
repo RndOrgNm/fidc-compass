@@ -7,11 +7,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, Calendar, DollarSign } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Building2, Calendar, DollarSign, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProspectionWorkflow } from "@/lib/api/prospectionService";
+import { listFunds } from "@/lib/api/fundService";
 import { RECEBIVEIS_STATUS_LABELS } from "@/data/recebiveisPipelineConfig";
+
+const FUNDS_ACTIVE_KEY = "funds-active";
 
 const SEGMENT_LABELS: Record<string, string> = {
   comercio: "Comércio",
@@ -43,6 +54,7 @@ interface RecebivelDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdatePendingItems: (workflowId: string, pendingItems: string[]) => void;
+  onUpdateFund?: (workflowId: string, fundId: string | null) => void;
 }
 
 export function RecebivelDetailsModal({
@@ -51,8 +63,17 @@ export function RecebivelDetailsModal({
   open,
   onOpenChange,
   onUpdatePendingItems,
+  onUpdateFund,
 }: RecebivelDetailsModalProps) {
   if (!workflow) return null;
+
+  const isEnquadramento = workflow.status === "enquadramento_alocacao";
+  const { data: fundsData, isLoading: loadingFunds } = useQuery({
+    queryKey: [FUNDS_ACTIVE_KEY],
+    queryFn: () => listFunds({ status: "active", limit: 200 }),
+    enabled: open && isEnquadramento,
+  });
+  const funds = fundsData?.items ?? [];
 
   const checklistItems = checklist[workflow.status] ?? [];
 
@@ -106,6 +127,37 @@ export function RecebivelDetailsModal({
               )}
             </div>
           </div>
+
+          {isEnquadramento && onUpdateFund && (
+            <div className="space-y-2 shrink-0">
+              <Label className="text-sm font-medium">Fundo comprador</Label>
+              {loadingFunds ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando fundos...
+                </div>
+              ) : (
+                <Select
+                  value={workflow.fund_id ?? "none"}
+                  onValueChange={(value) =>
+                    onUpdateFund(workflow.id, value === "none" ? null : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o fundo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (aguardando seleção)</SelectItem>
+                    {funds.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
           {checklistItems.length > 0 && (
             <div className="flex-1 min-h-0 flex flex-col gap-2">
