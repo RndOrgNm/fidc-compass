@@ -276,7 +276,7 @@ export function NewReceivableModal({ open, onOpenChange }: NewReceivableModalPro
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4 overflow-y-auto min-h-0 pr-2">
+        <div className="flex flex-col gap-4 py-4 overflow-y-auto min-h-0 pl-6 pr-10 scroll-pl-4 scroll-pr-4">
           {/* Cedente */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-muted-foreground">Cedente</h4>

@@ -224,7 +224,7 @@ export function NewCedenteModal({ open, onOpenChange }: NewCedenteModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pr-6">
+        <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-10 scroll-pl-4 scroll-pr-4">
         <div className="grid gap-6 py-4">
           {/* Dados da empresa */}
           <div className="space-y-2">
