@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -116,6 +116,14 @@ export function NewReceivableModal({ open, onOpenChange }: NewReceivableModalPro
   const cedentes = (cedentesData?.items ?? []).filter(
     (c) => (c.pending_items?.length ?? 0) === 0
   );
+
+  // Pre-fill segment from selected cedente (user can still change it)
+  useEffect(() => {
+    if (cedenteId && cedentes.length > 0) {
+      const selected = cedentes.find((c) => c.id === cedenteId);
+      if (selected?.segment) setSegment(selected.segment);
+    }
+  }, [cedenteId, cedentes]);
 
   const resetForm = () => {
     setCedenteId("");
