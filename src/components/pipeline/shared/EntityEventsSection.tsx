@@ -160,6 +160,11 @@ export function EntityEventsSection({
                     {formatEventValue(event.new_value)}
                   </span>
                 )}
+                {(event.old_value != null && (event.new_value == null || event.new_value === "") && event.event_type === "checklist_updated") && (
+                  <span className="ml-1 font-medium text-foreground">
+                    Concluído: {formatEventValue(event.old_value)}
+                  </span>
+                )}
               </div>
             )}
 
