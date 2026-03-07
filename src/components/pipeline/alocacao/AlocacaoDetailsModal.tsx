@@ -113,7 +113,7 @@ export function AlocacaoDetailsModal({
                 <p className="text-xs text-muted-foreground">
                   Marque os itens concluídos. Quando todos estiverem concluídos, o workflow poderá avançar para o próximo status.
                 </p>
-                <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[200px]">
+                <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[280px]">
                   <div className="space-y-4">
                     {checklistItems.map((checkItem, idx) => {
                       const isChecked = !(workflow.pending_items ?? []).includes(checkItem);

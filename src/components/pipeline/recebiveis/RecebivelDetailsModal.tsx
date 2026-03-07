@@ -77,7 +77,13 @@ export function RecebivelDetailsModal({
   });
   const funds = fundsData?.items ?? [];
 
-  const checklistItems = checklist[workflow.status] ?? [];
+  const canonicalItems = checklist[workflow.status] ?? [];
+  const pending = workflow.pending_items ?? [];
+  // Merge: show all canonical items + any pending items not in canonical (legacy/different format)
+  const checklistItems = [...canonicalItems];
+  for (const p of pending) {
+    if (!canonicalItems.includes(p)) checklistItems.push(p);
+  }
 
   const handleCheckChange = (checkItem: string, checked: boolean) => {
     const current = workflow.pending_items ?? [];
@@ -168,7 +174,7 @@ export function RecebivelDetailsModal({
                 <p className="text-xs text-muted-foreground">
                   Marque os itens concluídos. Quando todos estiverem concluídos, o workflow poderá avançar para o próximo status.
                 </p>
-                <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[200px]">
+                <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[320px]">
                   <div className="space-y-4">
                     {checklistItems.map((checkItem, idx) => {
                       const isChecked = !(workflow.pending_items ?? []).includes(checkItem);

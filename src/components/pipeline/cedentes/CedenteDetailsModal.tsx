@@ -62,7 +62,13 @@ export function CedenteDetailsModal({
 }: CedenteDetailsModalProps) {
   if (!cedente) return null;
 
-  const checklistItems = checklist[cedente.status] ?? [];
+  const canonicalItems = checklist[cedente.status] ?? [];
+  const pending = cedente.pending_items ?? [];
+  // Merge: show all canonical items + any pending items not in canonical (legacy/different format)
+  const checklistItems = [...canonicalItems];
+  for (const p of pending) {
+    if (!canonicalItems.includes(p)) checklistItems.push(p);
+  }
 
   const handleCheckChange = (item: string, checked: boolean) => {
     const current = cedente.pending_items ?? [];
@@ -135,7 +141,7 @@ export function CedenteDetailsModal({
               <p className="text-xs text-muted-foreground">
                 Marque os itens concluídos. Quando todos estiverem concluídos, o cedente poderá avançar para o próximo status.
               </p>
-              <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[200px]">
+              <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[320px]">
                 <div className="space-y-4">
                   {checklistItems.map((item, idx) => {
                     const isChecked = !(cedente.pending_items ?? []).includes(item);
