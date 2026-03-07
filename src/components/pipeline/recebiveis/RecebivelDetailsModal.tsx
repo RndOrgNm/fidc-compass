@@ -15,7 +15,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Calendar, DollarSign, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -99,138 +98,132 @@ export function RecebivelDetailsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="detalhes" className="flex-1 min-h-0 flex flex-col">
-          <TabsList className="shrink-0 w-full">
-            <TabsTrigger value="detalhes" className="flex-1">Detalhes</TabsTrigger>
-            <TabsTrigger value="eventos" className="flex-1">Eventos</TabsTrigger>
-            <TabsTrigger value="notas" className="flex-1">Notas Livres</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="detalhes" className="flex-1 min-h-0 flex flex-col">
-            <div className="space-y-5 flex-1 min-h-0 flex flex-col">
-              <div className="space-y-3 shrink-0">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">{RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</Badge>
-                  {workflow.cedente_segment && (
-                    <Badge variant="outline">{SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}</Badge>
-                  )}
-                  {workflow.assigned_to && (
-                    <Badge variant="outline">Atribuído a: {workflow.assigned_to}</Badge>
-                  )}
-                  <Badge variant="outline">{workflow.days_in_progress} dias no status</Badge>
-                </div>
-                <div className="grid gap-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>CNPJ: {formatCnpj(workflow.cedente_cnpj)}</span>
-                  </div>
-                  {workflow.estimated_volume > 0 && (
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>Volume estimado: {formatCurrency(workflow.estimated_volume)}</span>
-                    </div>
-                  )}
-                  {workflow.sla_deadline && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</span>
-                    </div>
-                  )}
-                </div>
+        <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-10 space-y-6">
+          <section className="space-y-5">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">{RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</Badge>
+                {workflow.cedente_segment && (
+                  <Badge variant="outline">{SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}</Badge>
+                )}
+                {workflow.assigned_to && (
+                  <Badge variant="outline">Atribuído a: {workflow.assigned_to}</Badge>
+                )}
+                <Badge variant="outline">{workflow.days_in_progress} dias no status</Badge>
               </div>
-
-              {isEnquadramento && onUpdateFund && (
-                <div className="space-y-2 shrink-0">
-                  <Label className="text-sm font-medium">Fundo comprador</Label>
-                  {loadingFunds ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Carregando fundos...
-                    </div>
-                  ) : (
-                    <Select
-                      value={workflow.fund_id ?? "none"}
-                      onValueChange={(value) =>
-                        onUpdateFund(workflow.id, value === "none" ? null : value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o fundo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhum (aguardando seleção)</SelectItem>
-                        {funds.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {f.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+              <div className="grid gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span>CNPJ: {formatCnpj(workflow.cedente_cnpj)}</span>
                 </div>
-              )}
-
-              {checklistItems.length > 0 && (
-                <div className="flex-1 min-h-0 flex flex-col gap-2">
-                  <h4 className="font-medium text-sm shrink-0">Checklist — {RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</h4>
-                  <p className="text-xs text-muted-foreground shrink-0">
-                    Marque os itens concluídos. Quando todos estiverem concluídos, o workflow poderá avançar para o próximo status.
-                  </p>
-                  <ScrollArea className="flex-1 pr-3 -mr-2 border rounded-md p-4 min-h-[200px]">
-                    <div className="space-y-4">
-                      {checklistItems.map((checkItem, idx) => {
-                        const isChecked = !(workflow.pending_items ?? []).includes(checkItem);
-                        return (
-                          <div key={idx} className="flex items-start gap-3">
-                            <Checkbox
-                              id={`receb-check-${workflow.id}-${idx}`}
-                              checked={isChecked}
-                              onCheckedChange={(checked) =>
-                                handleCheckChange(checkItem, checked === true)
-                              }
-                              className="mt-0.5 shrink-0"
-                            />
-                            <Label
-                              htmlFor={`receb-check-${workflow.id}-${idx}`}
-                              className={cn(
-                                "text-sm cursor-pointer leading-relaxed",
-                                isChecked && "text-muted-foreground line-through"
-                              )}
-                            >
-                              {checkItem}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                </div>
-              )}
-
-              {checklistItems.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  {RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}. Sem checklist pendente.
-                </p>
-              )}
+                {workflow.estimated_volume > 0 && (
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span>Volume estimado: {formatCurrency(workflow.estimated_volume)}</span>
+                  </div>
+                )}
+                {workflow.sla_deadline && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </TabsContent>
 
-          <TabsContent value="notas" className="flex-1 min-h-0 flex flex-col">
-            <EntityNotesSection
-              entityType="recebivel"
-              entityId={workflow.id}
-              enabled={open}
-            />
-          </TabsContent>
+            {isEnquadramento && onUpdateFund && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Fundo comprador</Label>
+                {loadingFunds ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando fundos...
+                  </div>
+                ) : (
+                  <Select
+                    value={workflow.fund_id ?? "none"}
+                    onValueChange={(value) =>
+                      onUpdateFund(workflow.id, value === "none" ? null : value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o fundo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum (aguardando seleção)</SelectItem>
+                      {funds.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
 
-          <TabsContent value="eventos" className="flex-1 min-h-0 flex flex-col">
+            {checklistItems.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <h4 className="font-medium text-sm">Checklist — {RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</h4>
+                <p className="text-xs text-muted-foreground">
+                  Marque os itens concluídos. Quando todos estiverem concluídos, o workflow poderá avançar para o próximo status.
+                </p>
+                <ScrollArea className="pr-3 -mr-2 border rounded-md p-4 min-h-[120px] max-h-[200px]">
+                  <div className="space-y-4">
+                    {checklistItems.map((checkItem, idx) => {
+                      const isChecked = !(workflow.pending_items ?? []).includes(checkItem);
+                      return (
+                        <div key={idx} className="flex items-start gap-3">
+                          <Checkbox
+                            id={`receb-check-${workflow.id}-${idx}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) =>
+                              handleCheckChange(checkItem, checked === true)
+                            }
+                            className="mt-0.5 shrink-0"
+                          />
+                          <Label
+                            htmlFor={`receb-check-${workflow.id}-${idx}`}
+                            className={cn(
+                              "text-sm cursor-pointer leading-relaxed",
+                              isChecked && "text-muted-foreground line-through"
+                            )}
+                          >
+                            {checkItem}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {checklistItems.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                {RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}. Sem checklist pendente.
+              </p>
+            )}
+          </section>
+
+          <section>
+            <h4 className="font-medium text-sm mb-2">Eventos</h4>
             <EntityEventsSection
               entityType="recebivel"
               entityId={workflow.id}
               enabled={open}
             />
-          </TabsContent>
-        </Tabs>
+          </section>
+
+          <section>
+            <h4 className="font-medium text-sm mb-2">Notas Livres</h4>
+            <EntityNotesSection
+              entityType="recebivel"
+              entityId={workflow.id}
+              enabled={open}
+            />
+          </section>
+        </div>
       </DialogContent>
     </Dialog>
   );
