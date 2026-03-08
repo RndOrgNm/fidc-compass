@@ -14,6 +14,7 @@ interface FundsAgentQueryRequest {
   query: string;
   conversation_id?: string;
   user_id?: string;
+  channel?: string;
 }
 
 interface FundsAgentQueryResponse {
@@ -27,7 +28,7 @@ async function askFundsAgent(
   query: string,
   conversationId?: string
 ): Promise<FundsAgentQueryResponse> {
-  const body: FundsAgentQueryRequest = { query };
+  const body: FundsAgentQueryRequest = { query, channel: "frontend_agent" };
   if (conversationId) {
     body.conversation_id = conversationId;
   }

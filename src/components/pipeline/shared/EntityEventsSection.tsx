@@ -24,7 +24,7 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 
 const CHANNEL_LABELS: Record<string, string> = {
   frontend: "Frontend",
-  frontend_agent: "Agente",
+  frontend_agent: "Funds Agent",
   whatsapp: "WhatsApp",
   slack: "Slack",
 };
@@ -63,6 +63,7 @@ function formatDate(dateStr: string) {
     year: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
   });
 }
 
@@ -131,11 +132,6 @@ export function EntityEventsSection({
               >
                 {EVENT_TYPE_LABELS[event.event_type] ?? event.event_type}
               </Badge>
-              {event.event_channel && (
-                <Badge variant="outline" className="text-xs">
-                  {CHANNEL_LABELS[event.event_channel] ?? event.event_channel}
-                </Badge>
-              )}
               <span className="text-xs text-muted-foreground ml-auto">
                 {formatDate(event.created_at)}
               </span>
@@ -170,7 +166,9 @@ export function EntityEventsSection({
 
             {event.cause_detail && (
               <p className="text-xs text-muted-foreground italic">
-                {event.cause_detail}
+                {event.event_channel
+                  ? `${CHANNEL_LABELS[event.event_channel] ?? event.event_channel}: ${event.cause_detail}`
+                  : event.cause_detail}
               </p>
             )}
           </div>
