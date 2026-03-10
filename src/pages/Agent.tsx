@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, ChevronDown } from "lucide-react";
+import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, ChevronDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -276,6 +276,21 @@ export default function Agent() {
         <Button onClick={handleNewConversation} variant="outline" size="sm">
           <Plus className="h-4 w-4 mr-2" />
           Nova Conversa
+        </Button>
+        <Button
+          onClick={async () => {
+            await refreshConversations();
+            if (currentConversationId) {
+              await loadMessages(currentConversationId);
+            }
+          }}
+          variant="outline"
+          size="sm"
+          disabled={isLoadingConversations}
+          title="Atualizar lista de conversas e mensagens"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingConversations ? "animate-spin" : ""}`} />
+          Atualizar
         </Button>
 
         <div className="ml-auto">
