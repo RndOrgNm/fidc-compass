@@ -7,6 +7,16 @@ import {
   conversationDeleteConversation,
   conversationGenerateTitle,
 } from "./conversationService";
+
+interface AgentConfig {
+  whatsapp_allowed_group_ids: string;
+}
+
+async function fetchAgentConfig(): Promise<AgentConfig> {
+  const response = await fetch(`${FUNDS_AGENT_API_URL}/config`);
+  if (!response.ok) return { whatsapp_allowed_group_ids: "" };
+  return response.json();
+}
 import type { MessageResponse, ApiSource, ConversationResponse } from "./client";
 import type { ConversationWithMetadata } from "./ragService";
 
@@ -58,7 +68,12 @@ export class FundsAgentService {
   async fetchConversations(
     limit: number = 50
   ): Promise<ConversationWithMetadata[]> {
-    const response = await conversationListConversations(limit, "funds");
+    const config = await fetchAgentConfig();
+    const response = await conversationListConversations(
+      limit,
+      "funds",
+      config.whatsapp_allowed_group_ids || undefined
+    );
     return response.conversations.map((conv) => ({
       ...conv,
       lastMessageAt: conv.updated_at,

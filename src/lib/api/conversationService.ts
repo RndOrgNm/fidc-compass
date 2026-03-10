@@ -24,10 +24,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 export async function conversationListConversations(
   limit: number = 50,
-  agent?: string
+  agent?: string,
+  whatsappAllowedGroupIds?: string
 ): Promise<ConversationListResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (agent) params.set("agent", agent);
+  if (whatsappAllowedGroupIds) params.set("whatsapp_allowed_group_ids", whatsappAllowedGroupIds);
   const response = await fetch(
     `${CONVERSATION_SERVICE_URL}/conversations?${params.toString()}`,
     {
