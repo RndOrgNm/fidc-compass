@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { RAG_API_BASE_URL } from "@/lib/api/config";
@@ -209,10 +209,7 @@ export default function Agent() {
   };
 
   const formatTimestamp = (timestamp: string) => {
-    return formatDistanceToNow(new Date(timestamp), { 
-      addSuffix: true, 
-      locale: ptBR 
-    });
+    return format(new Date(timestamp), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
   const currentConversation = conversations.find(c => c.conversation_id === currentConversationId);
