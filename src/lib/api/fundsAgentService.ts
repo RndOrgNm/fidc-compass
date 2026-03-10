@@ -124,6 +124,7 @@ export class FundsAgentService {
     query: string,
     isFirstMessage: boolean = false
   ): Promise<{ userMessage: MessageResponse; assistantMessage: MessageResponse }> {
+    const sendTime = new Date().toISOString();
     const queryResponse = await askFundsAgent(query, conversationId);
 
     let responseText = queryResponse.response;
@@ -131,7 +132,7 @@ export class FundsAgentService {
       responseText = String(responseText);
     }
 
-    const now = new Date().toISOString();
+    const responseTime = new Date().toISOString();
     const resolvedConversationId =
       queryResponse.conversation_id || conversationId;
 
@@ -140,7 +141,7 @@ export class FundsAgentService {
       conversation_id: resolvedConversationId,
       role: "user",
       content: query,
-      created_at: now,
+      created_at: sendTime,
     };
 
     const assistantMessage: MessageResponse = {
@@ -149,7 +150,7 @@ export class FundsAgentService {
       role: "assistant",
       content: responseText,
       sources: queryResponse.sources?.length ? queryResponse.sources : null,
-      created_at: now,
+      created_at: responseTime,
     };
 
     if (isFirstMessage) {

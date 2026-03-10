@@ -111,6 +111,7 @@ export class RAGService {
     query: string,
     isFirstMessage: boolean = false
   ): Promise<{ userMessage: MessageResponse; assistantMessage: MessageResponse }> {
+    const sendTime = new Date().toISOString();
     const queryResponse = await askSearchAgent(query, conversationId);
 
     let responseText = queryResponse.response;
@@ -118,7 +119,7 @@ export class RAGService {
       responseText = String(responseText);
     }
 
-    const now = new Date().toISOString();
+    const responseTime = new Date().toISOString();
     const resolvedConversationId =
       queryResponse.conversation_id || conversationId;
 
@@ -127,7 +128,7 @@ export class RAGService {
       conversation_id: resolvedConversationId,
       role: "user",
       content: query,
-      created_at: now,
+      created_at: sendTime,
     };
 
     const assistantMessage: MessageResponse = {
@@ -136,7 +137,7 @@ export class RAGService {
       role: "assistant",
       content: responseText,
       sources: queryResponse.sources?.length ? queryResponse.sources : null,
-      created_at: now,
+      created_at: responseTime,
     };
 
     if (isFirstMessage) {
