@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, User, Mail, Phone, Save } from "lucide-react";
+import { Building2, User, Mail, Phone, Save, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CedentePipelineItem } from "./CedenteCard";
 import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
@@ -68,6 +68,7 @@ export function CedenteDetailsModal({
   onUpdatePendingItems,
   onUpdateFinancials,
 }: CedenteDetailsModalProps) {
+  const [isEditingData, setIsEditingData] = useState(false);
   const [creditScore, setCreditScore] = useState<string>("0");
   const [proposedLimit, setProposedLimit] = useState<string>("0");
   const [approvedLimit, setApprovedLimit] = useState<string>("0");
@@ -76,11 +77,12 @@ export function CedenteDetailsModal({
 
   useEffect(() => {
     if (!cedente) return;
+    setIsEditingData(false);
     setFinancialsDirty(false);
     setCreditScore(String(cedente.creditScore ?? 0));
     setProposedLimit(String(cedente.proposedLimit ?? 0));
     setApprovedLimit(String(cedente.approvedLimit ?? 0));
-  }, [cedente?.id]);
+  }, [cedente?.id, open]);
 
   if (!cedente) return null;
 
@@ -97,12 +99,21 @@ export function CedenteDetailsModal({
         approved_limit: isNaN(al) ? undefined : al,
       });
       setFinancialsDirty(false);
+      setIsEditingData(false);
     } finally {
       setSavingFinancials(false);
     }
   };
 
   const markDirty = () => setFinancialsDirty(true);
+
+  const handleCancelEdit = () => {
+    setIsEditingData(false);
+    setFinancialsDirty(false);
+    setCreditScore(String(cedente.creditScore ?? 0));
+    setProposedLimit(String(cedente.proposedLimit ?? 0));
+    setApprovedLimit(String(cedente.approvedLimit ?? 0));
+  };
 
   const canonicalItems = checklist[cedente.status] ?? [];
   const pending = cedente.pending_items ?? [];
@@ -125,10 +136,38 @@ export function CedenteDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            {cedente.companyName}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {cedente.companyName}
+            </DialogTitle>
+            {onUpdateFinancials && (
+              <>
+                {!isEditingData ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingData(true)}
+                    className="shrink-0"
+                  >
+                    <Pencil className="h-4 w-4 mr-1.5" />
+                    Alterar Dados
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    disabled={savingFinancials}
+                    className="shrink-0"
+                  >
+                    <X className="h-4 w-4 mr-1.5" />
+                    Cancelar
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-10 space-y-6">
@@ -165,71 +204,81 @@ export function CedenteDetailsModal({
                 )}
                 <div className="pt-2 space-y-3">
                   <h4 className="text-sm font-medium text-foreground">Dados financeiros</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="cedente-score" className="text-sm">
-                        Score
-                      </Label>
-                      <Input
-                        id="cedente-score"
-                        type="number"
-                        min={0}
-                        max={1000}
-                        value={creditScore}
-                        onChange={(e) => {
-                          setCreditScore(e.target.value);
-                          markDirty();
-                        }}
-                        className="h-9"
-                      />
+                  {!isEditingData ? (
+                    <div className="space-y-1 text-muted-foreground">
+                      <p>Score: {cedente.creditScore}</p>
+                      <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>
+                      <p>Limite aprovado: {formatCurrency(cedente.approvedLimit ?? 0)}</p>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="cedente-proposed" className="text-sm">
-                        Limite proposto
-                      </Label>
-                      <Input
-                        id="cedente-proposed"
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        placeholder="R$"
-                        value={proposedLimit}
-                        onChange={(e) => {
-                          setProposedLimit(e.target.value);
-                          markDirty();
-                        }}
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="cedente-approved" className="text-sm">
-                        Limite aprovado
-                      </Label>
-                      <Input
-                        id="cedente-approved"
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        placeholder="R$"
-                        value={approvedLimit}
-                        onChange={(e) => {
-                          setApprovedLimit(e.target.value);
-                          markDirty();
-                        }}
-                        className="h-9"
-                      />
-                    </div>
-                  </div>
-                  {onUpdateFinancials && financialsDirty && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={handleSaveFinancials}
-                      disabled={savingFinancials}
-                    >
-                      <Save className="h-3.5 w-3.5 mr-1.5" />
-                      {savingFinancials ? "Salvando..." : "Salvar alterações"}
-                    </Button>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="cedente-score" className="text-sm">
+                            Score
+                          </Label>
+                          <Input
+                            id="cedente-score"
+                            type="number"
+                            min={0}
+                            max={1000}
+                            value={creditScore}
+                            onChange={(e) => {
+                              setCreditScore(e.target.value);
+                              markDirty();
+                            }}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="cedente-proposed" className="text-sm">
+                            Limite proposto
+                          </Label>
+                          <Input
+                            id="cedente-proposed"
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            placeholder="R$"
+                            value={proposedLimit}
+                            onChange={(e) => {
+                              setProposedLimit(e.target.value);
+                              markDirty();
+                            }}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="cedente-approved" className="text-sm">
+                            Limite aprovado
+                          </Label>
+                          <Input
+                            id="cedente-approved"
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            placeholder="R$"
+                            value={approvedLimit}
+                            onChange={(e) => {
+                              setApprovedLimit(e.target.value);
+                              markDirty();
+                            }}
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                      {financialsDirty && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleSaveFinancials}
+                          disabled={savingFinancials}
+                        >
+                          <Save className="h-3.5 w-3.5 mr-1.5" />
+                          {savingFinancials ? "Salvando..." : "Salvar alterações"}
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
