@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,10 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Building2, User, Mail, Phone } from "lucide-react";
+import { Building2, User, Mail, Phone, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CedentePipelineItem } from "./CedenteCard";
 import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
@@ -51,6 +54,10 @@ interface CedenteDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdatePendingItems: (cedenteId: string, pendingItems: string[]) => void;
+  onUpdateFinancials?: (
+    cedenteId: string,
+    payload: { credit_score?: number; approved_limit?: number; proposed_limit?: number }
+  ) => Promise<void>;
 }
 
 export function CedenteDetailsModal({
@@ -59,8 +66,43 @@ export function CedenteDetailsModal({
   open,
   onOpenChange,
   onUpdatePendingItems,
+  onUpdateFinancials,
 }: CedenteDetailsModalProps) {
+  const [creditScore, setCreditScore] = useState<string>("0");
+  const [proposedLimit, setProposedLimit] = useState<string>("0");
+  const [approvedLimit, setApprovedLimit] = useState<string>("0");
+  const [savingFinancials, setSavingFinancials] = useState(false);
+  const [financialsDirty, setFinancialsDirty] = useState(false);
+
+  useEffect(() => {
+    if (!cedente) return;
+    setFinancialsDirty(false);
+    setCreditScore(String(cedente.creditScore ?? 0));
+    setProposedLimit(String(cedente.proposedLimit ?? 0));
+    setApprovedLimit(String(cedente.approvedLimit ?? 0));
+  }, [cedente?.id]);
+
   if (!cedente) return null;
+
+  const handleSaveFinancials = async () => {
+    if (!onUpdateFinancials) return;
+    setSavingFinancials(true);
+    try {
+      const cs = parseInt(creditScore, 10);
+      const pl = parseFloat(proposedLimit) || 0;
+      const al = parseFloat(approvedLimit) || 0;
+      await onUpdateFinancials(cedente.id, {
+        credit_score: isNaN(cs) ? undefined : Math.max(0, Math.min(1000, cs)),
+        proposed_limit: isNaN(pl) ? undefined : pl,
+        approved_limit: isNaN(al) ? undefined : al,
+      });
+      setFinancialsDirty(false);
+    } finally {
+      setSavingFinancials(false);
+    }
+  };
+
+  const markDirty = () => setFinancialsDirty(true);
 
   const canonicalItems = checklist[cedente.status] ?? [];
   const pending = cedente.pending_items ?? [];
@@ -121,16 +163,73 @@ export function CedenteDetailsModal({
                     <span>{cedente.contactPhone}</span>
                   </div>
                 )}
-                <div className="pt-2 space-y-1 text-muted-foreground">
-                  {cedente.creditScore > 0 && <p>Score: {cedente.creditScore}</p>}
-                  {cedente.status === "comite_credito" && (
-                    <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>
-                  )}
-                  {["habilitado", "bloqueado_desistencia"].includes(cedente.status) && (
-                    <>
-                      <p>Limite proposto: {formatCurrency(cedente.proposedLimit ?? 0)}</p>
-                      <p>Limite aprovado: {formatCurrency(cedente.approvedLimit ?? 0)}</p>
-                    </>
+                <div className="pt-2 space-y-3">
+                  <h4 className="text-sm font-medium text-foreground">Dados financeiros</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cedente-score" className="text-sm">
+                        Score
+                      </Label>
+                      <Input
+                        id="cedente-score"
+                        type="number"
+                        min={0}
+                        max={1000}
+                        value={creditScore}
+                        onChange={(e) => {
+                          setCreditScore(e.target.value);
+                          markDirty();
+                        }}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cedente-proposed" className="text-sm">
+                        Limite proposto
+                      </Label>
+                      <Input
+                        id="cedente-proposed"
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder="R$"
+                        value={proposedLimit}
+                        onChange={(e) => {
+                          setProposedLimit(e.target.value);
+                          markDirty();
+                        }}
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cedente-approved" className="text-sm">
+                        Limite aprovado
+                      </Label>
+                      <Input
+                        id="cedente-approved"
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        placeholder="R$"
+                        value={approvedLimit}
+                        onChange={(e) => {
+                          setApprovedLimit(e.target.value);
+                          markDirty();
+                        }}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+                  {onUpdateFinancials && financialsDirty && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleSaveFinancials}
+                      disabled={savingFinancials}
+                    >
+                      <Save className="h-3.5 w-3.5 mr-1.5" />
+                      {savingFinancials ? "Salvando..." : "Salvar alterações"}
+                    </Button>
                   )}
                 </div>
               </div>

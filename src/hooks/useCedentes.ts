@@ -59,6 +59,9 @@ export function useUpdateCedente() {
                       days_in_status: 0,
                       status_started_at: payload.status_started_at,
                     }),
+                    ...(payload.credit_score !== undefined && { creditScore: payload.credit_score }),
+                    ...(payload.approved_limit !== undefined && { approvedLimit: payload.approved_limit }),
+                    ...(payload.proposed_limit !== undefined && { proposedLimit: payload.proposed_limit }),
                   }
                 : c
             ),

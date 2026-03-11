@@ -53,6 +53,9 @@ export interface CedenteUpdatePayload {
   assigned_to?: string | null;
   pending_items?: string[];
   status_started_at?: string;
+  credit_score?: number;
+  approved_limit?: number;
+  proposed_limit?: number;
 }
 
 export interface CedenteCreatePayload {
@@ -206,6 +209,9 @@ export async function updateCedente(
   if (payload.assigned_to !== undefined) body.assigned_to = payload.assigned_to;
   if (payload.pending_items != null) body.pending_items = payload.pending_items;
   if (payload.status_started_at != null) body.status_started_at = payload.status_started_at;
+  if (payload.credit_score != null) body.credit_score = payload.credit_score;
+  if (payload.approved_limit != null) body.approved_limit = payload.approved_limit;
+  if (payload.proposed_limit != null) body.proposed_limit = payload.proposed_limit;
 
   const response = await fetch(`${FUNDS_API_BASE_URL}/cedentes/${id}`, {
     method: "PUT",

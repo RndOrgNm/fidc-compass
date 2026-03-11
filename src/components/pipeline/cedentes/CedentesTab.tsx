@@ -117,6 +117,22 @@ export function CedentesTab({ selectedCedenteId: controlledCedenteId, onOpenDeta
     }
   };
 
+  const handleUpdateFinancials = async (
+    cedenteId: string,
+    payload: { credit_score?: number; approved_limit?: number; proposed_limit?: number }
+  ) => {
+    try {
+      await updateCedente.mutateAsync({ id: cedenteId, payload });
+      toast({ title: "Dados atualizados", description: "Score e limites salvos com sucesso." });
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os dados financeiros.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const selectedCedente = filteredCedentes.find((c) => c.id === selectedCedenteId) ?? null;
 
   return (
@@ -246,6 +262,7 @@ export function CedentesTab({ selectedCedenteId: controlledCedenteId, onOpenDeta
         open={selectedCedenteId != null}
         onOpenChange={(open) => !open && handleCloseDetails()}
         onUpdatePendingItems={handleUpdatePendingItems}
+        onUpdateFinancials={handleUpdateFinancials}
       />
 
       <NewCedenteModal open={showNewCedenteModal} onOpenChange={setShowNewCedenteModal} />
