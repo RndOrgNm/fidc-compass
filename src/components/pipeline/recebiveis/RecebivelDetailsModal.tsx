@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -19,7 +19,15 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Calendar, DollarSign, Loader2, Pencil, Save, X } from "lucide-react";
+import {
+  Building2,
+  Calendar,
+  DollarSign,
+  Loader2,
+  Pencil,
+  Save,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProspectionWorkflow } from "@/lib/api/prospectionService";
 import { listFunds } from "@/lib/api/fundService";
@@ -53,6 +61,22 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function parseCurrencyInput(raw: string): number | null {
+  const digits = raw.replace(/[^\d,]/g, "").replace(",", ".");
+  const n = parseFloat(digits);
+  return isNaN(n) ? null : n;
+}
+
+export interface WorkflowUpdateFields {
+  estimated_volume?: number | null;
+  sla_deadline?: string | null;
+  invoice_number?: string | null;
+  nominal_value?: number | null;
+  due_date?: string | null;
+  debtor_name?: string | null;
+  debtor_cnpj?: string | null;
+}
+
 interface RecebivelDetailsModalProps {
   workflow: ProspectionWorkflow | null;
   checklist: Record<string, string[]>;
@@ -60,10 +84,7 @@ interface RecebivelDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   onUpdatePendingItems: (workflowId: string, pendingItems: string[]) => void;
   onUpdateFund?: (workflowId: string, fundId: string | null) => void;
-  onUpdateData?: (
-    workflowId: string,
-    data: { estimated_volume?: number; sla_deadline?: string | null; assigned_to?: string | null }
-  ) => Promise<void>;
+  onUpdateFields?: (workflowId: string, fields: WorkflowUpdateFields) => Promise<void>;
 }
 
 export function RecebivelDetailsModal({
@@ -73,53 +94,70 @@ export function RecebivelDetailsModal({
   onOpenChange,
   onUpdatePendingItems,
   onUpdateFund,
-  onUpdateData,
+  onUpdateFields,
 }: RecebivelDetailsModalProps) {
   const [isEditingData, setIsEditingData] = useState(false);
-  const [estimatedVolume, setEstimatedVolume] = useState<string>("0");
-  const [slaDeadline, setSlaDeadline] = useState<string>("");
-  const [assignedTo, setAssignedTo] = useState<string>("");
-  const [savingData, setSavingData] = useState(false);
-  const [dataDirty, setDataDirty] = useState(false);
+  const [savingFields, setSavingFields] = useState(false);
+
+  // Editable field states
+  const [estimatedVolume, setEstimatedVolume] = useState("0");
+  const [nominalValue, setNominalValue] = useState("0");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [debtorName, setDebtorName] = useState("");
+  const [debtorCnpj, setDebtorCnpj] = useState("");
+  const [slaDeadline, setSlaDeadline] = useState("");
+
+  const [fieldsDirty, setFieldsDirty] = useState(false);
 
   useEffect(() => {
     if (!workflow) return;
     setIsEditingData(false);
-    setDataDirty(false);
-    setEstimatedVolume(String(workflow.estimated_volume ?? 0));
-    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.slice(0, 10) : "");
-    setAssignedTo(workflow.assigned_to ?? "");
+    setFieldsDirty(false);
+    setEstimatedVolume(workflow.estimated_volume > 0 ? String(workflow.estimated_volume) : "0");
+    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : "0");
+    setInvoiceNumber(workflow.invoice_number ?? "");
+    setDueDate(workflow.due_date ? workflow.due_date.substring(0, 10) : "");
+    setDebtorName(workflow.debtor_name ?? "");
+    setDebtorCnpj(workflow.debtor_cnpj ?? "");
+    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.substring(0, 10) : "");
   }, [workflow?.id, open]);
 
-  if (!workflow) return null;
+  const handleCancelEdit = () => {
+    if (!workflow) return;
+    setIsEditingData(false);
+    setFieldsDirty(false);
+    setEstimatedVolume(workflow.estimated_volume > 0 ? String(workflow.estimated_volume) : "0");
+    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : "0");
+    setInvoiceNumber(workflow.invoice_number ?? "");
+    setDueDate(workflow.due_date ? workflow.due_date.substring(0, 10) : "");
+    setDebtorName(workflow.debtor_name ?? "");
+    setDebtorCnpj(workflow.debtor_cnpj ?? "");
+    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.substring(0, 10) : "");
+  };
 
-  const handleSaveData = async () => {
-    if (!onUpdateData) return;
-    setSavingData(true);
+  const handleSaveFields = async () => {
+    if (!workflow || !onUpdateFields) return;
+    setSavingFields(true);
     try {
-      const vol = parseFloat(estimatedVolume) || 0;
-      const sla = slaDeadline.trim() ? slaDeadline : undefined;
-      await onUpdateData(workflow.id, {
-        estimated_volume: vol,
-        sla_deadline: sla ?? null,
-        assigned_to: assignedTo.trim() || null,
-      });
-      setDataDirty(false);
+      const fields: WorkflowUpdateFields = {
+        estimated_volume: parseCurrencyInput(estimatedVolume) ?? workflow.estimated_volume,
+        nominal_value: parseCurrencyInput(nominalValue),
+        invoice_number: invoiceNumber.trim() || null,
+        due_date: dueDate || null,
+        debtor_name: debtorName.trim() || null,
+        debtor_cnpj: debtorCnpj.trim() || null,
+        sla_deadline: slaDeadline || null,
+      };
+      await onUpdateFields(workflow.id, fields);
       setIsEditingData(false);
+      setFieldsDirty(false);
     } finally {
-      setSavingData(false);
+      setSavingFields(false);
     }
   };
 
-  const markDirty = () => setDataDirty(true);
-
-  const handleCancelEdit = () => {
-    setIsEditingData(false);
-    setDataDirty(false);
-    setEstimatedVolume(String(workflow.estimated_volume ?? 0));
-    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.slice(0, 10) : "");
-    setAssignedTo(workflow.assigned_to ?? "");
-  };
+  if (!workflow) return null;
 
   const isEnquadramento = workflow.status === "enquadramento_alocacao";
   const { data: fundsData, isLoading: loadingFunds } = useQuery({
@@ -131,7 +169,6 @@ export function RecebivelDetailsModal({
 
   const canonicalItems = checklist[workflow.status] ?? [];
   const pending = workflow.pending_items ?? [];
-  // Merge: show all canonical items + any pending items not in canonical (legacy/different format)
   const checklistItems = [...canonicalItems];
   for (const p of pending) {
     if (!canonicalItems.includes(p)) checklistItems.push(p);
@@ -146,6 +183,8 @@ export function RecebivelDetailsModal({
     }
   };
 
+  const markDirty = () => setFieldsDirty(true);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
@@ -155,7 +194,7 @@ export function RecebivelDetailsModal({
               <Building2 className="h-5 w-5" />
               {workflow.cedente_name || "Sem nome"}
             </DialogTitle>
-            {onUpdateData && (
+            {onUpdateFields && (
               <>
                 {!isEditingData ? (
                   <Button
@@ -172,7 +211,7 @@ export function RecebivelDetailsModal({
                     variant="ghost"
                     size="sm"
                     onClick={handleCancelEdit}
-                    disabled={savingData}
+                    disabled={savingFields}
                     className="shrink-0 mr-2"
                   >
                     <X className="h-4 w-4 mr-1.5" />
@@ -186,6 +225,7 @@ export function RecebivelDetailsModal({
 
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-10 space-y-6">
           <section className="space-y-5">
+            {/* Badges / static header info */}
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</Badge>
@@ -202,90 +242,127 @@ export function RecebivelDetailsModal({
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   <span>CNPJ: {formatCnpj(workflow.cedente_cnpj)}</span>
                 </div>
-                <div className="pt-2 space-y-3">
-                  <h4 className="text-sm font-medium text-foreground">Dados operacionais</h4>
-                  {!isEditingData ? (
-                    <div className="space-y-1 text-muted-foreground">
-                      {(workflow.estimated_volume ?? 0) > 0 && (
-                        <p>Volume estimado: {formatCurrency(workflow.estimated_volume)}</p>
-                      )}
-                      {workflow.sla_deadline ? (
-                        <p>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</p>
-                      ) : (
-                        <p>SLA: —</p>
-                      )}
-                      <p>Atribuído a: {workflow.assigned_to || "—"}</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="receb-volume" className="text-sm">
-                            Volume estimado (R$)
-                          </Label>
-                          <Input
-                            id="receb-volume"
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            placeholder="0"
-                            value={estimatedVolume}
-                            onChange={(e) => {
-                              setEstimatedVolume(e.target.value);
-                              markDirty();
-                            }}
-                            className="h-9"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="receb-sla" className="text-sm">
-                            SLA
-                          </Label>
-                          <Input
-                            id="receb-sla"
-                            type="date"
-                            value={slaDeadline}
-                            onChange={(e) => {
-                              setSlaDeadline(e.target.value);
-                              markDirty();
-                            }}
-                            className="h-9"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="receb-assigned" className="text-sm">
-                          Atribuído a
-                        </Label>
-                        <Input
-                          id="receb-assigned"
-                          type="text"
-                          placeholder="Nome do responsável"
-                          value={assignedTo}
-                          onChange={(e) => {
-                            setAssignedTo(e.target.value);
-                            markDirty();
-                          }}
-                          className="h-9"
-                        />
-                      </div>
-                      {dataDirty && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={handleSaveData}
-                          disabled={savingData}
-                        >
-                          <Save className="h-3.5 w-3.5 mr-1.5" />
-                          {savingData ? "Salvando..." : "Salvar alterações"}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
+                {workflow.estimated_volume > 0 && !isEditingData && (
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span>Volume estimado: {formatCurrency(workflow.estimated_volume)}</span>
+                  </div>
+                )}
+                {workflow.sla_deadline && !isEditingData && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</span>
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* ── Dados operacionais (editable) ─────────────────── */}
+            {onUpdateFields && (
+              <div className="pt-2 space-y-3">
+                <h4 className="text-sm font-medium text-foreground">Dados operacionais</h4>
+                {!isEditingData ? (
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    {workflow.invoice_number && <p>NF: {workflow.invoice_number}</p>}
+                    {(workflow.nominal_value ?? 0) > 0 && (
+                      <p>Valor nominal: {formatCurrency(workflow.nominal_value!)}</p>
+                    )}
+                    {workflow.debtor_name && <p>Sacado: {workflow.debtor_name}</p>}
+                    {workflow.debtor_cnpj && <p>CNPJ sacado: {formatCnpj(workflow.debtor_cnpj)}</p>}
+                    {workflow.due_date && (
+                      <p>Vencimento: {new Date(workflow.due_date + "T00:00:00").toLocaleDateString("pt-BR")}</p>
+                    )}
+                    {workflow.estimated_volume > 0 && (
+                      <p>Volume estimado: {formatCurrency(workflow.estimated_volume)}</p>
+                    )}
+                    {workflow.sla_deadline && (
+                      <p>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nº da NF</Label>
+                        <Input
+                          value={invoiceNumber}
+                          onChange={(e) => { setInvoiceNumber(e.target.value); markDirty(); }}
+                          placeholder="Ex: 000123"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Valor nominal (R$)</Label>
+                        <Input
+                          value={nominalValue}
+                          onChange={(e) => { setNominalValue(e.target.value); markDirty(); }}
+                          placeholder="Ex: 50000"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome do sacado</Label>
+                        <Input
+                          value={debtorName}
+                          onChange={(e) => { setDebtorName(e.target.value); markDirty(); }}
+                          placeholder="Razão social do sacado"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">CNPJ do sacado</Label>
+                        <Input
+                          value={debtorCnpj}
+                          onChange={(e) => { setDebtorCnpj(e.target.value); markDirty(); }}
+                          placeholder="XX.XXX.XXX/XXXX-XX"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Vencimento</Label>
+                        <Input
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => { setDueDate(e.target.value); markDirty(); }}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">SLA (prazo)</Label>
+                        <Input
+                          type="date"
+                          value={slaDeadline}
+                          onChange={(e) => { setSlaDeadline(e.target.value); markDirty(); }}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1 col-span-2">
+                        <Label className="text-xs">Volume estimado (R$)</Label>
+                        <Input
+                          value={estimatedVolume}
+                          onChange={(e) => { setEstimatedVolume(e.target.value); markDirty(); }}
+                          placeholder="Ex: 100000"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                    </div>
+                    {fieldsDirty && (
+                      <Button
+                        size="sm"
+                        onClick={handleSaveFields}
+                        disabled={savingFields}
+                        className="w-full"
+                      >
+                        <Save className="h-3.5 w-3.5 mr-1.5" />
+                        {savingFields ? "Salvando..." : "Salvar alterações"}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Fundo comprador (enquadramento only) ─────────── */}
             {isEnquadramento && onUpdateFund && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Fundo comprador</Label>
@@ -317,6 +394,7 @@ export function RecebivelDetailsModal({
               </div>
             )}
 
+            {/* ── Checklist ────────────────────────────────────── */}
             {checklistItems.length > 0 && (
               <div className="flex flex-col gap-2">
                 <h4 className="font-medium text-sm">Checklist — {RECEBIVEIS_STATUS_LABELS[workflow.status as keyof typeof RECEBIVEIS_STATUS_LABELS] ?? workflow.status}</h4>

@@ -14,6 +14,7 @@ import { RecebiveisListView } from "./RecebiveisListView";
 import { RecebivelDetailsModal } from "./RecebivelDetailsModal";
 import { RecebivelDeleteModal } from "./RecebivelDeleteModal";
 import { useProspectionWorkflows, useUpdateRecebivel, useDeleteRecebivel, useRecebiveisChecklist } from "@/hooks/useProspection";
+import type { WorkflowUpdateFields } from "./RecebivelDetailsModal";
 import { RECEBIVEIS_CHECKLIST } from "@/data/recebiveisChecklist";
 import { RECEBIVEIS_COLUMNS } from "@/data/recebiveisPipelineConfig";
 import { toast } from "@/hooks/use-toast";
@@ -133,20 +134,10 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
     }
   };
 
-  const handleUpdateData = async (
-    workflowId: string,
-    data: { estimated_volume?: number; sla_deadline?: string | null; assigned_to?: string | null }
-  ) => {
+  const handleUpdateFields = async (workflowId: string, fields: WorkflowUpdateFields) => {
     try {
-      await updateRecebivel.mutateAsync({
-        workflowId,
-        data: {
-          estimated_volume: data.estimated_volume,
-          sla_deadline: data.sla_deadline,
-          assigned_to: data.assigned_to,
-        },
-      });
-      toast({ title: "Dados atualizados", description: "Volume, SLA e atribuição salvos com sucesso." });
+      await updateRecebivel.mutateAsync({ workflowId, data: fields });
+      toast({ title: "Dados atualizados", description: "Informações do recebível salvas com sucesso." });
     } catch {
       toast({
         title: "Erro",
@@ -308,7 +299,7 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
         onOpenChange={(open) => !open && handleCloseDetails()}
         onUpdatePendingItems={handleUpdatePendingItems}
         onUpdateFund={handleUpdateFund}
-        onUpdateData={handleUpdateData}
+        onUpdateFields={handleUpdateFields}
       />
 
       <NewReceivableModal

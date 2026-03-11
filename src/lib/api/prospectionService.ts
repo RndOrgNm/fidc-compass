@@ -36,9 +36,11 @@ export interface ProspectionWorkflow {
   cedente_segment: Segment | null;
   fund_name: string | null;
   receivable_value: number;
+  nominal_value: number | null;
   invoice_number: string | null;
   due_date: string | null;
   debtor_name: string | null;
+  debtor_cnpj: string | null;
   rejection_reason: string | null;
   total_steps: number;
   completed_steps: number;
@@ -87,6 +89,11 @@ export interface RecebivelUpdateRequest {
   sla_deadline?: string | null;
   estimated_volume?: number;
   status?: RecebivelStatus;
+  invoice_number?: string | null;
+  nominal_value?: number | null;
+  due_date?: string | null;
+  debtor_name?: string | null;
+  debtor_cnpj?: string | null;
 }
 
 export interface RecebivelCreatePayload {
@@ -237,6 +244,11 @@ export async function updateRecebivel(
   if (data.sla_deadline !== undefined) body.sla_deadline = data.sla_deadline;
   if (data.estimated_volume !== undefined) body.estimated_volume = data.estimated_volume;
   if (data.status !== undefined) body.status = data.status;
+  if (data.invoice_number !== undefined) body.invoice_number = data.invoice_number;
+  if (data.nominal_value !== undefined) body.nominal_value = data.nominal_value;
+  if (data.due_date !== undefined) body.due_date = data.due_date;
+  if (data.debtor_name !== undefined) body.debtor_name = data.debtor_name;
+  if (data.debtor_cnpj !== undefined) body.debtor_cnpj = data.debtor_cnpj;
 
   const response = await fetch(`${FUNDS_API_BASE_URL}/recebiveis/${workflowId}`, {
     method: "PUT",

@@ -51,27 +51,25 @@ function StatusBody({
     case "recepcao_bordero":
       return (
         <div className="space-y-1.5">
+          {workflow.debtor_name && (
+            <div className="text-sm font-medium truncate">{workflow.debtor_name}</div>
+          )}
           <div className="flex flex-wrap gap-2">
             {(workflow.receivable_value ?? 0) > 0 && (
               <span className="text-sm font-medium">{formatCurrency(workflow.receivable_value ?? 0)}</span>
             )}
             {workflow.estimated_volume > 0 && (
-              <span className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume)}</span>
+              <span className="text-xs text-muted-foreground">Vol. est.: {formatCurrency(workflow.estimated_volume)}</span>
             )}
           </div>
-          {workflow.debtor_name && (
-            <div className="text-xs text-muted-foreground truncate" title={workflow.debtor_name}>
-              Devedor: {workflow.debtor_name}
-            </div>
-          )}
         </div>
       );
 
     case "checagem_lastro":
       return (
         <div className="space-y-1.5">
-          {(workflow.receivable_value ?? 0) > 0 && (
-            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          {workflow.debtor_name && (
+            <div className="text-sm font-medium truncate">{workflow.debtor_name}</div>
           )}
           {workflow.invoice_number && (
             <div className="flex items-center gap-1.5 text-xs">
@@ -79,9 +77,12 @@ function StatusBody({
               <span>NF: {workflow.invoice_number}</span>
             </div>
           )}
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="text-sm font-medium">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
           {workflow.due_date && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <Calendar className="h-3 w-3 text-muted-foreground" />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
               <span>Venc.: {formatDate(workflow.due_date)}</span>
             </div>
           )}
@@ -92,15 +93,16 @@ function StatusBody({
       return (
         <div className="space-y-1.5">
           <div className="font-medium text-sm">
-            {workflow.fund_name ?? "Aguardando seleção"}
+            {workflow.fund_name ?? "Aguardando seleção de fundo"}
           </div>
-          {workflow.cedente_segment && (
-            <Badge variant="secondary" className="text-xs">
-              {SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}
-            </Badge>
-          )}
           {(workflow.receivable_value ?? 0) > 0 && (
             <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.due_date && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3 flex-shrink-0" />
+              <span>Venc.: {formatDate(workflow.due_date)}</span>
+            </div>
           )}
         </div>
       );
@@ -108,17 +110,17 @@ function StatusBody({
     case "formalizacao_cessao":
       return (
         <div className="space-y-1.5">
-          {(workflow.receivable_value ?? 0) > 0 && (
-            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
-          )}
-          {workflow.invoice_number && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <FileText className="h-3 w-3 text-muted-foreground" />
-              <span>NF: {workflow.invoice_number}</span>
-            </div>
-          )}
           {workflow.fund_name && (
-            <div className="text-xs text-muted-foreground">Fundo: {workflow.fund_name}</div>
+            <div className="text-sm font-medium">{workflow.fund_name}</div>
+          )}
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.due_date && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>Venc.: {formatDate(workflow.due_date)}</span>
+            </div>
           )}
         </div>
       );
@@ -126,8 +128,17 @@ function StatusBody({
     case "aguardando_liquidacao":
       return (
         <div className="space-y-1.5">
+          {workflow.fund_name && (
+            <div className="text-sm font-medium">{workflow.fund_name}</div>
+          )}
           {(workflow.receivable_value ?? 0) > 0 && (
             <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.due_date && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>Venc.: {formatDate(workflow.due_date)}</span>
+            </div>
           )}
           {workflow.sla_deadline && (
             <div className="text-xs text-muted-foreground">
@@ -140,11 +151,17 @@ function StatusBody({
     case "liquidado":
       return (
         <div className="space-y-1">
-          {(workflow.receivable_value ?? 0) > 0 && (
-            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          {workflow.fund_name && (
+            <div className="text-sm font-medium">{workflow.fund_name}</div>
           )}
-          {workflow.invoice_number && (
-            <div className="text-xs text-muted-foreground">NF: {workflow.invoice_number}</div>
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.due_date && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              <span>Venc.: {formatDate(workflow.due_date)}</span>
+            </div>
           )}
         </div>
       );
@@ -153,9 +170,7 @@ function StatusBody({
       return (
         <div className="space-y-1">
           {workflow.rejection_reason ? (
-            <p className="text-sm text-red-700 font-medium line-clamp-2" title={workflow.rejection_reason}>
-              {workflow.rejection_reason}
-            </p>
+            <p className="text-sm text-red-700 font-medium">{workflow.rejection_reason}</p>
           ) : (
             <p className="text-sm text-muted-foreground">Reprovado / Cancelado</p>
           )}
