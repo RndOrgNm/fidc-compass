@@ -136,7 +136,7 @@ export function CedenteDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 pr-8">
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
               {cedente.companyName}
@@ -148,7 +148,7 @@ export function CedenteDetailsModal({
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditingData(true)}
-                    className="shrink-0"
+                    className="shrink-0 mr-2"
                   >
                     <Pencil className="h-4 w-4 mr-1.5" />
                     Alterar Dados
@@ -159,7 +159,7 @@ export function CedenteDetailsModal({
                     size="sm"
                     onClick={handleCancelEdit}
                     disabled={savingFinancials}
-                    className="shrink-0"
+                    className="shrink-0 mr-2"
                   >
                     <X className="h-4 w-4 mr-1.5" />
                     Cancelar
