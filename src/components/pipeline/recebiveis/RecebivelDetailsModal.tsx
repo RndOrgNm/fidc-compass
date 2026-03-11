@@ -115,7 +115,7 @@ export function RecebivelDetailsModal({
     setIsEditingData(false);
     setFieldsDirty(false);
     setEstimatedVolume(workflow.estimated_volume > 0 ? String(workflow.estimated_volume) : "0");
-    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : "0");
+    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : (workflow.receivable_value > 0 ? String(workflow.receivable_value) : "0"));
     setInvoiceNumber(workflow.invoice_number ?? "");
     setDueDate(workflow.due_date ? workflow.due_date.substring(0, 10) : "");
     setDebtorName(workflow.debtor_name ?? "");
@@ -128,7 +128,7 @@ export function RecebivelDetailsModal({
     setIsEditingData(false);
     setFieldsDirty(false);
     setEstimatedVolume(workflow.estimated_volume > 0 ? String(workflow.estimated_volume) : "0");
-    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : "0");
+    setNominalValue(workflow.nominal_value != null ? String(workflow.nominal_value) : (workflow.receivable_value > 0 ? String(workflow.receivable_value) : "0"));
     setInvoiceNumber(workflow.invoice_number ?? "");
     setDueDate(workflow.due_date ? workflow.due_date.substring(0, 10) : "");
     setDebtorName(workflow.debtor_name ?? "");
@@ -265,8 +265,8 @@ export function RecebivelDetailsModal({
                 {!isEditingData ? (
                   <div className="space-y-1 text-sm text-muted-foreground">
                     {workflow.invoice_number && <p>NF: {workflow.invoice_number}</p>}
-                    {(workflow.nominal_value ?? 0) > 0 && (
-                      <p>Valor nominal: {formatCurrency(workflow.nominal_value!)}</p>
+                    {((workflow.nominal_value ?? workflow.receivable_value) ?? 0) > 0 && (
+                      <p>Valor nominal: {formatCurrency(workflow.nominal_value ?? workflow.receivable_value ?? 0)}</p>
                     )}
                     {workflow.debtor_name && <p>Sacado: {workflow.debtor_name}</p>}
                     {workflow.debtor_cnpj && <p>CNPJ sacado: {formatCnpj(workflow.debtor_cnpj)}</p>}
