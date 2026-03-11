@@ -23,14 +23,26 @@ import type { CedenteStatus, Segment } from "@/lib/api/cedenteService";
 
 const CURRENT_USER_PLACEHOLDER = "Maria Silva";
 
-export function CedentesTab() {
+interface CedentesTabProps {
+  selectedCedenteId?: string | null;
+  onOpenDetails?: (id: string) => void;
+  onCloseDetails?: () => void;
+}
+
+export function CedentesTab({ selectedCedenteId: controlledCedenteId, onOpenDetails, onCloseDetails }: CedentesTabProps = {}) {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [statusFilter, setStatusFilter] = useState("all");
   const [segmentFilter, setSegmentFilter] = useState("all");
   const [assignedFilter, setAssignedFilter] = useState("all");
   const [showNewCedenteModal, setShowNewCedenteModal] = useState(false);
-  const [selectedCedenteId, setSelectedCedenteId] = useState<string | null>(null);
+  const [internalCedenteId, setInternalCedenteId] = useState<string | null>(null);
   const [cedenteToDelete, setCedenteToDelete] = useState<CedentePipelineItem | null>(null);
+
+  const isControlled = controlledCedenteId !== undefined;
+  const selectedCedenteId = isControlled ? controlledCedenteId : internalCedenteId;
+  const handleOpenDetails = (cedente: { id: string }) =>
+    isControlled ? onOpenDetails?.(cedente.id) : setInternalCedenteId(cedente.id);
+  const handleCloseDetails = () => (isControlled ? onCloseDetails?.() : setInternalCedenteId(null));
 
   const filters: { status?: CedenteStatus; segment?: Segment } = {};
   if (statusFilter !== "all") filters.status = statusFilter as CedenteStatus;
@@ -79,7 +91,7 @@ export function CedentesTab() {
     try {
       await deleteCedente.mutateAsync(cedente.id);
       toast({ title: "Cedente excluído", description: "O cedente foi removido com sucesso." });
-      if (selectedCedenteId === cedente.id) setSelectedCedenteId(null);
+      if (selectedCedenteId === cedente.id) handleCloseDetails();
       setCedenteToDelete(null);
     } catch {
       toast({
@@ -214,14 +226,14 @@ export function CedentesTab() {
               cedentes={filteredCedentes}
               checklist={checklist}
               onStatusChange={handleStatusChange}
-              onOpenDetails={(c) => setSelectedCedenteId(c.id)}
+              onOpenDetails={handleOpenDetails}
               onDelete={handleRequestDelete}
             />
           ) : (
             <CedentesListView
               cedentes={filteredCedentes}
               checklist={checklist}
-              onOpenDetails={(c) => setSelectedCedenteId(c.id)}
+              onOpenDetails={handleOpenDetails}
               onDelete={handleRequestDelete}
             />
           )}
@@ -232,7 +244,7 @@ export function CedentesTab() {
         cedente={selectedCedente}
         checklist={checklist}
         open={selectedCedenteId != null}
-        onOpenChange={(open) => !open && setSelectedCedenteId(null)}
+        onOpenChange={(open) => !open && handleCloseDetails()}
         onUpdatePendingItems={handleUpdatePendingItems}
       />
 

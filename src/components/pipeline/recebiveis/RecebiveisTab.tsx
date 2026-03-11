@@ -23,7 +23,13 @@ import type {
   ProspectionWorkflow,
 } from "@/lib/api/prospectionService";
 
-export function RecebiveisTab() {
+interface RecebiveisTabProps {
+  selectedWorkflowId?: string | null;
+  onOpenDetails?: (id: string) => void;
+  onCloseDetails?: () => void;
+}
+
+export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpenDetails, onCloseDetails }: RecebiveisTabProps = {}) {
   const [showNewModal, setShowNewModal] = useState(false);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -45,8 +51,14 @@ export function RecebiveisTab() {
   const checklist = checklistData ?? RECEBIVEIS_CHECKLIST;
   const updateRecebivel = useUpdateRecebivel();
   const deleteRecebivel = useDeleteRecebivel();
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [internalWorkflowId, setInternalWorkflowId] = useState<string | null>(null);
   const [workflowToDelete, setWorkflowToDelete] = useState<ProspectionWorkflow | null>(null);
+
+  const isControlled = controlledWorkflowId !== undefined;
+  const selectedWorkflowId = isControlled ? controlledWorkflowId : internalWorkflowId;
+  const handleOpenDetails = (wf: { id: string }) =>
+    isControlled ? onOpenDetails?.(wf.id) : setInternalWorkflowId(wf.id);
+  const handleCloseDetails = () => (isControlled ? onCloseDetails?.() : setInternalWorkflowId(null));
 
   const handleRequestDelete = (workflow: ProspectionWorkflow) => {
     setWorkflowToDelete(workflow);
@@ -57,7 +69,7 @@ export function RecebiveisTab() {
       await deleteRecebivel.mutateAsync(workflow.id);
       const { toast } = await import("@/hooks/use-toast");
       toast({ title: "Recebível excluído", description: "O recebível foi removido com sucesso." });
-      if (selectedWorkflowId === workflow.id) setSelectedWorkflowId(null);
+      if (selectedWorkflowId === workflow.id) handleCloseDetails();
       setWorkflowToDelete(null);
     } catch {
       const { toast } = await import("@/hooks/use-toast");
@@ -256,14 +268,14 @@ export function RecebiveisTab() {
             <RecebiveisKanban
               workflows={filteredWorkflows}
               checklist={checklist}
-              onOpenDetails={(wf) => setSelectedWorkflowId(wf.id)}
+              onOpenDetails={handleOpenDetails}
               onDelete={handleRequestDelete}
             />
           ) : (
             <RecebiveisListView
               workflows={filteredWorkflows}
               checklist={checklist}
-              onOpenDetails={(wf) => setSelectedWorkflowId(wf.id)}
+              onOpenDetails={handleOpenDetails}
               onDelete={handleRequestDelete}
             />
           )}
@@ -274,7 +286,7 @@ export function RecebiveisTab() {
         workflow={selectedWorkflow}
         checklist={checklist}
         open={selectedWorkflowId != null}
-        onOpenChange={(open) => !open && setSelectedWorkflowId(null)}
+        onOpenChange={(open) => !open && handleCloseDetails()}
         onUpdatePendingItems={handleUpdatePendingItems}
         onUpdateFund={handleUpdateFund}
       />

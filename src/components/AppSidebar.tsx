@@ -60,16 +60,16 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.url;
+                const isActive =
+                  item.url === "/" ? location.pathname === "/" :
+                  item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
+                  item.url === "/agent" ? location.pathname.startsWith("/agent") :
+                  location.pathname === item.url;
                 // Special handling for Chatbot to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {
-                  if (item.title === "Chatbot" && location.pathname === "/agent") {
+                  if (item.title === "Chatbot" && location.pathname.startsWith("/agent")) {
                     e.preventDefault();
-                    // Navigate with state to trigger reset
-                    navigate("/agent", { 
-                      replace: true,
-                      state: { reset: true }
-                    });
+                    navigate("/agent", { replace: true, state: { reset: true } });
                   }
                 };
                 

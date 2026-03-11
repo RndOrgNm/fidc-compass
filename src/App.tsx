@@ -31,7 +31,12 @@ const App = () => (
 
             <Route path="/" element={<AppLayout><Home /></AppLayout>} />
             <Route path="/pipeline" element={<AppLayout><Pipeline /></AppLayout>} />
+            <Route path="/pipeline/cedentes" element={<AppLayout><Pipeline /></AppLayout>} />
+            <Route path="/pipeline/cedentes/:cedenteId" element={<AppLayout><Pipeline /></AppLayout>} />
+            <Route path="/pipeline/recebiveis" element={<AppLayout><Pipeline /></AppLayout>} />
+            <Route path="/pipeline/recebiveis/:workflowId" element={<AppLayout><Pipeline /></AppLayout>} />
             <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
+            <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

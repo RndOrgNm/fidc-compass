@@ -15,6 +15,8 @@ interface AppLayoutProps {
 const pageTitles: Record<string, string> = {
   "/": "Home",
   "/pipeline": "Pipeline de Investimentos",
+  "/pipeline/cedentes": "Pipeline de Investimentos",
+  "/pipeline/recebiveis": "Pipeline de Investimentos",
   "/agent": "Agente IA",
 };
 
@@ -30,7 +32,9 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   //   }
   // }, [navigate]);
 
-  const pageTitle = title || pageTitles[location.pathname] || "FIDC Manager";
+  const pageTitle = title || pageTitles[location.pathname] ||
+    (location.pathname.startsWith("/pipeline") ? "Pipeline de Investimentos" :
+     location.pathname.startsWith("/agent") ? "Agente IA" : "FIDC Manager");
 
   return (
     <SidebarProvider>

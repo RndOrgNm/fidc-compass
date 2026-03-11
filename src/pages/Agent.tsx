@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, ChevronDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,9 @@ import { useChat } from "@/contexts/ChatContext";
 
 export default function Agent() {
   const location = useLocation();
+  const { conversationId: conversationIdFromUrl } = useParams<{ conversationId?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const {
     conversations,
     currentConversationId,
@@ -67,10 +70,29 @@ export default function Agent() {
       setDisplayedText("");
       setPdfViewerOpen(false);
       setCurrentPage(1);
-      // Clear the state to prevent reset on subsequent renders
       window.history.replaceState({}, document.title);
     }
   }, [location.state, resetToInitialState]);
+
+  // Sync URL -> state: agent from URL on load
+  useEffect(() => {
+    const agentFromUrl = searchParams.get("agent");
+    if (agentFromUrl === "funds" || agentFromUrl === "cvm") {
+      setSelectedAgent(agentFromUrl);
+    } else if (selectedAgent) {
+      setSearchParams((p) => {
+        const next = new URLSearchParams(p);
+        next.set("agent", selectedAgent);
+        return next;
+      }, { replace: true });
+    }
+  }, [searchParams, setSelectedAgent, selectedAgent, setSearchParams]);
+
+  useEffect(() => {
+    if (conversationIdFromUrl && conversationIdFromUrl !== currentConversationId) {
+      setCurrentConversationId(conversationIdFromUrl);
+    }
+  }, [conversationIdFromUrl, setCurrentConversationId]);
 
   // Load conversations on mount
   useEffect(() => {
@@ -83,6 +105,15 @@ export default function Agent() {
       loadMessages(currentConversationId);
     }
   }, [currentConversationId, loadMessages]);
+
+  // Sync state -> URL: when conversation is set (e.g. select from sidebar or new from sendMessage)
+  useEffect(() => {
+    if (!currentConversationId) return;
+    if (currentConversationId === conversationIdFromUrl) return;
+    const params = new URLSearchParams();
+    params.set("agent", selectedAgent);
+    navigate(`/agent/${encodeURIComponent(currentConversationId)}?${params}`, { replace: true });
+  }, [currentConversationId, conversationIdFromUrl, selectedAgent, navigate]);
 
   const scrollToBottom = () => {
     if (shouldAutoScrollRef.current) {
@@ -159,6 +190,9 @@ export default function Agent() {
     setInputValue("");
     setStreamingMessage(null);
     setDisplayedText("");
+    const params = new URLSearchParams();
+    params.set("agent", selectedAgent);
+    navigate(`/agent/${encodeURIComponent(conversationId)}?${params}`, { replace: true });
   };
 
   const handleNewConversation = () => {
@@ -167,13 +201,22 @@ export default function Agent() {
     setDisplayedText("");
     setPdfViewerOpen(false);
     setCurrentPage(1);
+    const params = new URLSearchParams();
+    params.set("agent", selectedAgent);
+    navigate(`/agent?${params}`, { replace: true });
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
     if (!confirm("Tem certeza que deseja excluir esta conversa?")) {
       return;
     }
+    const wasCurrent = conversationId === currentConversationId;
     await deleteConversation(conversationId);
+    if (wasCurrent) {
+      const params = new URLSearchParams();
+      params.set("agent", selectedAgent);
+      navigate(`/agent?${params}`, { replace: true });
+    }
   };
 
   const openPdfViewer = (pageNumber: number) => {
@@ -302,7 +345,13 @@ export default function Agent() {
             <DropdownMenuContent align="end">
               <DropdownMenuRadioGroup
                 value={selectedAgent}
-                onValueChange={(v) => setSelectedAgent(v as "cvm" | "funds")}
+                onValueChange={(v) => {
+                  const agent = v as "cvm" | "funds";
+                  setSelectedAgent(agent);
+                  const params = new URLSearchParams();
+                  params.set("agent", agent);
+                  navigate(`/agent?${params}`, { replace: true });
+                }}
               >
                 <DropdownMenuRadioItem value="cvm">CVM Agent</DropdownMenuRadioItem>
                 <DropdownMenuRadioItem value="funds">Funds Agent</DropdownMenuRadioItem>
