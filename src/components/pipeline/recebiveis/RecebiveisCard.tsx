@@ -59,12 +59,20 @@ function StatusBody({
               <span className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume)}</span>
             )}
           </div>
+          {workflow.debtor_name && (
+            <div className="text-xs text-muted-foreground truncate" title={workflow.debtor_name}>
+              Devedor: {workflow.debtor_name}
+            </div>
+          )}
         </div>
       );
 
     case "checagem_lastro":
       return (
         <div className="space-y-1.5">
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
           {workflow.invoice_number && (
             <div className="flex items-center gap-1.5 text-xs">
               <FileText className="h-3 w-3 text-muted-foreground" />
@@ -86,11 +94,13 @@ function StatusBody({
           <div className="font-medium text-sm">
             {workflow.fund_name ?? "Aguardando seleção"}
           </div>
+          {workflow.cedente_segment && (
+            <Badge variant="secondary" className="text-xs">
+              {SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}
+            </Badge>
+          )}
           {(workflow.receivable_value ?? 0) > 0 && (
             <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
-          )}
-          {(workflow.estimated_volume ?? 0) > 0 && (workflow.estimated_volume ?? 0) !== (workflow.receivable_value ?? 0) && (
-            <div className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</div>
           )}
         </div>
       );
@@ -101,11 +111,14 @@ function StatusBody({
           {(workflow.receivable_value ?? 0) > 0 && (
             <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
           )}
-          {(workflow.estimated_volume ?? 0) > 0 && (
-            <div className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</div>
+          {workflow.invoice_number && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <FileText className="h-3 w-3 text-muted-foreground" />
+              <span>NF: {workflow.invoice_number}</span>
+            </div>
           )}
-          {workflow.sla_deadline && (
-            <div className="text-xs text-muted-foreground">SLA: {formatDate(workflow.sla_deadline)}</div>
+          {workflow.fund_name && (
+            <div className="text-xs text-muted-foreground">Fundo: {workflow.fund_name}</div>
           )}
         </div>
       );
@@ -128,7 +141,10 @@ function StatusBody({
       return (
         <div className="space-y-1">
           {(workflow.receivable_value ?? 0) > 0 && (
-            <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {workflow.invoice_number && (
+            <div className="text-xs text-muted-foreground">NF: {workflow.invoice_number}</div>
           )}
         </div>
       );
@@ -137,7 +153,9 @@ function StatusBody({
       return (
         <div className="space-y-1">
           {workflow.rejection_reason ? (
-            <p className="text-sm text-red-700 font-medium">{workflow.rejection_reason}</p>
+            <p className="text-sm text-red-700 font-medium line-clamp-2" title={workflow.rejection_reason}>
+              {workflow.rejection_reason}
+            </p>
           ) : (
             <p className="text-sm text-muted-foreground">Reprovado / Cancelado</p>
           )}
@@ -319,50 +337,46 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
           )}
           <Badge variant="outline">{workflow.days_in_progress} dias</Badge>
           {getSLABadge()}
-          {(workflow.estimated_volume ?? 0) > 0 && (
-            <Badge variant="outline" className="font-medium">
-              Vol: {formatCurrency(workflow.estimated_volume ?? 0)}
-            </Badge>
-          )}
         </div>
 
-        {(checklist[workflow.status]?.length ?? 0) > 0 && (
+        {(workflow.pending_items?.length ?? 0) > 0 && (
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger>
                 <button type="button" className="cursor-help">
-                  <Badge
-                    className={cn(
-                      "pointer-events-none",
-                      (workflow.pending_items?.length ?? 0) > 0
-                        ? "bg-red-100 text-red-800"
-                        : "bg-emerald-100 text-emerald-800"
-                    )}
-                  >
+                  <Badge className="bg-red-100 text-red-800 pointer-events-none">
                     <AlertCircle className="h-3 w-3 mr-1" />
-                    {(workflow.pending_items?.length ?? 0) > 0
-                      ? `${workflow.pending_items!.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items!.length !== 1 ? "s" : ""}`
-                      : "Checklist completo"}
+                    {(checklist[workflow.status]?.length ?? 0) > 0
+                      ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items.length !== 1 ? "s" : ""}`
+                      : `${workflow.pending_items.length} ${workflow.pending_items.length === 1 ? "pendência" : "pendências"}`}
                   </Badge>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[320px]">
                 <p className="font-medium mb-1.5">
-                  Checklist — {(workflow.pending_items?.length ?? 0) > 0 ? `${workflow.pending_items!.length} pendente${workflow.pending_items!.length !== 1 ? "s" : ""}` : "completo"}
-                  {(workflow.pending_items?.length ?? 0) > 0 && " (bloqueia avanço)"}
+                  Checklist — {workflow.pending_items.length} pendente{workflow.pending_items.length !== 1 ? "s" : ""} (bloqueia avanço)
                 </p>
                 <ul className="text-sm space-y-1.5">
-                  {(checklist[workflow.status] ?? []).map((item, idx) => {
-                    const isPending = (workflow.pending_items ?? []).includes(item);
-                    return (
-                      <li key={idx} className={cn("flex items-start gap-1.5", isPending ? "text-foreground" : "text-muted-foreground")}>
-                        <span className={isPending ? "text-red-500 mt-0.5" : "text-green-600 mt-0.5"}>
-                          {isPending ? "○" : "✓"}
-                        </span>
+                  {(checklist[workflow.status] ?? []).length > 0 ? (
+                    (checklist[workflow.status] ?? []).map((item, idx) => {
+                      const isPending = workflow.pending_items.includes(item);
+                      return (
+                        <li key={idx} className={cn("flex items-start gap-1.5", isPending ? "text-foreground" : "text-muted-foreground")}>
+                          <span className={isPending ? "text-red-500 mt-0.5" : "text-green-600 mt-0.5"}>
+                            {isPending ? "○" : "✓"}
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      );
+                    })
+                  ) : (
+                    workflow.pending_items.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="text-red-500 mt-0.5">•</span>
                         <span>{item}</span>
                       </li>
-                    );
-                  })}
+                    ))
+                  )}
                 </ul>
               </TooltipContent>
             </Tooltip>

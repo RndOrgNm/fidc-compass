@@ -135,15 +135,22 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
 
   const handleUpdateData = async (
     workflowId: string,
-    payload: { sla_deadline?: string | null; estimated_volume?: number }
+    data: { estimated_volume?: number; sla_deadline?: string | null; assigned_to?: string | null }
   ) => {
     try {
-      await updateRecebivel.mutateAsync({ workflowId, data: payload });
-      toast({ title: "Dados atualizados", description: "SLA e volume estimado salvos com sucesso." });
+      await updateRecebivel.mutateAsync({
+        workflowId,
+        data: {
+          estimated_volume: data.estimated_volume,
+          sla_deadline: data.sla_deadline,
+          assigned_to: data.assigned_to,
+        },
+      });
+      toast({ title: "Dados atualizados", description: "Volume, SLA e atribuição salvos com sucesso." });
     } catch {
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar os dados operacionais.",
+        description: "Não foi possível atualizar os dados.",
         variant: "destructive",
       });
     }

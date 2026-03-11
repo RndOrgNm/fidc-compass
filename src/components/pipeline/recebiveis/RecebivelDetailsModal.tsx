@@ -62,7 +62,7 @@ interface RecebivelDetailsModalProps {
   onUpdateFund?: (workflowId: string, fundId: string | null) => void;
   onUpdateData?: (
     workflowId: string,
-    payload: { sla_deadline?: string | null; estimated_volume?: number }
+    data: { estimated_volume?: number; sla_deadline?: string | null; assigned_to?: string | null }
   ) => Promise<void>;
 }
 
@@ -76,8 +76,9 @@ export function RecebivelDetailsModal({
   onUpdateData,
 }: RecebivelDetailsModalProps) {
   const [isEditingData, setIsEditingData] = useState(false);
-  const [slaDeadline, setSlaDeadline] = useState("");
-  const [estimatedVolume, setEstimatedVolume] = useState("0");
+  const [estimatedVolume, setEstimatedVolume] = useState<string>("0");
+  const [slaDeadline, setSlaDeadline] = useState<string>("");
+  const [assignedTo, setAssignedTo] = useState<string>("");
   const [savingData, setSavingData] = useState(false);
   const [dataDirty, setDataDirty] = useState(false);
 
@@ -85,12 +86,9 @@ export function RecebivelDetailsModal({
     if (!workflow) return;
     setIsEditingData(false);
     setDataDirty(false);
-    setSlaDeadline(
-      workflow.sla_deadline
-        ? new Date(workflow.sla_deadline).toISOString().slice(0, 10)
-        : ""
-    );
     setEstimatedVolume(String(workflow.estimated_volume ?? 0));
+    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.slice(0, 10) : "");
+    setAssignedTo(workflow.assigned_to ?? "");
   }, [workflow?.id, open]);
 
   if (!workflow) return null;
@@ -100,10 +98,11 @@ export function RecebivelDetailsModal({
     setSavingData(true);
     try {
       const vol = parseFloat(estimatedVolume) || 0;
-      const sla = slaDeadline.trim() ? slaDeadline : null;
+      const sla = slaDeadline.trim() ? slaDeadline : undefined;
       await onUpdateData(workflow.id, {
-        sla_deadline: sla,
         estimated_volume: vol,
+        sla_deadline: sla ?? null,
+        assigned_to: assignedTo.trim() || null,
       });
       setDataDirty(false);
       setIsEditingData(false);
@@ -117,12 +116,9 @@ export function RecebivelDetailsModal({
   const handleCancelEdit = () => {
     setIsEditingData(false);
     setDataDirty(false);
-    setSlaDeadline(
-      workflow.sla_deadline
-        ? new Date(workflow.sla_deadline).toISOString().slice(0, 10)
-        : ""
-    );
     setEstimatedVolume(String(workflow.estimated_volume ?? 0));
+    setSlaDeadline(workflow.sla_deadline ? workflow.sla_deadline.slice(0, 10) : "");
+    setAssignedTo(workflow.assigned_to ?? "");
   };
 
   const isEnquadramento = workflow.status === "enquadramento_alocacao";
@@ -210,28 +206,29 @@ export function RecebivelDetailsModal({
                   <h4 className="text-sm font-medium text-foreground">Dados operacionais</h4>
                   {!isEditingData ? (
                     <div className="space-y-1 text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4" />
-                        <span>Volume estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>SLA: {workflow.sla_deadline ? new Date(workflow.sla_deadline).toLocaleDateString("pt-BR") : "—"}</span>
-                      </div>
+                      {(workflow.estimated_volume ?? 0) > 0 && (
+                        <p>Volume estimado: {formatCurrency(workflow.estimated_volume)}</p>
+                      )}
+                      {workflow.sla_deadline ? (
+                        <p>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</p>
+                      ) : (
+                        <p>SLA: —</p>
+                      )}
+                      <p>Atribuído a: {workflow.assigned_to || "—"}</p>
                     </div>
                   ) : (
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <Label htmlFor="receb-volume" className="text-sm">
-                            Volume estimado
+                            Volume estimado (R$)
                           </Label>
                           <Input
                             id="receb-volume"
                             type="number"
                             min={0}
                             step={0.01}
-                            placeholder="R$"
+                            placeholder="0"
                             value={estimatedVolume}
                             onChange={(e) => {
                               setEstimatedVolume(e.target.value);
@@ -242,7 +239,7 @@ export function RecebivelDetailsModal({
                         </div>
                         <div className="space-y-1.5">
                           <Label htmlFor="receb-sla" className="text-sm">
-                            SLA (data)
+                            SLA
                           </Label>
                           <Input
                             id="receb-sla"
@@ -255,6 +252,22 @@ export function RecebivelDetailsModal({
                             className="h-9"
                           />
                         </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="receb-assigned" className="text-sm">
+                          Atribuído a
+                        </Label>
+                        <Input
+                          id="receb-assigned"
+                          type="text"
+                          placeholder="Nome do responsável"
+                          value={assignedTo}
+                          onChange={(e) => {
+                            setAssignedTo(e.target.value);
+                            markDirty();
+                          }}
+                          className="h-9"
+                        />
                       </div>
                       {dataDirty && (
                         <Button
