@@ -13,7 +13,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-// import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },

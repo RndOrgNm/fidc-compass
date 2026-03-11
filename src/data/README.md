@@ -9,7 +9,6 @@ Este documento descreve o modelo de dados utilizado para os dados mockados da ap
 | `dashboardData.ts` | KPIs, alertas críticos, atividades recentes |
 | `receivablesData.ts` | Recebíveis, transações bancárias |
 | `investorsData.ts` | Investidores, onboarding |
-| `chatData.ts` | Conversas e mensagens do chat |
 | `pipelineData.ts` | Fundos, cedentes, workflows, tipos de pipeline |
 | **Checklists** | `*Checklist.ts` – fallbacks quando a API de checklist não está disponível |
 | `allocationChecklist.ts`, `cedentesChecklist.ts`, `recebiveisChecklist.ts` | |
@@ -269,5 +268,4 @@ Os dados mockados estão organizados nos seguintes arquivos:
 | `dashboardData.ts` | KPIs, alertas críticos, atividades recentes |
 | `receivablesData.ts` | Recebíveis, transações bancárias, exceções, alertas |
 | `investorsData.ts` | Investidores, onboarding, documentos, compliance |
-| `chatData.ts` | Conversas, mensagens, respostas do bot |
 | `index.ts` | Barrel file (re-exporta todos os dados) |

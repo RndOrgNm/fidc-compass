@@ -1,5 +1,5 @@
-import { ReactNode, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Bell } from "lucide-react";
@@ -12,29 +12,24 @@ interface AppLayoutProps {
   title?: string;
 }
 
-const pageTitles: Record<string, string> = {
+const PAGE_TITLES: Record<string, string> = {
   "/": "Home",
   "/pipeline": "Pipeline de Investimentos",
-  "/pipeline/cedentes": "Pipeline de Investimentos",
-  "/pipeline/recebiveis": "Pipeline de Investimentos",
   "/agent": "Agente IA",
 };
 
+function getPageTitle(pathname: string, override?: string): string {
+  if (override) return override;
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
+  if (pathname.startsWith("/agent")) return "Agente IA";
+  return "FIDC Manager";
+}
+
 export function AppLayout({ children, title }: AppLayoutProps) {
-  const navigate = useNavigate();
   const location = useLocation();
 
-  // Auth temporarily disabled: skip redirect to login
-  // useEffect(() => {
-  //   const isAuthenticated = localStorage.getItem("isAuthenticated");
-  //   if (!isAuthenticated) {
-  //     navigate("/login");
-  //   }
-  // }, [navigate]);
-
-  const pageTitle = title || pageTitles[location.pathname] ||
-    (location.pathname.startsWith("/pipeline") ? "Pipeline de Investimentos" :
-     location.pathname.startsWith("/agent") ? "Agente IA" : "FIDC Manager");
+  const pageTitle = getPageTitle(location.pathname, title);
 
   return (
     <SidebarProvider>

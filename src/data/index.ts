@@ -1,4 +1,3 @@
-export * from './chatData';
 export * from './pipelineData';
 
 // Pipeline checklists (fallbacks when API unavailable)

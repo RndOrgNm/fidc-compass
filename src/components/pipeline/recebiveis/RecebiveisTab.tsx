@@ -16,6 +16,7 @@ import { RecebivelDeleteModal } from "./RecebivelDeleteModal";
 import { useProspectionWorkflows, useUpdateRecebivel, useDeleteRecebivel, useRecebiveisChecklist } from "@/hooks/useProspection";
 import { RECEBIVEIS_CHECKLIST } from "@/data/recebiveisChecklist";
 import { RECEBIVEIS_COLUMNS } from "@/data/recebiveisPipelineConfig";
+import { toast } from "@/hooks/use-toast";
 import type {
   RecebivelStatus,
   Segment,
@@ -67,12 +68,10 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
   const handleConfirmDelete = async (workflow: ProspectionWorkflow) => {
     try {
       await deleteRecebivel.mutateAsync(workflow.id);
-      const { toast } = await import("@/hooks/use-toast");
       toast({ title: "Recebível excluído", description: "O recebível foi removido com sucesso." });
       if (selectedWorkflowId === workflow.id) handleCloseDetails();
       setWorkflowToDelete(null);
     } catch {
-      const { toast } = await import("@/hooks/use-toast");
       toast({
         title: "Erro",
         description: "Não foi possível excluir o recebível.",
@@ -110,7 +109,6 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
         data: { pending_items: pendingItems },
       });
     } catch {
-      const { toast } = await import("@/hooks/use-toast");
       toast({
         title: "Erro",
         description: "Não foi possível atualizar os itens pendentes.",
@@ -125,10 +123,8 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
         workflowId,
         data: { fund_id: fundId },
       });
-      const { toast } = await import("@/hooks/use-toast");
       toast({ title: "Fundo atualizado", description: "O fundo comprador foi definido com sucesso." });
     } catch {
-      const { toast } = await import("@/hooks/use-toast");
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o fundo comprador.",

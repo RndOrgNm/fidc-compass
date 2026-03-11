@@ -74,7 +74,7 @@ export default function Agent() {
     }
   }, [location.state, resetToInitialState]);
 
-  // Sync URL -> state: agent from URL on load
+  // URL → state: agent and conversationId from URL
   useEffect(() => {
     const agentFromUrl = searchParams.get("agent");
     if (agentFromUrl === "funds" || agentFromUrl === "cvm") {
@@ -88,13 +88,14 @@ export default function Agent() {
     }
   }, [searchParams, setSelectedAgent, selectedAgent, setSearchParams]);
 
+  // Sync conversationId from URL
   useEffect(() => {
     if (conversationIdFromUrl && conversationIdFromUrl !== currentConversationId) {
       setCurrentConversationId(conversationIdFromUrl);
     }
   }, [conversationIdFromUrl, setCurrentConversationId]);
 
-  // Load conversations on mount
+  // --- Data loading ---
   useEffect(() => {
     refreshConversations();
   }, [refreshConversations]);
@@ -106,7 +107,7 @@ export default function Agent() {
     }
   }, [currentConversationId, loadMessages]);
 
-  // Sync state -> URL: when conversation is set (e.g. select from sidebar or new from sendMessage)
+  // Sync state -> URL when conversation is set
   useEffect(() => {
     if (!currentConversationId) return;
     if (currentConversationId === conversationIdFromUrl) return;
@@ -185,14 +186,21 @@ export default function Agent() {
     };
   }, [streamingMessage, setStreamingMessage]);
 
+  const buildAgentUrl = (conversationId?: string, agent = selectedAgent) => {
+    const params = new URLSearchParams();
+    params.set("agent", agent);
+    const query = params.toString();
+    return conversationId
+      ? `/agent/${encodeURIComponent(conversationId)}?${query}`
+      : `/agent?${query}`;
+  };
+
   const handleConversationChange = (conversationId: string) => {
     setCurrentConversationId(conversationId);
     setInputValue("");
     setStreamingMessage(null);
     setDisplayedText("");
-    const params = new URLSearchParams();
-    params.set("agent", selectedAgent);
-    navigate(`/agent/${encodeURIComponent(conversationId)}?${params}`, { replace: true });
+    navigate(buildAgentUrl(conversationId), { replace: true });
   };
 
   const handleNewConversation = () => {
@@ -201,9 +209,7 @@ export default function Agent() {
     setDisplayedText("");
     setPdfViewerOpen(false);
     setCurrentPage(1);
-    const params = new URLSearchParams();
-    params.set("agent", selectedAgent);
-    navigate(`/agent?${params}`, { replace: true });
+    navigate(buildAgentUrl(), { replace: true });
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -213,9 +219,7 @@ export default function Agent() {
     const wasCurrent = conversationId === currentConversationId;
     await deleteConversation(conversationId);
     if (wasCurrent) {
-      const params = new URLSearchParams();
-      params.set("agent", selectedAgent);
-      navigate(`/agent?${params}`, { replace: true });
+      navigate(buildAgentUrl(), { replace: true });
     }
   };
 
@@ -348,9 +352,7 @@ export default function Agent() {
                 onValueChange={(v) => {
                   const agent = v as "cvm" | "funds";
                   setSelectedAgent(agent);
-                  const params = new URLSearchParams();
-                  params.set("agent", agent);
-                  navigate(`/agent?${params}`, { replace: true });
+                  navigate(buildAgentUrl(undefined, agent), { replace: true });
                 }}
               >
                 <DropdownMenuRadioItem value="cvm">CVM Agent</DropdownMenuRadioItem>
