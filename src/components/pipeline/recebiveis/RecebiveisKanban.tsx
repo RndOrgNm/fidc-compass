@@ -125,7 +125,7 @@ export function RecebiveisKanban({ workflows, checklist, onOpenDetails, onDelete
 
   const getTotalValue = (status: RecebivelStatus) => {
     return getWorkflowsByStatus(status).reduce(
-      (acc, wf) => acc + (wf.estimated_volume || 0),
+      (acc, wf) => acc + (wf.receivable_value ?? wf.nominal_value ?? 0),
       0
     );
   };
