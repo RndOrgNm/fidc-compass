@@ -157,24 +157,23 @@ export function RecebivelDetailsModal({
     }
   };
 
-  if (!workflow) return null;
-
-  const isEnquadramento = workflow.status === "enquadramento_alocacao";
+  const isEnquadramento = workflow?.status === "enquadramento_alocacao";
   const { data: fundsData, isLoading: loadingFunds } = useQuery({
     queryKey: [FUNDS_ACTIVE_KEY],
     queryFn: () => listFunds({ status: "active", limit: 200 }),
-    enabled: open && isEnquadramento,
+    enabled: open && !!workflow && isEnquadramento,
   });
   const funds = fundsData?.items ?? [];
 
-  const canonicalItems = checklist[workflow.status] ?? [];
-  const pending = workflow.pending_items ?? [];
+  const canonicalItems = (workflow && checklist[workflow.status]) ?? [];
+  const pending = workflow?.pending_items ?? [];
   const checklistItems = [...canonicalItems];
   for (const p of pending) {
     if (!canonicalItems.includes(p)) checklistItems.push(p);
   }
 
   const handleCheckChange = (checkItem: string, checked: boolean) => {
+    if (!workflow) return;
     const current = workflow.pending_items ?? [];
     if (checked) {
       onUpdatePendingItems(workflow.id, current.filter((i) => i !== checkItem));
@@ -184,6 +183,8 @@ export function RecebivelDetailsModal({
   };
 
   const markDirty = () => setFieldsDirty(true);
+
+  if (!workflow) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
