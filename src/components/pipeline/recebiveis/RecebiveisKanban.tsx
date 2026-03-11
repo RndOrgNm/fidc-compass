@@ -5,7 +5,7 @@ import { toast } from "@/hooks/use-toast";
 import { useTransitionWorkflow } from "@/hooks/useProspection";
 import { cn } from "@/lib/utils";
 import type { ProspectionWorkflow, RecebivelStatus } from "@/lib/api/prospectionService";
-import { RECEBIVEIS_COLUMNS, RECEBIVEIS_TERMINAL_STATUSES } from "@/data/recebiveisPipelineConfig";
+import { RECEBIVEIS_COLUMNS, RECEBIVEIS_STATUSES_WITH_VALUE, RECEBIVEIS_TERMINAL_STATUSES } from "@/data/recebiveisPipelineConfig";
 
 interface RecebiveisKanbanProps {
   workflows: ProspectionWorkflow[];
@@ -23,7 +23,7 @@ interface KanbanColumnProps {
   title: string;
   color: string;
   workflows: ProspectionWorkflow[];
-  totalValue: string;
+  totalValue: string | null;
   checklist: Record<string, string[]>;
   onOpenDetails?: (workflow: ProspectionWorkflow) => void;
   onDelete?: (workflow: ProspectionWorkflow) => void;
@@ -46,7 +46,7 @@ function KanbanColumn({ id, title, color, workflows, totalValue, checklist, onOp
           <h3 className="font-semibold">{title}</h3>
           <Badge variant="secondary">{workflows.length}</Badge>
         </div>
-        <p className="text-xs text-muted-foreground">{totalValue}</p>
+        {totalValue != null && <p className="text-xs text-muted-foreground">{totalValue}</p>}
       </div>
       <div className="space-y-3">
         {workflows.map((workflow) => (
@@ -140,7 +140,7 @@ export function RecebiveisKanban({ workflows, checklist, onOpenDetails, onDelete
             title={column.title}
             color={column.color}
             workflows={getWorkflowsByStatus(column.id)}
-            totalValue={formatCurrency(getTotalValue(column.id))}
+            totalValue={RECEBIVEIS_STATUSES_WITH_VALUE.includes(column.id) ? formatCurrency(getTotalValue(column.id)) : null}
             checklist={checklist}
             onOpenDetails={onOpenDetails}
             onDelete={onDelete}

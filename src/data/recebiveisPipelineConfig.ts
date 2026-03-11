@@ -23,6 +23,15 @@ export const RECEBIVEIS_COLUMNS: { id: RecebivelStatus; title: string; color: st
   { id: "reprovado_cancelado", title: RECEBIVEIS_STATUS_LABELS.reprovado_cancelado, color: "border-red-500" },
 ];
 
+/** Statuses where the column total (R$) makes sense. Hidden for recepcao_bordero (value often not yet filled) and reprovado_cancelado (rejected). */
+export const RECEBIVEIS_STATUSES_WITH_VALUE: RecebivelStatus[] = [
+  "checagem_lastro",
+  "enquadramento_alocacao",
+  "formalizacao_cessao",
+  "aguardando_liquidacao",
+  "liquidado",
+];
+
 /** Statuses where the card can be deleted (terminal/rejected states). */
 export const RECEBIVEIS_TERMINAL_STATUSES: RecebivelStatus[] = ["liquidado", "reprovado_cancelado"];
 
