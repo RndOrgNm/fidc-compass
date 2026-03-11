@@ -86,19 +86,29 @@ function StatusBody({
           <div className="font-medium text-sm">
             {workflow.fund_name ?? "Aguardando seleção"}
           </div>
-          {workflow.cedente_segment && (
-            <Badge variant="secondary" className="text-xs">
-              {SEGMENT_LABELS[workflow.cedente_segment] ?? workflow.cedente_segment}
-            </Badge>
-          )}
           {(workflow.receivable_value ?? 0) > 0 && (
             <div className="text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {(workflow.estimated_volume ?? 0) > 0 && (workflow.estimated_volume ?? 0) !== (workflow.receivable_value ?? 0) && (
+            <div className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</div>
           )}
         </div>
       );
 
     case "formalizacao_cessao":
-      return null;
+      return (
+        <div className="space-y-1.5">
+          {(workflow.receivable_value ?? 0) > 0 && (
+            <div className="font-medium text-sm">{formatCurrency(workflow.receivable_value ?? 0)}</div>
+          )}
+          {(workflow.estimated_volume ?? 0) > 0 && (
+            <div className="text-xs text-muted-foreground">Vol. estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</div>
+          )}
+          {workflow.sla_deadline && (
+            <div className="text-xs text-muted-foreground">SLA: {formatDate(workflow.sla_deadline)}</div>
+          )}
+        </div>
+      );
 
     case "aguardando_liquidacao":
       return (
@@ -290,7 +300,7 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
               {workflow.cedente_cnpj ? formatCnpj(workflow.cedente_cnpj) : "—"}
             </span>
           </div>
-          {(workflow.status === "recepcao_bordero" || workflow.status === "checagem_lastro") && workflow.cedente_segment && (
+          {workflow.cedente_segment && (
             <div>{getSegmentBadge(workflow.cedente_segment)}</div>
           )}
         </div>
@@ -309,46 +319,50 @@ export function RecebiveisCard({ workflow, checklist, onOpenDetails, onDelete }:
           )}
           <Badge variant="outline">{workflow.days_in_progress} dias</Badge>
           {getSLABadge()}
+          {(workflow.estimated_volume ?? 0) > 0 && (
+            <Badge variant="outline" className="font-medium">
+              Vol: {formatCurrency(workflow.estimated_volume ?? 0)}
+            </Badge>
+          )}
         </div>
 
-        {(workflow.pending_items?.length ?? 0) > 0 && (
+        {(checklist[workflow.status]?.length ?? 0) > 0 && (
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger>
                 <button type="button" className="cursor-help">
-                  <Badge className="bg-red-100 text-red-800 pointer-events-none">
+                  <Badge
+                    className={cn(
+                      "pointer-events-none",
+                      (workflow.pending_items?.length ?? 0) > 0
+                        ? "bg-red-100 text-red-800"
+                        : "bg-emerald-100 text-emerald-800"
+                    )}
+                  >
                     <AlertCircle className="h-3 w-3 mr-1" />
-                    {(checklist[workflow.status]?.length ?? 0) > 0
-                      ? `${workflow.pending_items.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items.length !== 1 ? "s" : ""}`
-                      : `${workflow.pending_items.length} ${workflow.pending_items.length === 1 ? "pendência" : "pendências"}`}
+                    {(workflow.pending_items?.length ?? 0) > 0
+                      ? `${workflow.pending_items!.length} de ${checklist[workflow.status]!.length} pendente${workflow.pending_items!.length !== 1 ? "s" : ""}`
+                      : "Checklist completo"}
                   </Badge>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-[320px]">
                 <p className="font-medium mb-1.5">
-                  Checklist — {workflow.pending_items.length} pendente{workflow.pending_items.length !== 1 ? "s" : ""} (bloqueia avanço)
+                  Checklist — {(workflow.pending_items?.length ?? 0) > 0 ? `${workflow.pending_items!.length} pendente${workflow.pending_items!.length !== 1 ? "s" : ""}` : "completo"}
+                  {(workflow.pending_items?.length ?? 0) > 0 && " (bloqueia avanço)"}
                 </p>
                 <ul className="text-sm space-y-1.5">
-                  {(checklist[workflow.status] ?? []).length > 0 ? (
-                    (checklist[workflow.status] ?? []).map((item, idx) => {
-                      const isPending = workflow.pending_items.includes(item);
-                      return (
-                        <li key={idx} className={cn("flex items-start gap-1.5", isPending ? "text-foreground" : "text-muted-foreground")}>
-                          <span className={isPending ? "text-red-500 mt-0.5" : "text-green-600 mt-0.5"}>
-                            {isPending ? "○" : "✓"}
-                          </span>
-                          <span>{item}</span>
-                        </li>
-                      );
-                    })
-                  ) : (
-                    workflow.pending_items.map((item: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-red-500 mt-0.5">•</span>
+                  {(checklist[workflow.status] ?? []).map((item, idx) => {
+                    const isPending = (workflow.pending_items ?? []).includes(item);
+                    return (
+                      <li key={idx} className={cn("flex items-start gap-1.5", isPending ? "text-foreground" : "text-muted-foreground")}>
+                        <span className={isPending ? "text-red-500 mt-0.5" : "text-green-600 mt-0.5"}>
+                          {isPending ? "○" : "✓"}
+                        </span>
                         <span>{item}</span>
                       </li>
-                    ))
-                  )}
+                    );
+                  })}
                 </ul>
               </TooltipContent>
             </Tooltip>

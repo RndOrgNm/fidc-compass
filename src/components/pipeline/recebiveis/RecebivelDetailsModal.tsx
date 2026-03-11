@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -5,7 +6,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -16,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Calendar, DollarSign, Loader2 } from "lucide-react";
+import { Building2, Calendar, DollarSign, Loader2, Pencil, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ProspectionWorkflow } from "@/lib/api/prospectionService";
 import { listFunds } from "@/lib/api/fundService";
@@ -57,6 +60,10 @@ interface RecebivelDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   onUpdatePendingItems: (workflowId: string, pendingItems: string[]) => void;
   onUpdateFund?: (workflowId: string, fundId: string | null) => void;
+  onUpdateData?: (
+    workflowId: string,
+    payload: { sla_deadline?: string | null; estimated_volume?: number }
+  ) => Promise<void>;
 }
 
 export function RecebivelDetailsModal({
@@ -66,8 +73,57 @@ export function RecebivelDetailsModal({
   onOpenChange,
   onUpdatePendingItems,
   onUpdateFund,
+  onUpdateData,
 }: RecebivelDetailsModalProps) {
+  const [isEditingData, setIsEditingData] = useState(false);
+  const [slaDeadline, setSlaDeadline] = useState("");
+  const [estimatedVolume, setEstimatedVolume] = useState("0");
+  const [savingData, setSavingData] = useState(false);
+  const [dataDirty, setDataDirty] = useState(false);
+
+  useEffect(() => {
+    if (!workflow) return;
+    setIsEditingData(false);
+    setDataDirty(false);
+    setSlaDeadline(
+      workflow.sla_deadline
+        ? new Date(workflow.sla_deadline).toISOString().slice(0, 10)
+        : ""
+    );
+    setEstimatedVolume(String(workflow.estimated_volume ?? 0));
+  }, [workflow?.id, open]);
+
   if (!workflow) return null;
+
+  const handleSaveData = async () => {
+    if (!onUpdateData) return;
+    setSavingData(true);
+    try {
+      const vol = parseFloat(estimatedVolume) || 0;
+      const sla = slaDeadline.trim() ? slaDeadline : null;
+      await onUpdateData(workflow.id, {
+        sla_deadline: sla,
+        estimated_volume: vol,
+      });
+      setDataDirty(false);
+      setIsEditingData(false);
+    } finally {
+      setSavingData(false);
+    }
+  };
+
+  const markDirty = () => setDataDirty(true);
+
+  const handleCancelEdit = () => {
+    setIsEditingData(false);
+    setDataDirty(false);
+    setSlaDeadline(
+      workflow.sla_deadline
+        ? new Date(workflow.sla_deadline).toISOString().slice(0, 10)
+        : ""
+    );
+    setEstimatedVolume(String(workflow.estimated_volume ?? 0));
+  };
 
   const isEnquadramento = workflow.status === "enquadramento_alocacao";
   const { data: fundsData, isLoading: loadingFunds } = useQuery({
@@ -98,10 +154,38 @@ export function RecebivelDetailsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            {workflow.cedente_name || "Sem nome"}
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-4 pr-8">
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {workflow.cedente_name || "Sem nome"}
+            </DialogTitle>
+            {onUpdateData && (
+              <>
+                {!isEditingData ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingData(true)}
+                    className="shrink-0 mr-2"
+                  >
+                    <Pencil className="h-4 w-4 mr-1.5" />
+                    Alterar Dados
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    disabled={savingData}
+                    className="shrink-0 mr-2"
+                  >
+                    <X className="h-4 w-4 mr-1.5" />
+                    Cancelar
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto pl-6 pr-10 space-y-6">
@@ -122,18 +206,70 @@ export function RecebivelDetailsModal({
                   <Building2 className="h-4 w-4 text-muted-foreground" />
                   <span>CNPJ: {formatCnpj(workflow.cedente_cnpj)}</span>
                 </div>
-                {workflow.estimated_volume > 0 && (
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span>Volume estimado: {formatCurrency(workflow.estimated_volume)}</span>
-                  </div>
-                )}
-                {workflow.sla_deadline && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span>SLA: {new Date(workflow.sla_deadline).toLocaleDateString("pt-BR")}</span>
-                  </div>
-                )}
+                <div className="pt-2 space-y-3">
+                  <h4 className="text-sm font-medium text-foreground">Dados operacionais</h4>
+                  {!isEditingData ? (
+                    <div className="space-y-1 text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span>Volume estimado: {formatCurrency(workflow.estimated_volume ?? 0)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>SLA: {workflow.sla_deadline ? new Date(workflow.sla_deadline).toLocaleDateString("pt-BR") : "—"}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="receb-volume" className="text-sm">
+                            Volume estimado
+                          </Label>
+                          <Input
+                            id="receb-volume"
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            placeholder="R$"
+                            value={estimatedVolume}
+                            onChange={(e) => {
+                              setEstimatedVolume(e.target.value);
+                              markDirty();
+                            }}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="receb-sla" className="text-sm">
+                            SLA (data)
+                          </Label>
+                          <Input
+                            id="receb-sla"
+                            type="date"
+                            value={slaDeadline}
+                            onChange={(e) => {
+                              setSlaDeadline(e.target.value);
+                              markDirty();
+                            }}
+                            className="h-9"
+                          />
+                        </div>
+                      </div>
+                      {dataDirty && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleSaveData}
+                          disabled={savingData}
+                        >
+                          <Save className="h-3.5 w-3.5 mr-1.5" />
+                          {savingData ? "Salvando..." : "Salvar alterações"}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 

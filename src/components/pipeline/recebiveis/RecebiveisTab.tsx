@@ -133,6 +133,22 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
     }
   };
 
+  const handleUpdateData = async (
+    workflowId: string,
+    payload: { sla_deadline?: string | null; estimated_volume?: number }
+  ) => {
+    try {
+      await updateRecebivel.mutateAsync({ workflowId, data: payload });
+      toast({ title: "Dados atualizados", description: "SLA e volume estimado salvos com sucesso." });
+    } catch {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os dados operacionais.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const selectedWorkflow = filteredWorkflows.find((wf) => wf.id === selectedWorkflowId) ?? null;
 
   return (
@@ -285,6 +301,7 @@ export function RecebiveisTab({ selectedWorkflowId: controlledWorkflowId, onOpen
         onOpenChange={(open) => !open && handleCloseDetails()}
         onUpdatePendingItems={handleUpdatePendingItems}
         onUpdateFund={handleUpdateFund}
+        onUpdateData={handleUpdateData}
       />
 
       <NewReceivableModal
