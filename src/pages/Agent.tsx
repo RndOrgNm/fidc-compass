@@ -231,18 +231,20 @@ export default function Agent() {
     setPdfViewerOpen(true);
   };
 
-  // Fetch PDF as blob when viewer opens — avoids iframe mixed-content and embedding issues
-  const pdfBlobUrlRef = useRef<string | null>(null);
+  // Cache PDF blob URL — fetch once, reuse on subsequent viewer opens
+  const cachedPdfBlobUrlRef = useRef<string | null>(null);
   const pdfViewerOpenRef = useRef(pdfViewerOpen);
   pdfViewerOpenRef.current = pdfViewerOpen;
 
   useEffect(() => {
     if (!pdfViewerOpen) {
-      if (pdfBlobUrlRef.current) {
-        URL.revokeObjectURL(pdfBlobUrlRef.current);
-        pdfBlobUrlRef.current = null;
-      }
       setPdfBlobUrl(null);
+      setPdfLoadError(null);
+      return;
+    }
+    // Use cached blob URL immediately if available
+    if (cachedPdfBlobUrlRef.current) {
+      setPdfBlobUrl(cachedPdfBlobUrlRef.current);
       setPdfLoadError(null);
       return;
     }
@@ -259,11 +261,12 @@ export default function Agent() {
       })
       .then((blob) => {
         const blobUrl = URL.createObjectURL(blob);
+        cachedPdfBlobUrlRef.current = blobUrl;
         if (pdfViewerOpenRef.current) {
-          pdfBlobUrlRef.current = blobUrl;
           setPdfBlobUrl(blobUrl);
         } else {
           URL.revokeObjectURL(blobUrl);
+          cachedPdfBlobUrlRef.current = null;
         }
       })
       .catch((err) => {
@@ -278,6 +281,16 @@ export default function Agent() {
       })
       .finally(() => setPdfLoading(false));
   }, [pdfViewerOpen]);
+
+  // Revoke cached blob URL on unmount (e.g. navigating away from Agent page)
+  useEffect(() => {
+    return () => {
+      if (cachedPdfBlobUrlRef.current) {
+        URL.revokeObjectURL(cachedPdfBlobUrlRef.current);
+        cachedPdfBlobUrlRef.current = null;
+      }
+    };
+  }, []);
 
   const nextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
