@@ -231,12 +231,21 @@ export default function Agent() {
     setPdfViewerOpen(true);
   };
 
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    if (iframeRef.current && pdfBlobUrl) {
+      iframeRef.current.src = `${pdfBlobUrl}#page=${page}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`;
+    }
+  };
+
   const nextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+    if (currentPage < totalPages) goToPage(currentPage + 1);
   };
 
   const prevPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+    if (currentPage > 1) goToPage(currentPage - 1);
   };
 
   // Prefetch PDF on mount — starts loading immediately, before user clicks a source
@@ -718,8 +727,8 @@ export default function Agent() {
               )}
               {pdfBlobUrl && !pdfLoading && (
                 <iframe
-                  key={currentPage}
-                  src={`${pdfBlobUrl}#page=${currentPage}`}
+                  ref={iframeRef}
+                  src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
                   className="border-0 w-full h-full"
                   title={`CVM Document - Page ${currentPage}`}
                 />
@@ -733,7 +742,6 @@ export default function Agent() {
             </span>
             <div className="flex gap-2">
               <Button
-                type="button"
                 variant="outline"
                 onClick={prevPage}
                 disabled={currentPage === 1}
@@ -742,7 +750,6 @@ export default function Agent() {
                 Anterior
               </Button>
               <Button
-                type="button"
                 variant="outline"
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
