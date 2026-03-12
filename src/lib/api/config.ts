@@ -10,6 +10,6 @@ export const FUNDS_AGENT_API_URL = rawFundsAgentUrl.replace(/\/+$/, "");
 const rawConvUrl = import.meta.env.VITE_CONVERSATION_SERVICE_URL || "http://localhost:8002";
 export const CONVERSATION_SERVICE_URL = rawConvUrl.replace(/\/+$/, "");
 
-// Legacy RAG API — used only for the static PDF viewer in Agent.tsx
-const rawRagUrl = import.meta.env.VITE_RAG_API_URL || "http://localhost:8000";
+// PDF viewer for CVM sources (resol175consolid.pdf) — served by agent-services at /static/pdf/
+const rawRagUrl = import.meta.env.VITE_RAG_API_URL || import.meta.env.VITE_FUNDS_AGENT_URL || "http://localhost:8001";
 export const RAG_API_BASE_URL = rawRagUrl.replace(/\/+$/, "");
