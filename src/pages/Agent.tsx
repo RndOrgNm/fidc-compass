@@ -25,6 +25,7 @@ import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { RAG_API_BASE_URL } from "@/lib/api/config";
 import { useChat } from "@/contexts/ChatContext";
+import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 
 export default function Agent() {
   const location = useLocation();
@@ -54,8 +55,8 @@ export default function Agent() {
   const [displayedText, setDisplayedText] = useState("");
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 100;
-  const [pdfSrc, setPdfSrc] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(100);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   
@@ -226,19 +227,9 @@ export default function Agent() {
     }
   };
 
-  // Store the Blob itself so we can create a fresh object URL on every page change.
-  // Reusing the same blob URL and changing only the hash doesn't reliably navigate
-  // in Chrome's built-in PDF viewer.
-  const pdfBlobRef = useRef<Blob | null>(null);
-  const pdfActiveSrcRef = useRef<string | null>(null);
+  // PDF.js canvas-based viewer — reliable page navigation (Chrome's iframe PDF viewer ignores #page=N)
+  const pdfDataRef = useRef<ArrayBuffer | null>(null);
   const pdfFetchStartedRef = useRef(false);
-
-  const makeSrcForPage = (page: number): string => {
-    if (pdfActiveSrcRef.current) URL.revokeObjectURL(pdfActiveSrcRef.current);
-    const url = URL.createObjectURL(pdfBlobRef.current!);
-    pdfActiveSrcRef.current = url;
-    return `${url}#page=${page}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`;
-  };
 
   const openPdfViewer = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -246,22 +237,14 @@ export default function Agent() {
   };
 
   const nextPage = () => {
-    if (currentPage < totalPages && pdfBlobRef.current) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
-      setPdfSrc(makeSrcForPage(newPage));
-    }
+    if (currentPage < totalPages) setCurrentPage((p) => Math.min(p + 1, totalPages));
   };
 
   const prevPage = () => {
-    if (currentPage > 1 && pdfBlobRef.current) {
-      const newPage = currentPage - 1;
-      setCurrentPage(newPage);
-      setPdfSrc(makeSrcForPage(newPage));
-    }
+    if (currentPage > 1) setCurrentPage((p) => Math.max(p - 1, 1));
   };
 
-  // Prefetch PDF blob on mount so it's ready before the user opens the viewer
+  // Prefetch PDF on mount
   useEffect(() => {
     if (pdfFetchStartedRef.current) return;
     pdfFetchStartedRef.current = true;
@@ -271,30 +254,24 @@ export default function Agent() {
           const err = await res.json().catch(() => ({}));
           throw new Error((err as { detail?: string })?.detail || `Erro ${res.status}`);
         }
-        return res.blob();
+        return res.arrayBuffer();
       })
-      .then((blob) => { pdfBlobRef.current = blob; })
+      .then((buf) => { pdfDataRef.current = buf; })
       .catch((err) => {
         pdfFetchStartedRef.current = false;
         console.error("PDF prefetch failed:", err);
       });
-    return () => {
-      if (pdfActiveSrcRef.current) {
-        URL.revokeObjectURL(pdfActiveSrcRef.current);
-        pdfActiveSrcRef.current = null;
-      }
-    };
   }, []);
 
-  // When viewer opens: use blob immediately, poll if still downloading, fallback-fetch if needed
+  // When viewer opens: pass pdfData (from cache or fetch)
   useEffect(() => {
     if (!pdfViewerOpen) {
-      setPdfSrc(null);
+      setPdfData(null);
       setPdfLoadError(null);
       return;
     }
-    if (pdfBlobRef.current) {
-      setPdfSrc(makeSrcForPage(currentPage));
+    if (pdfDataRef.current) {
+      setPdfData(pdfDataRef.current);
       setPdfLoading(false);
       return;
     }
@@ -302,14 +279,14 @@ export default function Agent() {
     setPdfLoadError(null);
     let cancelled = false;
     const interval = setInterval(() => {
-      if (cancelled || !pdfBlobRef.current) return;
+      if (cancelled || !pdfDataRef.current) return;
       clearInterval(interval);
       clearTimeout(timeout);
-      setPdfSrc(makeSrcForPage(currentPage));
+      setPdfData(pdfDataRef.current);
       setPdfLoading(false);
     }, 150);
     const timeout = setTimeout(() => {
-      if (cancelled || pdfBlobRef.current) return;
+      if (cancelled || pdfDataRef.current) return;
       clearInterval(interval);
       fetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
         .then(async (res) => {
@@ -317,12 +294,12 @@ export default function Agent() {
             const err = await res.json().catch(() => ({}));
             throw new Error((err as { detail?: string })?.detail || `Erro ${res.status}`);
           }
-          return res.blob();
+          return res.arrayBuffer();
         })
-        .then((blob) => {
+        .then((buf) => {
           if (cancelled) return;
-          pdfBlobRef.current = blob;
-          setPdfSrc(makeSrcForPage(currentPage));
+          pdfDataRef.current = buf;
+          setPdfData(buf);
           setPdfLoadError(null);
         })
         .catch((err) => {
@@ -720,11 +697,12 @@ export default function Agent() {
                   <span className="text-xs">{pdfLoadError}</span>
                 </div>
               )}
-              {pdfSrc && !pdfLoading && (
-                <iframe
-                  src={pdfSrc}
-                  className="border-0 w-full h-full"
-                  title={`CVM Document - Page ${currentPage}`}
+              {!pdfLoading && (
+                <PdfViewerCanvas
+                  pdfData={pdfData}
+                  currentPage={currentPage}
+                  onTotalPages={setTotalPages}
+                  className="w-full h-full min-h-[400px]"
                 />
               )}
             </div>
