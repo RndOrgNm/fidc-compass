@@ -55,7 +55,7 @@ export default function Agent() {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 100;
-  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfSrc, setPdfSrc] = useState<string | null>(null);
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   
@@ -226,28 +226,46 @@ export default function Agent() {
     }
   };
 
+  // Store the Blob itself so we can create a fresh object URL on every page change.
+  // Reusing the same blob URL and changing only the hash doesn't reliably navigate
+  // in Chrome's built-in PDF viewer.
+  const pdfBlobRef = useRef<Blob | null>(null);
+  const pdfActiveSrcRef = useRef<string | null>(null);
+  const pdfFetchStartedRef = useRef(false);
+
+  const makeSrcForPage = (page: number): string => {
+    if (pdfActiveSrcRef.current) URL.revokeObjectURL(pdfActiveSrcRef.current);
+    const url = URL.createObjectURL(pdfBlobRef.current!);
+    pdfActiveSrcRef.current = url;
+    return `${url}#page=${page}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`;
+  };
+
   const openPdfViewer = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     setPdfViewerOpen(true);
   };
 
   const nextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+    if (currentPage < totalPages && pdfBlobRef.current) {
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      setPdfSrc(makeSrcForPage(newPage));
+    }
   };
 
   const prevPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+    if (currentPage > 1 && pdfBlobRef.current) {
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      setPdfSrc(makeSrcForPage(newPage));
+    }
   };
 
-  // Prefetch PDF on mount — starts loading immediately, before user clicks a source
-  const cachedPdfBlobUrlRef = useRef<string | null>(null);
-  const pdfFetchStartedRef = useRef(false);
-
+  // Prefetch PDF blob on mount so it's ready before the user opens the viewer
   useEffect(() => {
     if (pdfFetchStartedRef.current) return;
     pdfFetchStartedRef.current = true;
-    const url = `${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`;
-    fetch(url)
+    fetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -255,53 +273,45 @@ export default function Agent() {
         }
         return res.blob();
       })
-      .then((blob) => {
-        cachedPdfBlobUrlRef.current = URL.createObjectURL(blob);
-      })
+      .then((blob) => { pdfBlobRef.current = blob; })
       .catch((err) => {
-        pdfFetchStartedRef.current = false; // Allow retry
+        pdfFetchStartedRef.current = false;
         console.error("PDF prefetch failed:", err);
       });
     return () => {
-      if (cachedPdfBlobUrlRef.current) {
-        URL.revokeObjectURL(cachedPdfBlobUrlRef.current);
-        cachedPdfBlobUrlRef.current = null;
+      if (pdfActiveSrcRef.current) {
+        URL.revokeObjectURL(pdfActiveSrcRef.current);
+        pdfActiveSrcRef.current = null;
       }
     };
   }, []);
 
-  // When viewer opens: show cached PDF, or poll for prefetch, or retry fetch if prefetch failed
+  // When viewer opens: use blob immediately, poll if still downloading, fallback-fetch if needed
   useEffect(() => {
     if (!pdfViewerOpen) {
-      setPdfBlobUrl(null);
+      setPdfSrc(null);
       setPdfLoadError(null);
       return;
     }
-    if (cachedPdfBlobUrlRef.current) {
-      setPdfBlobUrl(cachedPdfBlobUrlRef.current);
-      setPdfLoadError(null);
+    if (pdfBlobRef.current) {
+      setPdfSrc(makeSrcForPage(currentPage));
       setPdfLoading(false);
       return;
     }
     setPdfLoading(true);
     setPdfLoadError(null);
-    const url = `${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`;
     let cancelled = false;
-    // Poll for prefetch completing
     const interval = setInterval(() => {
-      if (cancelled) return;
-      if (cachedPdfBlobUrlRef.current) {
-        setPdfBlobUrl(cachedPdfBlobUrlRef.current);
-        setPdfLoadError(null);
-        setPdfLoading(false);
-        clearInterval(interval);
-      }
-    }, 150);
-    // Fallback: if still no cache after 2s, prefetch may have failed — retry fetch
-    const timeout = setTimeout(() => {
-      if (cancelled || cachedPdfBlobUrlRef.current) return;
+      if (cancelled || !pdfBlobRef.current) return;
       clearInterval(interval);
-      fetch(url)
+      clearTimeout(timeout);
+      setPdfSrc(makeSrcForPage(currentPage));
+      setPdfLoading(false);
+    }, 150);
+    const timeout = setTimeout(() => {
+      if (cancelled || pdfBlobRef.current) return;
+      clearInterval(interval);
+      fetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
         .then(async (res) => {
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -311,24 +321,18 @@ export default function Agent() {
         })
         .then((blob) => {
           if (cancelled) return;
-          const blobUrl = URL.createObjectURL(blob);
-          cachedPdfBlobUrlRef.current = blobUrl;
-          setPdfBlobUrl(blobUrl);
+          pdfBlobRef.current = blob;
+          setPdfSrc(makeSrcForPage(currentPage));
           setPdfLoadError(null);
-          setPdfLoading(false);
         })
         .catch((err) => {
           if (!cancelled) {
             setPdfLoadError(err?.message || "Não foi possível carregar o documento");
-            toast({
-              title: "Erro ao carregar PDF",
-              description: err?.message || "Verifique se o documento está disponível.",
-              variant: "destructive",
-            });
-            setPdfLoading(false);
+            toast({ title: "Erro ao carregar PDF", description: err?.message, variant: "destructive" });
           }
-        });
-    }, 2000);
+        })
+        .finally(() => { if (!cancelled) setPdfLoading(false); });
+    }, 2500);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -716,10 +720,9 @@ export default function Agent() {
                   <span className="text-xs">{pdfLoadError}</span>
                 </div>
               )}
-              {pdfBlobUrl && !pdfLoading && (
+              {pdfSrc && !pdfLoading && (
                 <iframe
-                  key={currentPage}
-                  src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
+                  src={pdfSrc}
                   className="border-0 w-full h-full"
                   title={`CVM Document - Page ${currentPage}`}
                 />
