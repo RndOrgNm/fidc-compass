@@ -231,21 +231,12 @@ export default function Agent() {
     setPdfViewerOpen(true);
   };
 
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-    if (iframeRef.current && pdfBlobUrl) {
-      iframeRef.current.src = `${pdfBlobUrl}#page=${page}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`;
-    }
-  };
-
   const nextPage = () => {
-    if (currentPage < totalPages) goToPage(currentPage + 1);
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
   const prevPage = () => {
-    if (currentPage > 1) goToPage(currentPage - 1);
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
   // Prefetch PDF on mount — starts loading immediately, before user clicks a source
@@ -727,7 +718,7 @@ export default function Agent() {
               )}
               {pdfBlobUrl && !pdfLoading && (
                 <iframe
-                  ref={iframeRef}
+                  key={currentPage}
                   src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
                   className="border-0 w-full h-full"
                   title={`CVM Document - Page ${currentPage}`}
