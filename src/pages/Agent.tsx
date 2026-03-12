@@ -719,7 +719,7 @@ export default function Agent() {
               {pdfBlobUrl && !pdfLoading && (
                 <iframe
                   key={currentPage}
-                  src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
+                  src={`${pdfBlobUrl}#page=${currentPage}`}
                   className="border-0 w-full h-full"
                   title={`CVM Document - Page ${currentPage}`}
                 />
@@ -733,6 +733,7 @@ export default function Agent() {
             </span>
             <div className="flex gap-2">
               <Button
+                type="button"
                 variant="outline"
                 onClick={prevPage}
                 disabled={currentPage === 1}
@@ -741,6 +742,7 @@ export default function Agent() {
                 Anterior
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
