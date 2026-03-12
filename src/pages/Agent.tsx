@@ -231,25 +231,21 @@ export default function Agent() {
     setPdfViewerOpen(true);
   };
 
-  // Cache PDF blob URL — fetch once, reuse on subsequent viewer opens
+  const nextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
+  // Prefetch PDF on mount — starts loading immediately, before user clicks a source
   const cachedPdfBlobUrlRef = useRef<string | null>(null);
-  const pdfViewerOpenRef = useRef(pdfViewerOpen);
-  pdfViewerOpenRef.current = pdfViewerOpen;
+  const pdfFetchStartedRef = useRef(false);
 
   useEffect(() => {
-    if (!pdfViewerOpen) {
-      setPdfBlobUrl(null);
-      setPdfLoadError(null);
-      return;
-    }
-    // Use cached blob URL immediately if available
-    if (cachedPdfBlobUrlRef.current) {
-      setPdfBlobUrl(cachedPdfBlobUrlRef.current);
-      setPdfLoadError(null);
-      return;
-    }
-    setPdfLoading(true);
-    setPdfLoadError(null);
+    if (pdfFetchStartedRef.current) return;
+    pdfFetchStartedRef.current = true;
     const url = `${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`;
     fetch(url)
       .then(async (res) => {
@@ -260,30 +256,12 @@ export default function Agent() {
         return res.blob();
       })
       .then((blob) => {
-        const blobUrl = URL.createObjectURL(blob);
-        cachedPdfBlobUrlRef.current = blobUrl;
-        if (pdfViewerOpenRef.current) {
-          setPdfBlobUrl(blobUrl);
-        } else {
-          URL.revokeObjectURL(blobUrl);
-          cachedPdfBlobUrlRef.current = null;
-        }
+        cachedPdfBlobUrlRef.current = URL.createObjectURL(blob);
       })
       .catch((err) => {
-        if (pdfViewerOpenRef.current) {
-          setPdfLoadError(err?.message || "Não foi possível carregar o documento");
-          toast({
-            title: "Erro ao carregar PDF",
-            description: err?.message || "Verifique se o documento está disponível.",
-            variant: "destructive",
-          });
-        }
-      })
-      .finally(() => setPdfLoading(false));
-  }, [pdfViewerOpen]);
-
-  // Revoke cached blob URL on unmount (e.g. navigating away from Agent page)
-  useEffect(() => {
+        pdfFetchStartedRef.current = false; // Allow retry
+        console.error("PDF prefetch failed:", err);
+      });
     return () => {
       if (cachedPdfBlobUrlRef.current) {
         URL.revokeObjectURL(cachedPdfBlobUrlRef.current);
@@ -292,13 +270,71 @@ export default function Agent() {
     };
   }, []);
 
-  const nextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  // When viewer opens: show cached PDF, or poll for prefetch, or retry fetch if prefetch failed
+  useEffect(() => {
+    if (!pdfViewerOpen) {
+      setPdfBlobUrl(null);
+      setPdfLoadError(null);
+      return;
+    }
+    if (cachedPdfBlobUrlRef.current) {
+      setPdfBlobUrl(cachedPdfBlobUrlRef.current);
+      setPdfLoadError(null);
+      setPdfLoading(false);
+      return;
+    }
+    setPdfLoading(true);
+    setPdfLoadError(null);
+    const url = `${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`;
+    let cancelled = false;
+    // Poll for prefetch completing
+    const interval = setInterval(() => {
+      if (cancelled) return;
+      if (cachedPdfBlobUrlRef.current) {
+        setPdfBlobUrl(cachedPdfBlobUrlRef.current);
+        setPdfLoadError(null);
+        setPdfLoading(false);
+        clearInterval(interval);
+      }
+    }, 150);
+    // Fallback: if still no cache after 2s, prefetch may have failed — retry fetch
+    const timeout = setTimeout(() => {
+      if (cancelled || cachedPdfBlobUrlRef.current) return;
+      clearInterval(interval);
+      fetch(url)
+        .then(async (res) => {
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error((err as { detail?: string })?.detail || `Erro ${res.status}`);
+          }
+          return res.blob();
+        })
+        .then((blob) => {
+          if (cancelled) return;
+          const blobUrl = URL.createObjectURL(blob);
+          cachedPdfBlobUrlRef.current = blobUrl;
+          setPdfBlobUrl(blobUrl);
+          setPdfLoadError(null);
+          setPdfLoading(false);
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            setPdfLoadError(err?.message || "Não foi possível carregar o documento");
+            toast({
+              title: "Erro ao carregar PDF",
+              description: err?.message || "Verifique se o documento está disponível.",
+              variant: "destructive",
+            });
+            setPdfLoading(false);
+          }
+        });
+    }, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [pdfViewerOpen]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -682,6 +718,7 @@ export default function Agent() {
               )}
               {pdfBlobUrl && !pdfLoading && (
                 <iframe
+                  key={currentPage}
                   src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
                   className="border-0 w-full h-full"
                   title={`CVM Document - Page ${currentPage}`}
