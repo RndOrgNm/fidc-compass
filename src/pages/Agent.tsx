@@ -55,6 +55,9 @@ export default function Agent() {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 100;
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -227,6 +230,54 @@ export default function Agent() {
     setCurrentPage(pageNumber);
     setPdfViewerOpen(true);
   };
+
+  // Fetch PDF as blob when viewer opens — avoids iframe mixed-content and embedding issues
+  const pdfBlobUrlRef = useRef<string | null>(null);
+  const pdfViewerOpenRef = useRef(pdfViewerOpen);
+  pdfViewerOpenRef.current = pdfViewerOpen;
+
+  useEffect(() => {
+    if (!pdfViewerOpen) {
+      if (pdfBlobUrlRef.current) {
+        URL.revokeObjectURL(pdfBlobUrlRef.current);
+        pdfBlobUrlRef.current = null;
+      }
+      setPdfBlobUrl(null);
+      setPdfLoadError(null);
+      return;
+    }
+    setPdfLoading(true);
+    setPdfLoadError(null);
+    const url = `${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`;
+    fetch(url)
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as { detail?: string })?.detail || `Erro ${res.status}`);
+        }
+        return res.blob();
+      })
+      .then((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        if (pdfViewerOpenRef.current) {
+          pdfBlobUrlRef.current = blobUrl;
+          setPdfBlobUrl(blobUrl);
+        } else {
+          URL.revokeObjectURL(blobUrl);
+        }
+      })
+      .catch((err) => {
+        if (pdfViewerOpenRef.current) {
+          setPdfLoadError(err?.message || "Não foi possível carregar o documento");
+          toast({
+            title: "Erro ao carregar PDF",
+            description: err?.message || "Verifique se o documento está disponível.",
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => setPdfLoading(false));
+  }, [pdfViewerOpen]);
 
   const nextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -604,18 +655,25 @@ export default function Agent() {
           
           <div className="flex-1 overflow-hidden bg-slate-100 p-4 flex items-center justify-center">
             <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
-              <iframe
-                src={`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
-                className="border-0 w-full h-full"
-                title={`CVM Document - Page ${currentPage}`}
-                onError={() => {
-                  toast({
-                    title: "Erro ao carregar PDF",
-                    description: "Não foi possível carregar a página do documento. Verifique se o arquivo PDF está disponível no servidor.",
-                    variant: "destructive",
-                  });
-                }}
-              />
+              {pdfLoading && (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="text-sm">Carregando documento...</span>
+                </div>
+              )}
+              {pdfLoadError && !pdfLoading && (
+                <div className="flex flex-col items-center gap-2 text-destructive p-4 text-center">
+                  <span className="text-sm font-medium">Não foi possível carregar o PDF</span>
+                  <span className="text-xs">{pdfLoadError}</span>
+                </div>
+              )}
+              {pdfBlobUrl && !pdfLoading && (
+                <iframe
+                  src={`${pdfBlobUrl}#page=${currentPage}&toolbar=0&navpanes=0&scrollbar=0&view=FitV`}
+                  className="border-0 w-full h-full"
+                  title={`CVM Document - Page ${currentPage}`}
+                />
+              )}
             </div>
           </div>
           
