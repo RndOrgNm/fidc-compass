@@ -216,7 +216,7 @@ export default function Agent() {
     if (!confirm("Tem certeza que deseja excluir esta conversa?")) {
       return;
     }
-    const wasCurrent = conversationId === currentConversationId;
+    const wasCurrent = conversationId === currentConversationId || conversationId === conversationIdFromUrl;
     await deleteConversation(conversationId);
     if (wasCurrent) {
       navigate(buildAgentUrl(), { replace: true });
@@ -259,7 +259,8 @@ export default function Agent() {
     return format(new Date(timestamp), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const currentConversation = conversations.find(c => c.conversation_id === currentConversationId);
+  const effectiveConversationId = currentConversationId || conversationIdFromUrl || undefined;
+  const currentConversation = conversations.find(c => c.conversation_id === (currentConversationId || conversationIdFromUrl));
   const displayMessages = messages.map(msg => ({
     ...msg,
     content: msg.message_id === streamingMessage?.message_id ? displayedText : msg.content
@@ -270,8 +271,8 @@ export default function Agent() {
       {/* Main Chat Area */}
       <div className={`flex flex-col transition-all duration-300 ${pdfViewerOpen ? 'w-[65%] min-w-0' : 'w-full'} h-full relative z-0`}>
       {/* Header */}
-        <div className="border-b bg-card p-4 flex items-center gap-4 flex-shrink-0">
-        <Select value={currentConversationId || undefined} onValueChange={handleConversationChange}>
+        <div className="border-b bg-card p-4 flex flex-wrap items-center gap-4 flex-shrink-0">
+        <Select value={effectiveConversationId} onValueChange={handleConversationChange}>
           <SelectTrigger className="w-[400px]">
             <SelectValue>
               <div className="flex items-center gap-2">
@@ -292,13 +293,27 @@ export default function Agent() {
             ) : (
               conversations.map((conv) => (
                 <SelectItem key={conv.conversation_id} value={conv.conversation_id}>
-                <div className="flex flex-col gap-1 py-1">
-                  <span className="font-medium">{conv.title}</span>
-                  {conv.lastMessageAt && (
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(conv.lastMessageAt)}
-                    </span>
-                  )}
+                <div className="flex items-center justify-between gap-2 w-full group">
+                  <div className="flex flex-col gap-1 py-1 min-w-0">
+                    <span className="font-medium truncate">{conv.title}</span>
+                    {conv.lastMessageAt && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatTimestamp(conv.lastMessageAt)}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteConversation(conv.conversation_id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity flex-shrink-0"
+                    aria-label="Excluir conversa"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </SelectItem>
               ))
@@ -306,9 +321,9 @@ export default function Agent() {
           </SelectContent>
         </Select>
         
-        {currentConversationId && (
+        {effectiveConversationId && (
           <Button 
-            onClick={() => handleDeleteConversation(currentConversationId)} 
+            onClick={() => handleDeleteConversation(effectiveConversationId)} 
             variant="outline" 
             size="sm"
             className="text-destructive hover:text-destructive"
