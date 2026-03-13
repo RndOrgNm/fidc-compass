@@ -31,7 +31,10 @@ import {
 import { cn } from "@/lib/utils";
 import type { ProspectionWorkflow } from "@/lib/api/prospectionService";
 import { listFunds } from "@/lib/api/fundService";
-import { RECEBIVEIS_STATUS_LABELS } from "@/data/recebiveisPipelineConfig";
+import {
+  RECEBIVEIS_COLUMNS,
+  RECEBIVEIS_STATUS_LABELS,
+} from "@/data/recebiveisPipelineConfig";
 import { EntityNotesSection } from "@/components/pipeline/shared/EntityNotesSection";
 import { EntityEventsSection } from "@/components/pipeline/shared/EntityEventsSection";
 
@@ -447,6 +450,7 @@ export function RecebivelDetailsModal({
               entityId={workflow.id}
               enabled={open}
               currentStatus={workflow.status}
+              statusColumns={RECEBIVEIS_COLUMNS}
             />
           </section>
 

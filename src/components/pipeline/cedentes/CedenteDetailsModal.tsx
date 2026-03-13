@@ -14,7 +14,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Building2, User, Mail, Phone, Save, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CedentePipelineItem } from "./CedenteCard";
-import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
+import {
+  CEDENTES_COLUMNS,
+  CEDENTES_STATUS_LABELS,
+} from "@/data/cedentesPipelineConfig";
 import { EntityNotesSection } from "@/components/pipeline/shared/EntityNotesSection";
 import { EntityEventsSection } from "@/components/pipeline/shared/EntityEventsSection";
 
@@ -327,6 +330,7 @@ export function CedenteDetailsModal({
               entityId={cedente.id}
               enabled={open}
               currentStatus={cedente.status}
+              statusColumns={CEDENTES_COLUMNS}
             />
           </section>
 

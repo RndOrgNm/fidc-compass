@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Loader2, ArrowRight, ChevronRight } from "lucide-react";
+import { Loader2, ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { listEvents, type EntityType, type EventResponse } from "@/lib/api/eventService";
+import { listEvents, type EntityType } from "@/lib/api/eventService";
+import type { EventResponse } from "@/lib/api/eventService";
 import { RECEBIVEIS_STATUS_LABELS } from "@/data/recebiveisPipelineConfig";
 import { CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelineConfig";
 import { ALLOCATION_STATUS_LABELS } from "@/data/allocationPipelineConfig";
-import { CEDENTES_COLUMNS } from "@/data/cedentesPipelineConfig";
-import { RECEBIVEIS_COLUMNS } from "@/data/recebiveisPipelineConfig";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   created: "Criado",
@@ -65,9 +63,6 @@ const STATUS_VALUE_LABELS: Record<string, string> = {
   ...ALLOCATION_STATUS_LABELS,
 };
 
-const CEDENTES_STATUS_ORDER = CEDENTES_COLUMNS.map((c) => c.id);
-const RECEBIVEIS_STATUS_ORDER = RECEBIVEIS_COLUMNS.map((c) => c.id);
-
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -90,42 +85,94 @@ function formatFieldName(fieldName: string | null | undefined): string {
   return FIELD_NAME_LABELS[fieldName] ?? "";
 }
 
-const CREATED_GROUP_KEY = "__created__";
+/** Status column for pipeline order (id = status key, title = display label). */
+export type StatusColumn = { id: string; title: string };
 
-/** Assign each event to a status by walking the timeline. Events are assumed sorted oldest-first. */
-function groupEventsByStatus(
+interface EntityEventsSectionProps {
+  entityType: EntityType;
+  entityId: string;
+  enabled: boolean;
+  /** Current entity status — when provided with statusColumns, past-status checklist groups are collapsed. */
+  currentStatus?: string;
+  /** Pipeline status order — used to determine which statuses are "passed" for collapsing. */
+  statusColumns?: StatusColumn[];
+}
+
+/**
+ * Assigns each checklist_updated event to the status it belongs to, based on timeline.
+ */
+function assignChecklistEventsToStatus(
   events: EventResponse[],
-  statusOrder: string[]
-): Map<string, EventResponse[]> {
-  const groups = new Map<string, EventResponse[]>();
-  let currentStatus: string = statusOrder[0] ?? "";
+  statusColumns: StatusColumn[]
+): Map<string, string> {
+  const eventToStatus = new Map<string, string>();
+  const statusIds = statusColumns.map((c) => c.id);
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  const firstStatusChange = sorted.find(
+    (e) => e.event_type === "status_changed" && e.field_name === "status"
+  );
+  const initialStatus =
+    firstStatusChange?.old_value && statusIds.includes(firstStatusChange.old_value)
+      ? firstStatusChange.old_value
+      : statusIds[0] ?? null;
+
+  let currentStatus = initialStatus;
+  for (const event of sorted) {
+    if (event.event_type === "status_changed" && event.field_name === "status") {
+      const newVal = event.new_value ?? "";
+      if (statusIds.includes(newVal)) currentStatus = newVal;
+    }
+    if (event.event_type === "checklist_updated") {
+      if (currentStatus) eventToStatus.set(event.id, currentStatus);
+    }
+  }
+  return eventToStatus;
+}
+
+/**
+ * Groups events into expanded (show individually) and collapsed (group by past status).
+ */
+function groupEvents(
+  events: EventResponse[],
+  currentStatus: string | undefined,
+  statusColumns: StatusColumn[],
+  eventToStatus: Map<string, string>
+): { expanded: EventResponse[]; collapsed: Map<string, EventResponse[]> } {
+  const collapsed = new Map<string, EventResponse[]>();
+  const expanded: EventResponse[] = [];
+  const statusIds = statusColumns.map((c) => c.id);
+  const currentIdx = currentStatus ? statusIds.indexOf(currentStatus) : -1;
 
   for (const event of events) {
-    if (event.event_type === "created") {
-      const key = CREATED_GROUP_KEY;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(event);
+    if (event.event_type !== "checklist_updated") {
+      expanded.push(event);
       continue;
     }
-
-    if (event.event_type === "status_changed" && event.field_name === "status") {
-      const newVal = event.new_value;
-      if (newVal && statusOrder.includes(newVal)) {
-        currentStatus = newVal;
-      }
+    const status = eventToStatus.get(event.id);
+    if (!status) {
+      expanded.push(event);
+      continue;
     }
-
-    const key = currentStatus;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(event);
+    const statusIdx = statusIds.indexOf(status);
+    const isPassed = currentIdx >= 0 && statusIdx >= 0 && statusIdx < currentIdx;
+    if (isPassed) {
+      const list = collapsed.get(status) ?? [];
+      list.push(event);
+      collapsed.set(status, list);
+    } else {
+      expanded.push(event);
+    }
   }
 
-  return groups;
+  return { expanded, collapsed };
 }
 
 function EventCard({ event }: { event: EventResponse }) {
   return (
-    <div className="border rounded-md p-3 text-sm space-y-1.5">
+    <div key={event.id} className="border rounded-md p-3 text-sm space-y-1.5">
       <div className="flex items-center gap-2 flex-wrap">
         <Badge
           className={
@@ -179,19 +226,12 @@ function EventCard({ event }: { event: EventResponse }) {
   );
 }
 
-interface EntityEventsSectionProps {
-  entityType: EntityType;
-  entityId: string;
-  enabled: boolean;
-  /** Current status of the entity. When provided with statusOrder, past statuses are collapsed. */
-  currentStatus?: string;
-}
-
 export function EntityEventsSection({
   entityType,
   entityId,
   enabled,
   currentStatus,
+  statusColumns = [],
 }: EntityEventsSectionProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["entity-events", entityType, entityId],
@@ -199,6 +239,8 @@ export function EntityEventsSection({
       listEvents({ entity_type: entityType, entity_id: entityId, limit: 200 }),
     enabled,
   });
+
+  const [openCollapsed, setOpenCollapsed] = useState<Record<string, boolean>>({});
 
   if (isLoading) {
     return (
@@ -219,69 +261,63 @@ export function EntityEventsSection({
     );
   }
 
-  const statusOrder: string[] =
-    entityType === "cedente"
-      ? CEDENTES_STATUS_ORDER
-      : entityType === "recebivel"
-        ? RECEBIVEIS_STATUS_ORDER
-        : RECEBIVEIS_STATUS_ORDER;
+  const canCollapse = currentStatus && statusColumns.length > 0;
+  const eventToStatus = canCollapse
+    ? assignChecklistEventsToStatus(events, statusColumns)
+    : new Map<string, string>();
+  const { expanded, collapsed } = canCollapse
+    ? groupEvents(events, currentStatus, statusColumns, eventToStatus)
+    : { expanded: events, collapsed: new Map<string, EventResponse[]>() };
 
-  const statusLabels =
-    entityType === "cedente"
-      ? CEDENTES_STATUS_LABELS
-      : entityType === "recebivel"
-        ? RECEBIVEIS_STATUS_LABELS
-        : RECEBIVEIS_STATUS_LABELS;
-
-  const groups = groupEventsByStatus(events, statusOrder);
-
-  const currentIdx =
-    currentStatus != null ? statusOrder.indexOf(currentStatus) : -1;
-
-  const shouldCollapse = (statusKey: string): boolean => {
-    if (statusKey === CREATED_GROUP_KEY) return false;
-    if (currentStatus == null || currentIdx < 0) return false;
-    const idx = statusOrder.indexOf(statusKey);
-    if (idx < 0) return false;
-    return idx < currentIdx;
+  const statusLabels: Record<string, string> = {
+    ...RECEBIVEIS_STATUS_LABELS,
+    ...CEDENTES_STATUS_LABELS,
+    ...ALLOCATION_STATUS_LABELS,
   };
-
-  const entries = Array.from(groups.entries()).sort((a, b) => {
-    const eventsA = a[1];
-    const eventsB = b[1];
-    const dateA = eventsA[0]?.created_at ?? "";
-    const dateB = eventsB[0]?.created_at ?? "";
-    return dateA.localeCompare(dateB);
-  });
+  const getStatusLabel = (id: string) =>
+    statusColumns.find((c) => c.id === id)?.title ?? statusLabels[id] ?? id;
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pr-2">
       <div className="space-y-3">
-        {entries.map(([statusKey, groupEvents]) => {
-          const collapsed = shouldCollapse(statusKey);
-          const label =
-            statusKey === CREATED_GROUP_KEY
-              ? "Criado"
-              : (statusLabels as Record<string, string>)[statusKey] ?? statusKey;
+        {expanded.map((event) => (
+          <EventCard key={event.id} event={event} />
+        ))}
 
-          if (collapsed) {
+        {Array.from(collapsed.entries())
+          .sort(([a], [b]) => {
+            const ai = statusColumns.findIndex((c) => c.id === a);
+            const bi = statusColumns.findIndex((c) => c.id === b);
+            return bi - ai;
+          })
+          .map(([status, statusEvents]) => {
+            const isOpen = openCollapsed[status] ?? false;
+            const label = getStatusLabel(status);
             return (
-              <Collapsible key={statusKey} defaultOpen={false}>
+              <Collapsible
+                key={status}
+                open={isOpen}
+                onOpenChange={(open) =>
+                  setOpenCollapsed((prev) => ({ ...prev, [status]: open }))
+                }
+              >
                 <div className="border rounded-md overflow-hidden">
-                  <CollapsibleTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-between rounded-none h-10 px-3 font-medium text-sm hover:bg-muted/50 [&[data-state=open]_svg]:rotate-90"
-                    >
-                      <span className="flex items-center gap-2">
-                        <ChevronRight className="h-4 w-4 shrink-0 transition-transform" />
-                        {label} — {groupEvents.length} evento{groupEvents.length !== 1 ? "s" : ""}
-                      </span>
-                    </Button>
+                  <CollapsibleTrigger className="flex w-full items-center gap-2 px-3 py-2.5 text-sm hover:bg-muted/50 transition-colors text-left">
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <Badge className="bg-amber-100 text-amber-800">
+                      Checklist atualizado
+                    </Badge>
+                    <span className="text-muted-foreground">
+                      {statusEvents.length} itens concluídos em {label}
+                    </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="border-t p-3 space-y-3">
-                      {groupEvents.map((event) => (
+                    <div className="border-t px-3 py-2 space-y-2 bg-muted/20">
+                      {statusEvents.map((event) => (
                         <EventCard key={event.id} event={event} />
                       ))}
                     </div>
@@ -289,19 +325,7 @@ export function EntityEventsSection({
                 </div>
               </Collapsible>
             );
-          }
-
-          return (
-            <div key={statusKey} className="space-y-3">
-              {statusKey !== CREATED_GROUP_KEY && entries.length > 1 && (
-                <p className="text-xs font-medium text-muted-foreground">{label}</p>
-              )}
-              {groupEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          );
-        })}
+          })}
       </div>
     </div>
   );
