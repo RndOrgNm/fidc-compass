@@ -82,7 +82,9 @@ export default function Agent() {
   useEffect(() => {
     const agentFromUrl = searchParams.get("agent");
     if (agentFromUrl === "funds" || agentFromUrl === "cvm") {
-      setSelectedAgent(agentFromUrl);
+      if (agentFromUrl !== selectedAgent) {
+        setSelectedAgent(agentFromUrl);
+      }
     } else if (selectedAgent) {
       setSearchParams((p) => {
         const next = new URLSearchParams(p);
