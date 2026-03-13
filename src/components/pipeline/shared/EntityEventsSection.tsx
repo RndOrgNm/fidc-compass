@@ -277,10 +277,14 @@ export function EntityEventsSection({
   const getStatusLabel = (id: string) =>
     statusColumns.find((c) => c.id === id)?.title ?? statusLabels[id] ?? id;
 
+  // "Criado" is the first event chronologically — always render it last (at the bottom)
+  const createdEvent = expanded.find((e) => e.event_type === "created");
+  const expandedWithoutCreated = expanded.filter((e) => e.event_type !== "created");
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto pr-2">
       <div className="space-y-3">
-        {expanded.map((event) => (
+        {expandedWithoutCreated.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}
 
@@ -326,6 +330,8 @@ export function EntityEventsSection({
               </Collapsible>
             );
           })}
+
+        {createdEvent && <EventCard key={createdEvent.id} event={createdEvent} />}
       </div>
     </div>
   );
