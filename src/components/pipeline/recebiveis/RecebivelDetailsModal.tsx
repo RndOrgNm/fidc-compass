@@ -446,6 +446,7 @@ export function RecebivelDetailsModal({
               entityType="recebivel"
               entityId={workflow.id}
               enabled={open}
+              currentStatus={workflow.status}
             />
           </section>
 

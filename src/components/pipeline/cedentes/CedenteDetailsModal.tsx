@@ -326,6 +326,7 @@ export function CedenteDetailsModal({
               entityType="cedente"
               entityId={cedente.id}
               enabled={open}
+              currentStatus={cedente.status}
             />
           </section>
 
