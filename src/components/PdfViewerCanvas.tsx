@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-// Configure worker once (public folder copy for Vite)
+// Legacy build avoids "toHex is not a function" in older browsers (Uint8Array.prototype.toHex is ES2026).
+// Worker must be legacy too — copied via postinstall from pdfjs-dist/legacy/build/pdf.worker.min.mjs
 if (typeof window !== "undefined" && !GlobalWorkerOptions.workerSrc) {
   GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`;
 }
