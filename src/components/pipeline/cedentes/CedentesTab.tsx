@@ -21,7 +21,7 @@ import { CEDENTES_COLUMNS, CEDENTES_STATUS_LABELS } from "@/data/cedentesPipelin
 import { toast } from "@/hooks/use-toast";
 import type { CedenteStatus, Segment } from "@/lib/api/cedenteService";
 
-const CURRENT_USER_PLACEHOLDER = "Maria Silva";
+const CURRENT_USER_PLACEHOLDER = "João Vitor";
 
 interface CedentesTabProps {
   selectedCedenteId?: string | null;

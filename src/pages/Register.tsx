@@ -63,7 +63,7 @@ export default function Register() {
               <Input
                 id="name"
                 type="text"
-                placeholder="Maria Silva"
+                placeholder="João Vitor"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />

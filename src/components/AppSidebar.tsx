@@ -1,4 +1,4 @@
-import { Home, Bot, TrendingUp, GitBranch } from "lucide-react";
+import { Home, Bot, TrendingUp, GitBranch, LineChart } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -18,6 +18,7 @@ const menuItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Pipeline", url: "/pipeline", icon: GitBranch },
   { title: "Chatbot", url: "/agent", icon: Bot },
+  { title: "Gráficos", url: "/graficos", icon: LineChart },
 ];
 
 export function AppSidebar() {
@@ -63,6 +64,7 @@ export function AppSidebar() {
                   item.url === "/" ? location.pathname === "/" :
                   item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
+                  item.url === "/graficos" ? location.pathname.startsWith("/graficos") :
                   location.pathname === item.url;
                 // Special handling for Chatbot to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {
@@ -95,11 +97,11 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border px-4 py-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">MS</AvatarFallback>
+            <AvatarFallback className="bg-primary text-primary-foreground">JV</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-sidebar-foreground truncate">Maria Silva</p>
+              <p className="text-sm font-semibold text-sidebar-foreground truncate">João Vitor</p>
               <p className="text-xs text-sidebar-foreground/70 truncate">Gestora</p>
             </div>
           )}

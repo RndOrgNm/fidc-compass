@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/": "Home",
   "/pipeline": "Pipeline de Investimentos",
   "/agent": "Agente IA",
+  "/graficos": "Gráficos",
 };
 
 function getPageTitle(pathname: string, override?: string): string {
@@ -23,6 +24,7 @@ function getPageTitle(pathname: string, override?: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
   if (pathname.startsWith("/agent")) return "Agente IA";
+  if (pathname.startsWith("/graficos")) return "Gráficos";
   return "FIDC Manager";
 }
 
@@ -52,7 +54,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
               </Button>
               
               <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-primary text-primary-foreground">MS</AvatarFallback>
+                <AvatarFallback className="bg-primary text-primary-foreground">JV</AvatarFallback>
               </Avatar>
             </div>
           </header>

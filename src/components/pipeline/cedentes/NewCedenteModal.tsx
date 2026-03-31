@@ -393,7 +393,7 @@ export function NewCedenteModal({ open, onOpenChange }: NewCedenteModalProps) {
                 id="assignedTo"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                placeholder="Ex: Maria Silva"
+                placeholder="Ex: João Vitor"
               />
               <p className="text-xs text-muted-foreground">
                 Nome do analista / originador responsável. Também aparece nos cards do pipeline.

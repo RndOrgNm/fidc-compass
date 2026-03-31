@@ -199,7 +199,7 @@ export function NewAllocationModal({ open, onOpenChange }: NewAllocationModalPro
               id="assignedTo"
               value={assignedTo}
               onChange={(e) => setAssignedTo(e.target.value)}
-              placeholder="Ex: Maria Silva"
+              placeholder="Ex: João Vitor"
             />
           </div>
 

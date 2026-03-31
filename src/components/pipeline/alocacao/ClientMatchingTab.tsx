@@ -19,7 +19,7 @@ import { useAllocationWorkflows, useTransitionAllocationWorkflow, useUpdateAlloc
 import type { AllocationWorkflow, AllocationStatus } from "@/lib/api/allocationService";
 import { ALLOCATION_COLUMNS } from "@/data/allocationPipelineConfig";
 
-const CURRENT_USER_PLACEHOLDER = "Maria Silva";
+const CURRENT_USER_PLACEHOLDER = "João Vitor";
 
 export function ClientMatchingTab() {
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");

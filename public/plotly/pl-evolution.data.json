@@ -1,0 +1,84 @@
+[
+  {
+    "hovertemplate": "<b>Total Geral</b><br>R$ %{y:.2f}M<extra></extra>",
+    "line": {
+      "color": "#10B981",
+      "shape": "spline",
+      "width": 3.5
+    },
+    "marker": {
+      "color": "#10B981",
+      "line": {
+        "width": 0
+      },
+      "size": 12
+    },
+    "mode": "lines+markers",
+    "name": "Total Geral",
+    "x": [
+      "2026-03-26T00:00:00",
+      "2026-03-27T00:00:00"
+    ],
+    "y": {
+      "dtype": "f8",
+      "bdata": "BkldOh9QikAkheybf19+QA=="
+    },
+    "type": "scatter"
+  },
+  {
+    "connectgaps": false,
+    "hovertemplate": "<b>FIAGRO IMOBILIARIO ID GOIANA</b><br>R$ %{y:.2f}M<extra></extra>",
+    "line": {
+      "color": "#475569",
+      "dash": "dash",
+      "shape": "linear",
+      "width": 2
+    },
+    "marker": {
+      "color": "#475569",
+      "line": {
+        "width": 0
+      },
+      "size": 8
+    },
+    "mode": "lines+markers",
+    "name": "FIAGRO IMOBILIARIO ID GOIANA",
+    "x": [
+      "2026-03-26T00:00:00",
+      "2026-03-27T00:00:00"
+    ],
+    "y": {
+      "dtype": "f8",
+      "bdata": "TOgFCgLDWkD5A1BSwcJaQA=="
+    },
+    "type": "scatter"
+  },
+  {
+    "connectgaps": false,
+    "hovertemplate": "<b>FIDC ORIGIN RL</b><br>R$ %{y:.2f}M<extra></extra>",
+    "line": {
+      "color": "#F8FAFC",
+      "dash": "dash",
+      "shape": "linear",
+      "width": 2
+    },
+    "marker": {
+      "color": "#F8FAFC",
+      "line": {
+        "width": 0
+      },
+      "size": 8
+    },
+    "mode": "lines+markers",
+    "name": "FIDC ORIGIN RL",
+    "x": [
+      "2026-03-26T00:00:00",
+      "2026-03-27T00:00:00"
+    ],
+    "y": {
+      "dtype": "f8",
+      "bdata": "8vdBTHgqIkANuFtQ5y8iQA=="
+    },
+    "type": "scatter"
+  }
+]
