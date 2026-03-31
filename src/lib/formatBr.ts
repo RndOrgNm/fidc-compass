@@ -1,9 +1,20 @@
 /** pt-BR currency and percent helpers for dashboard figures. */
 
-/** Cota (valor de quota) — alinhado ao notebook (4 casas). */
+/** Cota (valor de quota) — número sem símbolo, alinhado ao notebook (4 casas). */
 export function formatCota(value: number | null | undefined, fractionDigits = 4): string {
   if (value == null || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat("pt-BR", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(value);
+}
+
+/** Valor da cota em reais (R$), para UI. */
+export function formatCotaBrl(value: number | null | undefined, fractionDigits = 2): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value);

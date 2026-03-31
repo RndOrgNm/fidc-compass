@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatBrl, formatCota, formatPercentPoints } from "@/lib/formatBr";
+import { formatBrl, formatCotaBrl, formatPercentPoints } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
@@ -30,7 +30,7 @@ function DayChange({ value }: { value: number | null }) {
 
 function metricValue(f: HomeFundRow, metric: FundTickerMetric): string {
   if (metric === "pl") return formatBrl(f.plAtual);
-  return formatCota(f.cotaAtual ?? null);
+  return formatCotaBrl(f.cotaAtual ?? null, 4);
 }
 
 function metricDayChange(f: HomeFundRow, metric: FundTickerMetric): number | null {

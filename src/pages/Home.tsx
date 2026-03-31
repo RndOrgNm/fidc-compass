@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FundSummaryCarousel } from "@/components/home/FundSummaryCarousel";
 import { FundTicker } from "@/components/home/FundTicker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatBrlCompact, formatPercentPoints } from "@/lib/formatBr";
@@ -203,6 +204,8 @@ export default function Home() {
         <FundTicker fundos={data?.fundos} loading={loading} metric="pl" caption="PL" />
         <FundTicker fundos={data?.fundos} loading={loading} metric="cota" caption="Cota" />
       </section>
+
+      <FundSummaryCarousel fundos={data?.fundos} asOf={data?.asOf} loading={loading} />
     </div>
   );
 }
