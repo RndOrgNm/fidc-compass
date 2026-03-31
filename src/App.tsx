@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { ChatProvider } from "./contexts/ChatContext";
@@ -17,33 +18,35 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ChatProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Auth routes temporarily disabled */}
-            {/*
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            */}
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <TooltipProvider>
+        <ChatProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth routes temporarily disabled */}
+              {/*
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              */}
 
-            <Route path="/" element={<AppLayout><Home /></AppLayout>} />
-            <Route path="/pipeline" element={<AppLayout><Pipeline /></AppLayout>} />
-            <Route path="/pipeline/cedentes" element={<AppLayout><Pipeline /></AppLayout>} />
-            <Route path="/pipeline/cedentes/:cedenteId" element={<AppLayout><Pipeline /></AppLayout>} />
-            <Route path="/pipeline/recebiveis" element={<AppLayout><Pipeline /></AppLayout>} />
-            <Route path="/pipeline/recebiveis/:workflowId" element={<AppLayout><Pipeline /></AppLayout>} />
-            <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
-            <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </ChatProvider>
-    </TooltipProvider>
+              <Route path="/" element={<AppLayout><Home /></AppLayout>} />
+              <Route path="/pipeline" element={<AppLayout><Pipeline /></AppLayout>} />
+              <Route path="/pipeline/cedentes" element={<AppLayout><Pipeline /></AppLayout>} />
+              <Route path="/pipeline/cedentes/:cedenteId" element={<AppLayout><Pipeline /></AppLayout>} />
+              <Route path="/pipeline/recebiveis" element={<AppLayout><Pipeline /></AppLayout>} />
+              <Route path="/pipeline/recebiveis/:workflowId" element={<AppLayout><Pipeline /></AppLayout>} />
+              <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
+              <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
+
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ChatProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
