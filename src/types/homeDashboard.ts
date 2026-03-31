@@ -14,6 +14,11 @@ export interface HomeFundRow {
   plDiaAnterior?: number | null;
   /** % change vs previous observation (day-on-day). */
   variacaoDiaPct?: number | null;
+  /** CotaFechamentoMoedaCarteira (última data). */
+  cotaAtual?: number | null;
+  cotaDiaAnterior?: number | null;
+  /** % change cota vs dia anterior. */
+  variacaoCotaDiaPct?: number | null;
 }
 
 export interface HomeDashboardMetrics {

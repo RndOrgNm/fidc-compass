@@ -20,7 +20,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": null,
       "plDiaAnterior": null,
-      "variacaoDiaPct": null
+      "variacaoDiaPct": null,
+      "cotaAtual": 265.6362007,
+      "cotaDiaAnterior": null,
+      "variacaoCotaDiaPct": null
     },
     {
       "idCarteira": 36885989,
@@ -31,7 +34,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": -0.0017576248809316286,
       "plDiaAnterior": 147823920.12,
-      "variacaoDiaPct": -0.0017576248809316286
+      "variacaoDiaPct": -0.0017576248809316286,
+      "cotaAtual": 2165.49924859,
+      "cotaDiaAnterior": 2165.53731062,
+      "variacaoCotaDiaPct": -0.0017576252236848882
     },
     {
       "idCarteira": 54417489,
@@ -42,7 +48,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": -0.0009872105874753965,
       "plDiaAnterior": 113480346.97,
-      "variacaoDiaPct": -0.0009872105874753965
+      "variacaoDiaPct": -0.0009872105874753965,
+      "cotaAtual": 2356.16623194,
+      "cotaDiaAnterior": 2356.18949249,
+      "variacaoCotaDiaPct": -0.0009872104970214221
     },
     {
       "idCarteira": 49112611,
@@ -53,7 +62,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": -0.0036900146850664655,
       "plDiaAnterior": 107046999.46,
-      "variacaoDiaPct": -0.0036900146850664655
+      "variacaoDiaPct": -0.0036900146850664655,
+      "cotaAtual": 200.7905435,
+      "cotaDiaAnterior": 200.79795297,
+      "variacaoCotaDiaPct": -0.0036900127169652583
     },
     {
       "idCarteira": 64089566,
@@ -64,7 +76,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": -0.0008934964264213244,
       "plDiaAnterior": 25406928.7,
-      "variacaoDiaPct": -0.0008934964264213244
+      "variacaoDiaPct": -0.0008934964264213244,
+      "cotaAtual": 101.3268792,
+      "cotaDiaAnterior": 101.32778456,
+      "variacaoCotaDiaPct": -0.0008934962941662949
     },
     {
       "idCarteira": 62296221,
@@ -75,7 +90,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": null,
       "plDiaAnterior": null,
-      "variacaoDiaPct": null
+      "variacaoDiaPct": null,
+      "cotaAtual": 663196.72522205,
+      "cotaDiaAnterior": null,
+      "variacaoCotaDiaPct": null
     },
     {
       "idCarteira": 58019792,
@@ -86,7 +104,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": -0.23561056227564425,
       "plDiaAnterior": 21721878.47,
-      "variacaoDiaPct": -0.23561056227564425
+      "variacaoDiaPct": -0.23561056227564425,
+      "cotaAtual": 14514.86900871,
+      "cotaDiaAnterior": 14549.14833891,
+      "variacaoCotaDiaPct": -0.23561056222324042
     },
     {
       "idCarteira": 58019791,
@@ -97,7 +118,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.08858873801223247,
       "plDiaAnterior": 17733303.75,
-      "variacaoDiaPct": 0.08858873801223247
+      "variacaoDiaPct": 0.08858873801223247,
+      "cotaAtual": 10922.97170271,
+      "cotaDiaAnterior": 10913.30374465,
+      "variacaoCotaDiaPct": 0.08858873798632115
     },
     {
       "idCarteira": 5801971,
@@ -108,7 +132,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.07740385095005393,
       "plDiaAnterior": 16490381.09,
-      "variacaoDiaPct": 0.07740385095005393
+      "variacaoDiaPct": 0.07740385095005393,
+      "cotaAtual": 1241.75266706,
+      "cotaDiaAnterior": 1240.79224608,
+      "variacaoCotaDiaPct": 0.07740385088915663
     },
     {
       "idCarteira": 61995402,
@@ -119,7 +146,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.020302067096561148,
       "plDiaAnterior": 12878393.06,
-      "variacaoDiaPct": 0.020302067096561148
+      "variacaoDiaPct": 0.020302067096561148,
+      "cotaAtual": 1033.10253136,
+      "cotaDiaAnterior": 1032.89283276,
+      "variacaoCotaDiaPct": 0.020302067489402643
     },
     {
       "idCarteira": 61872284,
@@ -130,7 +160,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.11684101651984277,
       "plDiaAnterior": 9082949.05,
-      "variacaoDiaPct": 0.11684101651984277
+      "variacaoDiaPct": 0.11684101651984277,
+      "cotaAtual": 1174.6213343,
+      "cotaDiaAnterior": 1173.25049649,
+      "variacaoCotaDiaPct": 0.11684101682472171
     },
     {
       "idCarteira": 62296223,
@@ -141,7 +174,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.1063340342992298,
       "plDiaAnterior": 5297476.05,
-      "variacaoDiaPct": 0.1063340342992298
+      "variacaoDiaPct": 0.1063340342992298,
+      "cotaAtual": 10731.60283736,
+      "cotaDiaAnterior": 10720.20361237,
+      "variacaoCotaDiaPct": 0.10633403433538054
     },
     {
       "idCarteira": 61795158,
@@ -152,7 +188,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": null,
       "plDiaAnterior": null,
-      "variacaoDiaPct": null
+      "variacaoDiaPct": null,
+      "cotaAtual": 1.16894308,
+      "cotaDiaAnterior": null,
+      "variacaoCotaDiaPct": null
     },
     {
       "idCarteira": 61839325,
@@ -163,7 +202,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.012302007592741186,
       "plDiaAnterior": 4029179.76,
-      "variacaoDiaPct": 0.012302007592741186
+      "variacaoDiaPct": 0.012302007592741186,
+      "cotaAtual": 15014.06790133,
+      "cotaDiaAnterior": 15012.22109675,
+      "variacaoCotaDiaPct": 0.012302007598328276
     },
     {
       "idCarteira": 6199541,
@@ -174,7 +216,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.07740349985220059,
       "plDiaAnterior": 3061928.73,
-      "variacaoDiaPct": 0.07740349985220059
+      "variacaoDiaPct": 0.07740349985220059,
+      "cotaAtual": 1042.28401881,
+      "cotaDiaAnterior": 1041.47787848,
+      "variacaoCotaDiaPct": 0.07740350003174026
     },
     {
       "idCarteira": 62296222,
@@ -185,7 +230,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": 0.08858713792608083,
       "plDiaAnterior": 1922141.34,
-      "variacaoDiaPct": 0.08858713792608083
+      "variacaoDiaPct": 0.08858713792608083,
+      "cotaAtual": 10791.26754759,
+      "cotaDiaAnterior": 10781.71633367,
+      "variacaoCotaDiaPct": 0.0885871379325082
     },
     {
       "idCarteira": 61796062,
@@ -196,7 +244,10 @@
       "referencia30dCompleta": false,
       "variacaoPct": null,
       "plDiaAnterior": null,
-      "variacaoDiaPct": null
+      "variacaoDiaPct": null,
+      "cotaAtual": 1.15525297,
+      "cotaDiaAnterior": null,
+      "variacaoCotaDiaPct": null
     }
   ]
 }

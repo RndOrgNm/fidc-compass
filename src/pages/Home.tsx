@@ -10,7 +10,7 @@ import {
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FundTicker } from "@/components/home/FundTicker";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatBrl, formatPercentPoints } from "@/lib/formatBr";
+import { formatBrlCompact, formatPercentPoints } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeDashboardMetrics } from "@/types/homeDashboard";
 
@@ -98,7 +98,7 @@ export default function Home() {
                 <Skeleton className="h-9 w-40 mt-2" />
               ) : (
                 <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground mt-2">
-                  {formatBrl(data?.plSobGestao ?? null)}
+                  {formatBrlCompact(data?.plSobGestao ?? null)}
                 </p>
               )}
             </CardHeader>
@@ -140,7 +140,7 @@ export default function Home() {
                 <Skeleton className="h-9 w-28 mt-2" />
               ) : data?.flowsDisponiveis && data.captacaoLiquida30d != null ? (
                 <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">
-                  {formatBrl(data.captacaoLiquida30d)}
+                  {formatBrlCompact(data.captacaoLiquida30d)}
                 </p>
               ) : (
                 <p className="text-2xl font-semibold mt-2">
@@ -156,7 +156,7 @@ export default function Home() {
               {loading ? (
                 <Skeleton className="h-9 w-28 mt-2" />
               ) : data?.flowsDisponiveis && data.aportes30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrl(data.aportes30d)}</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrlCompact(data.aportes30d)}</p>
               ) : (
                 <p className="text-2xl font-semibold mt-2">
                   <FlowPlaceholder />
@@ -171,7 +171,7 @@ export default function Home() {
               {loading ? (
                 <Skeleton className="h-9 w-28 mt-2" />
               ) : data?.flowsDisponiveis && data.resgates30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrl(data.resgates30d)}</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrlCompact(data.resgates30d)}</p>
               ) : (
                 <p className="text-2xl font-semibold mt-2">
                   <FlowPlaceholder />
@@ -187,7 +187,7 @@ export default function Home() {
                 <Skeleton className="h-9 w-28 mt-2" />
               ) : data?.flowsDisponiveis && data.dividendos30d != null ? (
                 <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">
-                  {formatBrl(data.dividendos30d)}
+                  {formatBrlCompact(data.dividendos30d)}
                 </p>
               ) : (
                 <p className="text-2xl font-semibold mt-2">
@@ -199,8 +199,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section aria-label="Fundos em movimento" className="space-y-3">
-        <FundTicker fundos={data?.fundos} loading={loading} />
+      <section aria-label="Cotações PL e cota" className="space-y-6">
+        <FundTicker fundos={data?.fundos} loading={loading} metric="pl" caption="PL" />
+        <FundTicker fundos={data?.fundos} loading={loading} metric="cota" caption="Cota" />
       </section>
     </div>
   );
