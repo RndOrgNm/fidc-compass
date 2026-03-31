@@ -1,17 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatBrlCompact, formatCotaBrl, formatPercentPoints } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeFundRow } from "@/types/homeDashboard";
+
+const AUTO_ADVANCE_MS = 10_000;
 
 function MiniSparkline({ values, className }: { values: number[]; className?: string }) {
   const clean = values.filter((v) => v != null && !Number.isNaN(v));
@@ -141,6 +136,44 @@ function SummarySlide({
   );
 }
 
+function CarouselPagination({
+  pageCount,
+  current,
+  onGoTo,
+}: {
+  pageCount: number;
+  current: number;
+  onGoTo: (index: number) => void;
+}) {
+  if (pageCount < 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 pt-2">
+      <div className="flex items-center gap-1.5" role="tablist" aria-label="Páginas do resumo">
+        {Array.from({ length: pageCount }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            role="tab"
+            aria-selected={i === current}
+            aria-label={`Página ${i + 1} de ${pageCount}`}
+            onClick={() => onGoTo(i)}
+            className={cn(
+              "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              i === current
+                ? "h-2 w-8 shrink-0 rounded-full bg-primary"
+                : "h-2 w-2 shrink-0 rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/55",
+            )}
+          />
+        ))}
+      </div>
+      <span className="text-sm tabular-nums text-muted-foreground">
+        {current + 1}/{pageCount}
+      </span>
+    </div>
+  );
+}
+
 export function FundSummaryCarousel({
   fundos,
   asOf,
@@ -153,9 +186,9 @@ export function FundSummaryCarousel({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [snapCount, setSnapCount] = useState(1);
+  const autoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const list = fundos?.length ? fundos : [];
-  const needsNavigation = list.length > 3;
 
   const asOfLabel = asOf
     ? new Date(asOf + "T12:00:00").toLocaleDateString("pt-BR", {
@@ -184,6 +217,36 @@ export function FundSummaryCarousel({
     if (!api) return;
     api.scrollTo(0);
   }, [api, fundos?.length]);
+
+  const clearAutoAdvance = useCallback(() => {
+    if (autoTimerRef.current) {
+      clearInterval(autoTimerRef.current);
+      autoTimerRef.current = null;
+    }
+  }, []);
+
+  const startAutoAdvance = useCallback(() => {
+    clearAutoAdvance();
+    if (!api || snapCount <= 1) return;
+
+    autoTimerRef.current = setInterval(() => {
+      if (api.canScrollNext()) {
+        api.scrollNext();
+      } else {
+        api.scrollTo(0);
+      }
+    }, AUTO_ADVANCE_MS);
+  }, [api, snapCount, clearAutoAdvance]);
+
+  useEffect(() => {
+    startAutoAdvance();
+    return clearAutoAdvance;
+  }, [startAutoAdvance, list.length]);
+
+  const goToPage = (index: number) => {
+    api?.scrollTo(index);
+    startAutoAdvance();
+  };
 
   if (loading) {
     return (
@@ -221,23 +284,9 @@ export function FundSummaryCarousel({
             </CarouselItem>
           ))}
         </CarouselContent>
-        {needsNavigation ? (
-          <>
-            <CarouselPrevious
-              variant="outline"
-              className="left-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 border-border bg-background/95 shadow-sm md:left-2"
-            />
-            <CarouselNext
-              variant="outline"
-              className="right-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 border-border bg-background/95 shadow-sm md:right-2"
-            />
-          </>
-        ) : null}
       </Carousel>
-      {needsNavigation ? (
-        <p className="text-center text-xs text-muted-foreground tabular-nums">
-          {current + 1} / {snapCount}
-        </p>
+      {snapCount >= 1 ? (
+        <CarouselPagination pageCount={snapCount} current={current} onGoTo={goToPage} />
       ) : null}
     </section>
   );
