@@ -2,58 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatBrlCompact, formatCotaBrl, formatPercentPoints } from "@/lib/formatBr";
+import { formatBrlCompact, formatCotaBrl, formatPercentPoints, isNeutralPercent } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
 const AUTO_ADVANCE_MS = 10_000;
-
-function MiniSparkline({ values, className }: { values: number[]; className?: string }) {
-  const clean = values.filter((v) => v != null && !Number.isNaN(v));
-  if (clean.length < 2) {
-    return <div className={cn("h-12 w-full rounded-md bg-muted/40", className)} aria-hidden />;
-  }
-  const min = Math.min(...clean);
-  const max = Math.max(...clean);
-  const range = max - min || 1;
-  const w = 200;
-  const h = 44;
-  const pad = 4;
-  const points = clean
-    .map((v, i) => {
-      const x = pad + (i / (clean.length - 1)) * (w - 2 * pad);
-      const y = pad + (1 - (v - min) / range) * (h - 2 * pad);
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  return (
-    <svg
-      viewBox={`0 0 ${w} ${h}`}
-      className={cn("w-full h-12 text-primary", className)}
-      preserveAspectRatio="none"
-      aria-hidden
-    >
-      <polyline fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" points={points} />
-    </svg>
-  );
-}
-
-function plSparklineValues(f: HomeFundRow): number[] {
-  const now = f.plAtual;
-  const prev = f.plDiaAnterior;
-  if (prev != null && !Number.isNaN(prev)) return [prev, now];
-  if (f.plReferencia != null && !Number.isNaN(f.plReferencia)) return [f.plReferencia, now];
-  return [now, now];
-}
-
-function cotaSparklineValues(f: HomeFundRow): number[] {
-  const now = f.cotaAtual;
-  const prev = f.cotaDiaAnterior;
-  if (now == null || Number.isNaN(now)) return [];
-  if (prev != null && !Number.isNaN(prev)) return [prev, now];
-  return [now, now];
-}
 
 function SummarySlide({
   fund,
@@ -64,14 +17,19 @@ function SummarySlide({
 }) {
   const name = fund.apelido ?? fund.nome;
   const badgePct = fund.variacaoPct ?? fund.variacaoDiaPct ?? null;
-  const up = badgePct != null && badgePct > 0;
-  const down = badgePct != null && badgePct < 0;
+  const badgeNeutral = badgePct != null && !Number.isNaN(badgePct) && isNeutralPercent(badgePct, 1);
+  const up = badgePct != null && !Number.isNaN(badgePct) && !badgeNeutral && badgePct > 0;
+  const down = badgePct != null && !Number.isNaN(badgePct) && !badgeNeutral && badgePct < 0;
+
+  const plDiaPct = fund.variacaoDiaPct;
+  const plDiaNeutral = plDiaPct != null && !Number.isNaN(plDiaPct) && isNeutralPercent(plDiaPct, 2);
 
   const cotaPct = fund.variacaoCotaDiaPct;
+  const cotaNeutral = cotaPct != null && !Number.isNaN(cotaPct) && isNeutralPercent(cotaPct, 2);
 
   return (
-    <div className="h-full rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5 lg:px-5 lg:py-5">
-      <div className="flex flex-col gap-1 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
+    <div className="h-full min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5 lg:px-5 lg:py-5">
+      <div className="flex min-w-0 flex-col gap-1 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate text-base font-semibold tracking-tight text-foreground lg:text-[15px] xl:text-lg" title={name}>
@@ -100,36 +58,52 @@ function SummarySlide({
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-4">
-        <div className="space-y-1.5">
+      <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-4">
+        <div className="min-w-0 space-y-1.5">
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground lg:text-[11px]">Patrimônio líquido</p>
-          <p className="text-xl font-semibold tabular-nums tracking-tight text-foreground lg:text-2xl xl:text-3xl">
+          <p className="text-lg font-semibold tabular-nums tracking-tight leading-snug text-foreground lg:text-xl xl:text-2xl">
             {formatBrlCompact(fund.plAtual)}
           </p>
-          <p className="text-xs text-muted-foreground">PL 30D</p>
-          <MiniSparkline values={plSparklineValues(fund)} />
+          <div className="space-y-0.5">
+            <p className="text-xs text-muted-foreground">PL (dia)</p>
+            {plDiaPct != null && !Number.isNaN(plDiaPct) ? (
+              <span
+                className={cn(
+                  "inline-flex text-sm font-semibold tabular-nums",
+                  !plDiaNeutral && plDiaPct > 0 && "text-primary",
+                  !plDiaNeutral && plDiaPct < 0 && "text-destructive",
+                  plDiaNeutral && "text-muted-foreground",
+                )}
+              >
+                {formatPercentPoints(plDiaPct, 2)}
+              </span>
+            ) : (
+              <span className="text-sm text-muted-foreground">—</span>
+            )}
+          </div>
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground lg:text-[11px]">Valor da cota</p>
-          <div className="flex flex-wrap items-baseline gap-1.5">
-            <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground lg:text-2xl xl:text-3xl">
-              {fund.cotaAtual != null && !Number.isNaN(fund.cotaAtual) ? formatCotaBrl(fund.cotaAtual, 2) : "—"}
-            </span>
+          <p className="text-lg font-semibold tabular-nums tracking-tight leading-snug text-foreground lg:text-xl xl:text-2xl">
+            {fund.cotaAtual != null && !Number.isNaN(fund.cotaAtual) ? formatCotaBrl(fund.cotaAtual, 2) : "—"}
+          </p>
+          <div className="space-y-0.5">
+            <p className="text-xs text-muted-foreground">Cota 30D</p>
             {cotaPct != null && !Number.isNaN(cotaPct) ? (
               <span
                 className={cn(
-                  "text-sm font-semibold tabular-nums",
-                  cotaPct > 0 && "text-primary",
-                  cotaPct < 0 && "text-destructive",
-                  cotaPct === 0 && "text-muted-foreground",
+                  "inline-flex text-sm font-semibold tabular-nums",
+                  !cotaNeutral && cotaPct > 0 && "text-primary",
+                  !cotaNeutral && cotaPct < 0 && "text-destructive",
+                  cotaNeutral && "text-muted-foreground",
                 )}
               >
                 {formatPercentPoints(cotaPct, 2)}
               </span>
-            ) : null}
+            ) : (
+              <span className="text-sm text-muted-foreground">—</span>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground">Cota 30D</p>
-          <MiniSparkline values={cotaSparklineValues(fund)} />
         </div>
       </div>
     </div>
@@ -253,9 +227,9 @@ export function FundSummaryCarousel({
       <section aria-label="Resumo por fundo" className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Resumo por Fundo</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Skeleton className="h-[260px] w-full rounded-xl" />
-          <Skeleton className="h-[260px] w-full rounded-xl hidden md:block" />
-          <Skeleton className="h-[260px] w-full rounded-xl hidden md:block" />
+          <Skeleton className="h-[200px] w-full rounded-xl" />
+          <Skeleton className="h-[200px] w-full rounded-xl hidden md:block" />
+          <Skeleton className="h-[200px] w-full rounded-xl hidden md:block" />
         </div>
       </section>
     );

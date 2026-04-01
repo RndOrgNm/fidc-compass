@@ -11,22 +11,19 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { FundSummaryCarousel } from "@/components/home/FundSummaryCarousel";
 import { FundTicker } from "@/components/home/FundTicker";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatBrlCompact, formatPercentPoints } from "@/lib/formatBr";
+import { formatBrlCompact, formatPercentPoints, isNeutralPercent } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeDashboardMetrics } from "@/types/homeDashboard";
 
 const METRICS_URL = "/dashboard/home-metrics.json";
 
-function FlowPlaceholder() {
-  return <span className="text-muted-foreground">—</span>;
-}
-
 function VariationBadge({ value }: { value: number | null }) {
   if (value == null || Number.isNaN(value)) {
     return <span className="text-muted-foreground tabular-nums">—</span>;
   }
-  const up = value > 0;
-  const down = value < 0;
+  const neutral = isNeutralPercent(value, 2);
+  const up = !neutral && value > 0;
+  const down = !neutral && value < 0;
   const Icon = up ? ArrowUpRight : down ? ArrowDownRight : Minus;
   return (
     <span
@@ -129,70 +126,6 @@ export default function Home() {
               ) : (
                 <p className="text-2xl font-semibold tabular-nums tracking-tight mt-2">
                   <VariationBadge value={data?.variacaoPortfolioPct ?? null} />
-                </p>
-              )}
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border/80 bg-card/50">
-            <CardHeader className="pb-2 space-y-0">
-              <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Captação líquida</div>
-              {loading ? (
-                <Skeleton className="h-9 w-28 mt-2" />
-              ) : data?.flowsDisponiveis && data.captacaoLiquida30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">
-                  {formatBrlCompact(data.captacaoLiquida30d)}
-                </p>
-              ) : (
-                <p className="text-2xl font-semibold mt-2">
-                  <FlowPlaceholder />
-                </p>
-              )}
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border/80 bg-card/50">
-            <CardHeader className="pb-2 space-y-0">
-              <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Aportes 30d</div>
-              {loading ? (
-                <Skeleton className="h-9 w-28 mt-2" />
-              ) : data?.flowsDisponiveis && data.aportes30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrlCompact(data.aportes30d)}</p>
-              ) : (
-                <p className="text-2xl font-semibold mt-2">
-                  <FlowPlaceholder />
-                </p>
-              )}
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border/80 bg-card/50">
-            <CardHeader className="pb-2 space-y-0">
-              <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Resgates 30d</div>
-              {loading ? (
-                <Skeleton className="h-9 w-28 mt-2" />
-              ) : data?.flowsDisponiveis && data.resgates30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">{formatBrlCompact(data.resgates30d)}</p>
-              ) : (
-                <p className="text-2xl font-semibold mt-2">
-                  <FlowPlaceholder />
-                </p>
-              )}
-            </CardHeader>
-          </Card>
-
-          <Card className="border-border/80 bg-card/50">
-            <CardHeader className="pb-2 space-y-0">
-              <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Dividendos 30d</div>
-              {loading ? (
-                <Skeleton className="h-9 w-28 mt-2" />
-              ) : data?.flowsDisponiveis && data.dividendos30d != null ? (
-                <p className="text-2xl font-semibold tabular-nums text-foreground mt-2">
-                  {formatBrlCompact(data.dividendos30d)}
-                </p>
-              ) : (
-                <p className="text-2xl font-semibold mt-2">
-                  <FlowPlaceholder />
                 </p>
               )}
             </CardHeader>

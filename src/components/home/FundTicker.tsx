@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatBrl, formatCotaBrl, formatPercentPoints } from "@/lib/formatBr";
+import { formatBrl, formatCotaBrl, formatPercentPoints, isNeutralPercent } from "@/lib/formatBr";
 import { cn } from "@/lib/utils";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
@@ -10,8 +10,9 @@ function DayChange({ value }: { value: number | null }) {
   if (value == null || Number.isNaN(value)) {
     return <span className="text-muted-foreground/90 tabular-nums text-xs font-medium">—</span>;
   }
-  const up = value > 0;
-  const down = value < 0;
+  const neutral = isNeutralPercent(value, 2);
+  const up = !neutral && value > 0;
+  const down = !neutral && value < 0;
   const Icon = up ? ArrowUpRight : down ? ArrowDownRight : Minus;
   return (
     <span
