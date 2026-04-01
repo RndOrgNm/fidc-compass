@@ -16,13 +16,14 @@ function SummarySlide({
   asOfLabel: string;
 }) {
   const name = fund.apelido ?? fund.nome;
-  const badgePct = fund.variacaoPct ?? fund.variacaoDiaPct ?? null;
+  const badgePct = fund.variacaoDiaPct ?? null;
   const badgeNeutral = badgePct != null && !Number.isNaN(badgePct) && isNeutralPercent(badgePct, 1);
   const up = badgePct != null && !Number.isNaN(badgePct) && !badgeNeutral && badgePct > 0;
   const down = badgePct != null && !Number.isNaN(badgePct) && !badgeNeutral && badgePct < 0;
 
-  const plDiaPct = fund.variacaoDiaPct;
-  const plDiaNeutral = plDiaPct != null && !Number.isNaN(plDiaPct) && isNeutralPercent(plDiaPct, 2);
+  const pl30dPct = fund.variacaoPct;
+  const pl30dNeutral =
+    pl30dPct != null && !Number.isNaN(pl30dPct) && isNeutralPercent(pl30dPct, 2);
 
   const cotaPct = fund.variacaoCotaDiaPct;
   const cotaNeutral = cotaPct != null && !Number.isNaN(cotaPct) && isNeutralPercent(cotaPct, 2);
@@ -65,17 +66,17 @@ function SummarySlide({
             {formatBrlCompact(fund.plAtual)}
           </p>
           <div className="space-y-0.5">
-            <p className="text-xs text-muted-foreground">PL (dia)</p>
-            {plDiaPct != null && !Number.isNaN(plDiaPct) ? (
+            <p className="text-xs text-muted-foreground">PL 30D</p>
+            {pl30dPct != null && !Number.isNaN(pl30dPct) ? (
               <span
                 className={cn(
                   "inline-flex text-sm font-semibold tabular-nums",
-                  !plDiaNeutral && plDiaPct > 0 && "text-primary",
-                  !plDiaNeutral && plDiaPct < 0 && "text-destructive",
-                  plDiaNeutral && "text-muted-foreground",
+                  !pl30dNeutral && pl30dPct > 0 && "text-primary",
+                  !pl30dNeutral && pl30dPct < 0 && "text-destructive",
+                  pl30dNeutral && "text-muted-foreground",
                 )}
               >
-                {formatPercentPoints(plDiaPct, 2)}
+                {formatPercentPoints(pl30dPct, 2)}
               </span>
             ) : (
               <span className="text-sm text-muted-foreground">—</span>
