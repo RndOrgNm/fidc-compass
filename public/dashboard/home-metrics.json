@@ -1,10 +1,10 @@
 {
   "asOf": "2026-03-31",
   "lookbackDays": 30,
-  "plSobGestao": 882768932.97,
-  "fundosAtivos": 15,
-  "variacaoPortfolioPct": -2.1896236515808383,
-  "variacaoPortfolioDiaPct": -2.8972020445586453,
+  "plSobGestao": 904527976.81,
+  "fundosAtivos": 16,
+  "variacaoPortfolioPct": 0.22126801835117346,
+  "variacaoPortfolioDiaPct": -0.500630684520575,
   "captacaoLiquida30d": null,
   "aportes30d": null,
   "resgates30d": null,
@@ -96,32 +96,46 @@
       "variacaoCotaDiaPct": -0.0009061454445514957
     },
     {
+      "idCarteira": 62296221,
+      "nome": "FII COTA REAL 77 RL",
+      "apelido": "FII COTA REAL 77 RL",
+      "plAtual": 21776490.57,
+      "plReferencia": 22698056.9,
+      "referencia30dCompleta": false,
+      "variacaoPct": -4.060111110215775,
+      "plDiaAnterior": 21786685.22,
+      "variacaoDiaPct": -0.04679302930690853,
+      "cotaAtual": 643319.87314509,
+      "cotaDiaAnterior": 643621.04292834,
+      "variacaoCotaDiaPct": -0.046793029308025806
+    },
+    {
       "idCarteira": 58019792,
       "nome": "FII COTA REAL 7",
       "apelido": "FII COTA REAL 7",
-      "plAtual": 21670699.43,
+      "plAtual": 21590386.39,
       "plReferencia": 21685035.81,
       "referencia30dCompleta": false,
-      "variacaoPct": -0.06611185762205554,
-      "plDiaAnterior": 21721878.47,
-      "variacaoDiaPct": -0.23561056227564425,
-      "cotaAtual": 14514.86900871,
-      "cotaDiaAnterior": 14549.14833891,
-      "variacaoCotaDiaPct": -0.23561056222324042
+      "variacaoPct": -0.4364734318600974,
+      "plDiaAnterior": 21630556.12,
+      "variacaoDiaPct": -0.18570826277951674,
+      "cotaAtual": 14461.07594776,
+      "cotaDiaAnterior": 14487.98132619,
+      "variacaoCotaDiaPct": -0.18570826276095814
     },
     {
       "idCarteira": 58019791,
       "nome": "FII COTA REAL 7 - MEZ",
       "apelido": "FII COTA REAL 7 - MEZ",
-      "plAtual": 17717608.18,
+      "plAtual": 17780474.49,
       "plReferencia": 16944651.43,
       "referencia30dCompleta": false,
-      "variacaoPct": 4.561656244114311,
-      "plDiaAnterior": 17701926.28,
-      "variacaoDiaPct": 0.08858866403548546,
-      "cotaAtual": 10903.64448853,
-      "cotaDiaAnterior": 10893.9936451,
-      "variacaoCotaDiaPct": 0.08858866403269938
+      "variacaoPct": 4.9326660005540095,
+      "plDiaAnterior": 17764736.94,
+      "variacaoDiaPct": 0.0885887027381843,
+      "cotaAtual": 10942.33322617,
+      "cotaDiaAnterior": 10932.64813501,
+      "variacaoCotaDiaPct": 0.08858870275889148
     },
     {
       "idCarteira": 5801971,
@@ -248,20 +262,6 @@
       "cotaAtual": 1.16205854,
       "cotaDiaAnterior": 1.15872468,
       "variacaoCotaDiaPct": 0.2877180453254981
-    },
-    {
-      "idCarteira": 62296221,
-      "nome": "FII COTA REAL 77 RL",
-      "apelido": "FII COTA REAL 77 RL",
-      "plAtual": 0.0,
-      "plReferencia": 22698056.9,
-      "referencia30dCompleta": false,
-      "variacaoPct": -100.0,
-      "plDiaAnterior": 21786685.22,
-      "variacaoDiaPct": -100.0,
-      "cotaAtual": 0.0,
-      "cotaDiaAnterior": 643621.04292834,
-      "variacaoCotaDiaPct": -100.0
     }
   ]
 }
