@@ -5,6 +5,8 @@ const PL_SLIDES = [
     id: "evolution",
     file: "pl-evolution.json",
     caption: "Evolução do PL por dia",
+    filterable: true,
+    enableTotalGeral: true,
   },
   {
     id: "matrix",
@@ -15,14 +17,16 @@ const PL_SLIDES = [
 
 const COTA_SLIDES = [
   {
-    id: "matrix",
-    file: "cota-matrix.json",
-    caption: "Cota por fundo e dia (tabela)",
-  },
-  {
     id: "lines",
     file: "cota-lines.json",
     caption: "Evolução da cota por dia",
+    filterable: true,
+    enableTotalGeral: false,
+  },
+  {
+    id: "matrix",
+    file: "cota-matrix.json",
+    caption: "Cota por fundo e dia (tabela)",
   },
 ] as const;
 

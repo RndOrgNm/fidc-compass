@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 import { PlotlyWebFigure } from "@/components/plotly/PlotlyWebFigure";
+import { PlotlyFundFilterFigure } from "@/components/plotly/PlotlyFundFilterFigure";
 
 export type PlotlyCarouselSlide = {
   id: string;
@@ -9,6 +10,10 @@ export type PlotlyCarouselSlide = {
   file: string;
   /** Short label shown above the chart */
   caption: string;
+  /** When true renders a fund-selector dropdown instead of showing all traces */
+  filterable?: boolean;
+  /** Only relevant when filterable=true: add a «Total Geral» (sum) option as the default */
+  enableTotalGeral?: boolean;
 };
 
 function CarouselPagination({
@@ -109,7 +114,14 @@ export function PlotlyChartCarousel({
               <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
                 <p className="mb-3 text-sm font-medium text-muted-foreground">{s.caption}</p>
                 <div className="overflow-x-auto">
-                  <PlotlyWebFigure variant="full" url={`/plotly/${s.file}`} />
+                  {s.filterable ? (
+                    <PlotlyFundFilterFigure
+                      url={`/plotly/${s.file}`}
+                      enableTotalGeral={s.enableTotalGeral}
+                    />
+                  ) : (
+                    <PlotlyWebFigure variant="full" url={`/plotly/${s.file}`} />
+                  )}
                 </div>
               </div>
             </CarouselItem>
