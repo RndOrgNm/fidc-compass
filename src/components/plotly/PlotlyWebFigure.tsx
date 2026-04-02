@@ -56,19 +56,32 @@ export function PlotlyWebFigure(props: PlotlyWebFigureProps) {
     );
   }
 
+  const layoutHeight =
+    typeof payload?.layout?.height === "number" && payload.layout.height > 0
+      ? payload.layout.height
+      : 540;
+
   if (!payload) {
     return <div className="h-[540px] animate-pulse rounded-md bg-muted" aria-hidden />;
   }
 
   return (
-    <Suspense fallback={<div className="h-[540px] animate-pulse rounded-md bg-muted" />}>
+    <Suspense
+      fallback={
+        <div
+          className="animate-pulse rounded-md bg-muted"
+          style={{ height: layoutHeight }}
+          aria-hidden
+        />
+      }
+    >
       <Plot
         data={payload.data}
         layout={{
           ...payload.layout,
           autosize: true,
         }}
-        style={{ width: "100%", height: 540 }}
+        style={{ width: "100%", height: layoutHeight }}
         useResizeHandler
         config={{ responsive: true, displayModeBar: true }}
       />

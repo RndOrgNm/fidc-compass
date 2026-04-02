@@ -5,7 +5,6 @@ const CHARTS = [
   { id: "1.0b-m", file: "cota-matrix.json" },
   { id: "1.0b-l", file: "cota-lines.json" },
   { id: "1.0c-m", file: "pl-moeda-matrix.json" },
-  { id: "1.0c-l", file: "pl-moeda-lines.json" },
 ] as const;
 
 /** Painel de gráficos Plotly exportados a partir do pipeline `data_fidc` (Parquet → JSON estático). */
@@ -21,16 +20,6 @@ export default function Graficos() {
           </div>
         </section>
       ))}
-
-      <section className="space-y-3">
-        <div className="overflow-x-auto">
-          <PlotlyWebFigure
-            variant="split"
-            layoutUrl="/plotly/pl-evolution.layout.json"
-            dataUrl="/plotly/pl-evolution.data.json"
-          />
-        </div>
-      </section>
     </div>
   );
 }
