@@ -1,25 +1,48 @@
-import { PlotlyWebFigure } from "@/components/plotly/PlotlyWebFigure";
+import { PlotlyChartCarousel } from "@/components/plotly/PlotlyChartCarousel";
 
-const CHARTS = [
-  { id: "1.0", file: "pl-evolution.json" },
-  { id: "1.0b-m", file: "cota-matrix.json" },
-  { id: "1.0b-l", file: "cota-lines.json" },
-  { id: "1.0c-m", file: "pl-moeda-matrix.json" },
+const PL_SLIDES = [
+  {
+    id: "evolution",
+    file: "pl-evolution.json",
+    caption: "Evolução do PL por dia",
+  },
+  {
+    id: "matrix",
+    file: "pl-moeda-matrix.json",
+    caption: "PL por fundo e dia (tabela)",
+  },
+] as const;
+
+const COTA_SLIDES = [
+  {
+    id: "matrix",
+    file: "cota-matrix.json",
+    caption: "Cota por fundo e dia (tabela)",
+  },
+  {
+    id: "lines",
+    file: "cota-lines.json",
+    caption: "Evolução da cota por dia",
+  },
 ] as const;
 
 /** Painel de gráficos Plotly exportados a partir do pipeline `data_fidc` (Parquet → JSON estático). */
 export default function Graficos() {
   return (
-    <div className="space-y-10 max-w-6xl mx-auto pb-8">
+    <div className="mx-auto max-w-6xl space-y-10 pb-8">
       <h1 className="text-2xl font-semibold text-foreground">Gráficos</h1>
 
-      {CHARTS.map((c) => (
-        <section key={c.id} className="space-y-3">
-          <div className="overflow-x-auto">
-            <PlotlyWebFigure variant="full" url={`/plotly/${c.file}`} />
-          </div>
-        </section>
-      ))}
+      <PlotlyChartCarousel
+        sectionTitle="PL"
+        ariaLabel="Gráficos de patrimônio líquido"
+        slides={[...PL_SLIDES]}
+      />
+
+      <PlotlyChartCarousel
+        sectionTitle="Cota"
+        ariaLabel="Gráficos de cota"
+        slides={[...COTA_SLIDES]}
+      />
     </div>
   );
 }
