@@ -25,11 +25,67 @@ type RawTrace = {
 /**
  * Plotly line chart with a fund-selector dropdown.
  *
- * - When *enableTotalGeral* is true (PL charts): default = "Total Geral", which sums all fund
- *   traces per date so the Y-axis makes sense in absolute terms.
+ * - When *enableTotalGeral* is true (PL charts): default = "Total Geral", built with the same logic
+ *   as Home **PL sob gestão**: for each date `t`, sum each fund’s **last** PL on or before `t`
+ *   (carry-forward / as-of). On the latest date this matches `plSobGestao` (values in R$ M in JSON).
  * - Otherwise (Cota charts): defaults to the first fund alphabetically. "Todos os fundos" is also
  *   available but shows all traces on one axis (same as original).
  */
+
+/** Sorted (x,y) points for one trace. */
+function buildSortedPairs(tr: RawTrace): { x: string; y: number }[] {
+  const pairs: { x: string; y: number }[] = [];
+  const xs = tr.x ?? [];
+  const ys = tr.y ?? [];
+  for (let i = 0; i < xs.length; i++) {
+    const x = xs[i];
+    const y = ys[i];
+    if (x != null && y != null && !Number.isNaN(y)) {
+      pairs.push({ x, y: y as number });
+    }
+  }
+  pairs.sort((a, b) => (a.x < b.x ? -1 : a.x > b.x ? 1 : 0));
+  return pairs;
+}
+
+/** Last fund PL at or before date `t` (same idea as “último PL conhecido” até a data). */
+function lastYOnOrBefore(pairs: { x: string; y: number }[], t: string): number | null {
+  let last: number | null = null;
+  for (const p of pairs) {
+    if (p.x <= t) last = p.y;
+    else break;
+  }
+  return last;
+}
+
+/**
+ * Total Geral series aligned with `compute_home_dashboard_payload` **plSobGestao** on the last day:
+ * at each date, sum over funds of last PL ≤ that date (R$ M in exported JSON).
+ */
+function totalGeralLikePlSobGestao(traces: RawTrace[]): { x: string[]; y: (number | null)[] } {
+  const perFund = traces.map(buildSortedPairs);
+  const dateSet = new Set<string>();
+  for (const pairs of perFund) {
+    for (const p of pairs) {
+      dateSet.add(p.x);
+    }
+  }
+  const sortedDates = Array.from(dateSet).sort();
+  const y = sortedDates.map((t) => {
+    let sum = 0;
+    let any = false;
+    for (const pairs of perFund) {
+      const v = lastYOnOrBefore(pairs, t);
+      if (v != null) {
+        sum += v;
+        any = true;
+      }
+    }
+    return any ? sum : null;
+  });
+  return { x: sortedDates, y };
+}
+
 export function PlotlyFundFilterFigure({
   url,
   enableTotalGeral = false,
@@ -87,21 +143,8 @@ export function PlotlyFundFilterFigure({
       ];
     }
 
-    // Total Geral: sum all y values per date
-    const dateMap = new Map<string, number>();
-    for (const tr of traces) {
-      const xs = tr.x ?? [];
-      const ys = tr.y ?? [];
-      for (let i = 0; i < xs.length; i++) {
-        const x = xs[i];
-        const y = ys[i];
-        if (x != null && y != null && !Number.isNaN(y)) {
-          dateMap.set(x, (dateMap.get(x) ?? 0) + y);
-        }
-      }
-    }
-    const sortedDates = Array.from(dateMap.keys()).sort();
-    const sumY = sortedDates.map((d) => dateMap.get(d) ?? null);
+    // Total Geral: same logic as Home plSobGestao (as-of sum per fund, then sum funds)
+    const { x: sortedDates, y: sumY } = totalGeralLikePlSobGestao(traces);
 
     // Clone the first trace's shape for consistent styling
     const base = traces[0];
