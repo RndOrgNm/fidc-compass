@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
-import { PlotlyWebFigure } from "@/components/plotly/PlotlyWebFigure";
-import { PlotlyFundFilterFigure } from "@/components/plotly/PlotlyFundFilterFigure";
+import { PlotlyFundFilterFigure } from "./PlotlyFundFilterFigure";
+import { PlotlyWebFigure } from "./PlotlyWebFigure";
 
 export type PlotlyCarouselSlide = {
   id: string;

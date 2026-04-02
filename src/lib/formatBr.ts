@@ -33,9 +33,9 @@ export function formatBrl(value: number | null | undefined, fractionDigits = 0):
 }
 
 /**
- * Abbreviated BRL for large amounts on dashboards: `R$ 842M` or `R$ 842,5M`, `R$ 1,2B`.
- * Uses one decimal when the value in millions/billions is not a whole number after rounding to 1 decimal place.
- * Values below 1 million use full {@link formatBrl}.
+ * Abbreviated BRL for large amounts on dashboards: `R$ 842M`, `R$ 147,86M`, `R$ 1,23B`.
+ * Values in millions/billions round to **two** decimal places in the scaled unit (e.g. 147,858M → 147,86M).
+ * Whole millions/billions omit decimals (`R$ 100M`). Values below 1 million use full {@link formatBrl}.
  */
 export function formatBrlCompact(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -45,11 +45,11 @@ export function formatBrlCompact(value: number | null | undefined): string {
 
   const formatScaled = (n: number, divisor: number, suffix: string): string => {
     const scaled = n / divisor;
-    const rounded = Math.round(scaled * 10) / 10;
+    const rounded = Math.round(scaled * 100) / 100;
     const isWhole = Math.abs(rounded - Math.round(rounded)) < 1e-9;
     const numPart = new Intl.NumberFormat(br, {
-      minimumFractionDigits: isWhole ? 0 : 1,
-      maximumFractionDigits: 1,
+      minimumFractionDigits: isWhole ? 0 : 2,
+      maximumFractionDigits: 2,
     }).format(rounded);
     const body = `R$ ${numPart}${suffix}`;
     return negative ? `-${body}` : body;

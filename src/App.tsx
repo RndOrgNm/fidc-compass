@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "./components/AppLayout";
+import { AppLayout } from "@/components/layout";
 import { ChatProvider } from "./contexts/ChatContext";
 import Home from "./pages/Home";
 import Pipeline from "./pages/Pipeline";

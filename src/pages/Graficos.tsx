@@ -1,4 +1,4 @@
-import { PlotlyChartCarousel } from "@/components/plotly/PlotlyChartCarousel";
+import { PlotlyChartCarousel } from "@/components/graficos";
 
 const PL_SLIDES = [
   {
