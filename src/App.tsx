@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { ChatProvider } from "./contexts/ChatContext";
 import Home from "./pages/Home";
-import Pipeline from "./pages/Pipeline";
+// import Pipeline from "./pages/Pipeline"; // hidden for now — re-enable with /pipeline routes below
 import Agent from "./pages/Agent";
 // Auth temporarily disabled
 // import Login from "./pages/Login";
@@ -33,11 +33,14 @@ const App = () => (
               */}
 
               <Route path="/" element={<AppLayout><Home /></AppLayout>} />
+              {/* Pipeline — hidden for now; send bookmarks to Home (re-enable routes + Pipeline import)
               <Route path="/pipeline" element={<AppLayout><Pipeline /></AppLayout>} />
               <Route path="/pipeline/cedentes" element={<AppLayout><Pipeline /></AppLayout>} />
               <Route path="/pipeline/cedentes/:cedenteId" element={<AppLayout><Pipeline /></AppLayout>} />
               <Route path="/pipeline/recebiveis" element={<AppLayout><Pipeline /></AppLayout>} />
               <Route path="/pipeline/recebiveis/:workflowId" element={<AppLayout><Pipeline /></AppLayout>} />
+              */}
+              <Route path="/pipeline/*" element={<Navigate to="/" replace />} />
               <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/graficos" element={<AppLayout><Graficos /></AppLayout>} />

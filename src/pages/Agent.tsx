@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, ChevronDown, RefreshCw } from "lucide-react";
+import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,13 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// DropdownMenu — used in commented Funds Agent selector block
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuRadioGroup,
+//   DropdownMenuRadioItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
@@ -78,17 +79,34 @@ export default function Agent() {
     }
   }, [location.state, resetToInitialState]);
 
+  // Force CVM when Funds Agent is hidden (no backend change — UI-only)
+  useEffect(() => {
+    if (selectedAgent === "funds") {
+      setSelectedAgent("cvm");
+    }
+  }, [selectedAgent, setSelectedAgent]);
+
   // URL → state: agent and conversationId from URL
   useEffect(() => {
     const agentFromUrl = searchParams.get("agent");
-    if (agentFromUrl === "funds" || agentFromUrl === "cvm") {
-      if (agentFromUrl !== selectedAgent) {
-        setSelectedAgent(agentFromUrl);
+    // Funds Agent hidden — normalize ?agent=funds to CVM
+    if (agentFromUrl === "funds") {
+      if (selectedAgent !== "cvm") setSelectedAgent("cvm");
+      setSearchParams((p) => {
+        const next = new URLSearchParams(p);
+        next.set("agent", "cvm");
+        return next;
+      }, { replace: true });
+      return;
+    }
+    if (agentFromUrl === "cvm") {
+      if (selectedAgent !== "cvm") {
+        setSelectedAgent("cvm");
       }
     } else if (selectedAgent) {
       setSearchParams((p) => {
         const next = new URLSearchParams(p);
-        next.set("agent", selectedAgent);
+        next.set("agent", selectedAgent === "funds" ? "cvm" : selectedAgent);
         return next;
       }, { replace: true });
     }
@@ -436,6 +454,11 @@ export default function Agent() {
         </Button>
 
         <div className="ml-auto">
+          <Button variant="outline" size="sm" className="pointer-events-none" aria-label="CVM Agent">
+            <UserCog className="h-4 w-4 mr-2" />
+            CVM Agent
+          </Button>
+          {/* Funds Agent dropdown hidden for now — restore when needed:
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -458,6 +481,7 @@ export default function Agent() {
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          */}
         </div>
       </div>
 

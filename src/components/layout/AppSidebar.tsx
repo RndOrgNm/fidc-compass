@@ -1,4 +1,5 @@
-import { Home, Bot, TrendingUp, GitBranch, LineChart } from "lucide-react";
+import { Home, Bot, TrendingUp, LineChart } from "lucide-react";
+// import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -16,7 +17,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
-  { title: "Pipeline", url: "/pipeline", icon: GitBranch },
+  // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Chatbot", url: "/agent", icon: Bot },
   { title: "Gráficos", url: "/graficos", icon: LineChart },
 ];
@@ -48,7 +49,10 @@ export function AppSidebar() {
           <TrendingUp className="h-8 w-8 text-primary shrink-0" />
           {!collapsed && (
             <div className="min-w-0 flex flex-col justify-center overflow-visible">
-              <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">FIDC Manager</h1>
+              <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">
+                {/* FIDC Manager */}
+                GIAA Investimentos
+              </h1>
               <p className="text-xs text-sidebar-foreground/70 leading-normal mt-0.5">Gestão de Fundos</p>
             </div>
           )}
@@ -62,7 +66,7 @@ export function AppSidebar() {
               {menuItems.map((item) => {
                 const isActive =
                   item.url === "/" ? location.pathname === "/" :
-                  item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
+                  // item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/graficos" ? location.pathname.startsWith("/graficos") :
                   location.pathname === item.url;
