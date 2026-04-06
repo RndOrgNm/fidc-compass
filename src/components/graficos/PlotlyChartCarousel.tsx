@@ -1,21 +1,9 @@
 import { useEffect, useState } from "react";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
-import { PlotlyFundFilterFigure } from "./PlotlyFundFilterFigure";
-import { PlotlyWebFigure } from "./PlotlyWebFigure";
-import { TableExportButtons } from "./TableExportButtons";
+import { PlotlySlideCard, type PlotlyCarouselSlide } from "./PlotlySlideCard";
 
-export type PlotlyCarouselSlide = {
-  id: string;
-  /** File under `/plotly/*.json` */
-  file: string;
-  /** Short label shown above the chart */
-  caption: string;
-  /** When true renders a fund-selector dropdown instead of showing all traces */
-  filterable?: boolean;
-  /** When true renders Excel/PDF export buttons above the chart */
-  exportable?: boolean;
-};
+export type { PlotlyCarouselSlide };
 
 function CarouselPagination({
   pageCount,
@@ -112,25 +100,7 @@ export function PlotlyChartCarousel({
         <CarouselContent>
           {slides.map((s) => (
             <CarouselItem key={s.id} className="basis-full">
-              <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-muted-foreground">{s.caption}</p>
-                  {s.exportable && (
-                    <TableExportButtons
-                      url={`/plotly/${s.file}`}
-                      filename={s.id}
-                      title={s.caption}
-                    />
-                  )}
-                </div>
-                <div className="overflow-x-auto">
-                  {s.filterable ? (
-                    <PlotlyFundFilterFigure url={`/plotly/${s.file}`} />
-                  ) : (
-                    <PlotlyWebFigure variant="full" url={`/plotly/${s.file}`} />
-                  )}
-                </div>
-              </div>
+              <PlotlySlideCard slide={s} />
             </CarouselItem>
           ))}
         </CarouselContent>

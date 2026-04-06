@@ -1,0 +1,2218 @@
+{
+  "data": [
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Consultoria - Ref Mar/2026 - Ja Ocorreu - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Gestão - Ref Dez/2025 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Gestão - Ref Fev/2026 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Gestão - Ref Jan/2026 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)/VENDA DA PRV PARTICIPAÇÕES - ANT ADM - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo",
+        "Fundo/Multimercado",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados/VILA SERRA GRANDE 5",
+        "Outros Ativos/Fundos Estruturados/RECANTO DOS BURITIS",
+        "Outros Ativos/Fundos Estruturados/POLO EMPRESARIAL GOIAS ETAPA 7",
+        "Outros Ativos/Fundos Estruturados/JD. FRANÇA N06 / 33",
+        "Outros Ativos",
+        "Outros Ativos/Fundos Estruturados/IMOVEL 48 - CAPELA",
+        "Outros Ativos/Fundos Estruturados/GLEBA 01 / ITACARÉ-BA",
+        "Outros Ativos/Fundos Estruturados/FRANÇA LOTE 07",
+        "Outros Ativos/Fundos Estruturados/FAZENDA LAGO AZUL GO",
+        "Outros Ativos/Fundos Estruturados/AVENIDA DAS ACÁCIAS-GO",
+        "Outros Ativos/Fundos Estruturados/ALPHA MALL SALA 44",
+        "Outros Ativos/Fundos Estruturados/ALPHA MALL ALPHAVILLE",
+        "Outros Ativos/Fundos Estruturados/LT 5 QD B4 ALPHA FLA",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "Pagamento de Taxa Consultoria - Ref Mar/2026 - Ja Ocorreu - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Pagamento de Taxa Gestão - Ref Dez/2025 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Pagamento de Taxa Gestão - Ref Fev/2026 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Pagamento de Taxa Gestão - Ref Jan/2026 - A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "VENDA DA PRV PARTICIPAÇÕES - ANT ADM - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR",
+        "(sem estratégia)",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo",
+        "Multimercado",
+        "Fundos Estruturados",
+        "VILA SERRA GRANDE 5",
+        "RECANTO DOS BURITIS",
+        "POLO EMPRESARIAL GOIAS ETAPA 7",
+        "JD. FRANÇA N06 / 33",
+        "Outros Ativos",
+        "IMOVEL 48 - CAPELA",
+        "GLEBA 01 / ITACARÉ-BA",
+        "FRANÇA LOTE 07",
+        "FAZENDA LAGO AZUL GO",
+        "AVENIDA DAS ACÁCIAS-GO",
+        "ALPHA MALL SALA 44",
+        "ALPHA MALL ALPHAVILLE",
+        "LT 5 QD B4 ALPHA FLA",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981"
+        ]
+      },
+      "name": "ABEL 33 FII RI",
+      "parents": [
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "",
+        "Conta Corrente - CPR",
+        "Fundo/Multimercado",
+        "",
+        "Fundo",
+        "Outros Ativos",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "cT0K12M7zEDD9ShcD062QClcj8K1A7RAFK5H4TpJtkAAAAAALKpaQR+F63FwyFpBH4XrcXDIWkH2KFyP0g3pQPYoXI/SDelA9ihcj9IN6UAfhev17UOhQQAAAAAyUIRBAAAAAOB3QUHsUbgeJ1ZsQQAAAAAUczdBH4Xr9e1DoUEAAAAAvPFfQQAAAIA0VGVBAAAAAFJeNkEAAACAkJqDQQAAAAA6kFdBAAAAABQTQEEAAAAAFBNAQQAAAADQBmVB37ycRgDsoEDfvJxGAOygQN+8nEYA7KBA"
+      },
+      "visible": true,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Conta Corrente - CPR/(sem estratégia)/Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Administração Ref Set/25 - Pago A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)/Pagamento de Taxa Gestão Ref Fev/26 - A MAIOR - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Fundos Estruturados/AFAC GOIANA AGRONEGOCIOS 24/01/2025",
+        "Outros Ativos/Fundos Estruturados/GOIANA AGRONEGOCIOS ADMINISTRACAO E PARTICIPACOES",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "Pagamento de Taxa Administração Ref Set/25 - Pago A Maior - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "Pagamento de Taxa Gestão Ref Fev/26 - A MAIOR - DtLancto - 31/03/2026 - DtVencto - 31/03/2026",
+        "(sem estratégia)",
+        "Conta Corrente - CPR",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "AFAC GOIANA AGRONEGOCIOS 24/01/2025",
+        "GOIANA AGRONEGOCIOS ADMINISTRACAO E PARTICIPACOES",
+        "Fundos Estruturados",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981"
+        ]
+      },
+      "name": "FIAGRO IMOBILIARIO ID GOIANA",
+      "parents": [
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "",
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "uB6F61ELl0AK16NwPX7CQOxRuB4FurNA16NwPao8z0DXo3A9qjzPQBWuR+GsAQxBFa5H4awBDEEVrkfhrAEMQQAAAAAARMZA7FG4dgB8mUHsUbiWsnyZQexRuJayfJlB+0F6aVcYaUD7QXppVxhpQPtBemlXGGlA"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados/COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 100,00% CDI + 6,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio",
+        "COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 100,00% CDI + 6,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569"
+        ]
+      },
+      "name": "FIDC MINHA CASA MINHA VIDA NP - SR",
+      "parents": [
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "ynv5MA9WkEDKe/kwD1aQQMp7+TAPVpBAkML1qIJzR0GQwvWognNHQZDC9aiCc0dB"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Fundos Estruturados/ORIGIN DC A VENCER",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "ORIGIN DC A VENCER",
+        "Fundos Estruturados",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78"
+        ]
+      },
+      "name": "FIDC ORIGIN RL",
+      "parents": [
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "7FG4HmWCxUDsUbgeZYLFQOxRuB5lgsVA4XoUNp9/YUHhehQ2n39hQeF6FDaff2FBuoQATExwkkC6hABMTHCSQLqEAExMcJJA"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Fundos Estruturados/127 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "Outros Ativos/Fundos Estruturados/154 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "Outros Ativos/Fundos Estruturados/164 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "127 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "154 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "164 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "Fundos Estruturados",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78"
+        ]
+      },
+      "name": "FII BRASIL INCORPORAÇÃO RL",
+      "parents": [
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "H4XrUSvuMEEfhetRK+4wQR+F61Er7jBBpHA9MkeWZ0EAAABANFpcQaRwPdraHlRBexSuX2fpd0F7FK5fZ+l3QawjDNioVFlArCMM2KhUWUCsIwzYqFRZQA=="
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Conta Corrente - CPR/(sem estratégia)/Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Ações/Imóvel Matrícula 17.385 - Itajaí/SC",
+        "Outros Ativos/Ações",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "(sem estratégia)",
+        "Conta Corrente - CPR",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "Imóvel Matrícula 17.385 - Itajaí/SC",
+        "Ações",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981"
+        ]
+      },
+      "name": "FII COTA REAL 7",
+      "parents": [
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "",
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Ações",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "UrgeheszgEBSuB6F6zOAQFK4HoXrM4BApHA9CmsB+kCkcD0KawH6QKRwPQprAfpAAAAAoD6hkUEAAACgPqGRQQAAAKA+oZFBNnskHUMjzEA2eyQdQyPMQDZ7JB1DI8xA"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados/COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 -> Tx = 25,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio",
+        "COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 -> Tx = 25,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569"
+        ]
+      },
+      "name": "FII COTA REAL 7 - MEZ",
+      "parents": [
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "BmiVT91oxUAGaJVP3WjFQAZolU/daMVAKVyPcqH8cEEpXI9yofxwQSlcj3Kh/HBB"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados/COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio",
+        "COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569"
+        ]
+      },
+      "name": "FII COTA REAL 7 - SR",
+      "parents": [
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "7T1SO2h2k0DtPVI7aHaTQO09UjtodpNASOF6nCeTb0FI4XqcJ5NvQUjhepwnk29B"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados/COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio",
+        "COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569"
+        ]
+      },
+      "name": "FII COTA REAL 77 RL - SR",
+      "parents": [
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "40zdlKwMxUDjTN2UrAzFQONM3ZSsDMVAPQrXo+RQVEE9Ctej5FBUQT0K16PkUFRB"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Fundos Estruturados/ANGRA PARTNERS DESENVOLVIMENTO IMOBILIÁRIO SPE",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados/Nota Comercial Angra -  Vcto: 30-01-2036 -> 100% CDI + 2,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "ANGRA PARTNERS DESENVOLVIMENTO IMOBILIÁRIO SPE",
+        "Fundos Estruturados",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio",
+        "Nota Comercial Angra -  Vcto: 30-01-2036 -> 100% CDI + 2,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981"
+        ]
+      },
+      "name": "FII ID ANGRA PARTNERS",
+      "parents": [
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        "",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "pHA9CiO99ECkcD0KI730QKRwPQojvfRAw/UofP9JSEHD9Sh8/0lIQcP1KHz/SUhBpfHI7rdWzUCl8cjut1bNQKXxyO63Vs1AAAAAgNFQJ0EAAACA0VAnQQAAAIDRUCdB"
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Conta Corrente - CPR"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ],
+        [
+          "Renda Fixa"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Conta Corrente - CPR/(sem estratégia)/Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo",
+        "Fundo/Multimercado",
+        "Outros Ativos/Fundos Estruturados/GVT 04",
+        "Outros Ativos/Fundos Estruturados/SCA 02",
+        "Outros Ativos/Fundos Estruturados/SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
+        "Outros Ativos/Fundos Estruturados/SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
+        "Outros Ativos",
+        "Outros Ativos/Fundos Estruturados",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio",
+        "Patrimonio/(sem estratégia)",
+        "Renda Fixa/Fundos Estruturados/TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%",
+        "Renda Fixa/Fundos Estruturados/NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
+        "Renda Fixa/Fundos Estruturados/AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL -  Vcto: 27-06-2035 -> 100,00% IPCA + 3,00%",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "labels": [
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVencto - 02/04/2026",
+        "(sem estratégia)",
+        "Conta Corrente - CPR",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo",
+        "Multimercado",
+        "GVT 04",
+        "SCA 02",
+        "SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
+        "SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
+        "Outros Ativos",
+        "Fundos Estruturados",
+        "0000",
+        "Patrimonio",
+        "(sem estratégia)",
+        "TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%",
+        "NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
+        "AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL -  Vcto: 27-06-2035 -> 100,00% IPCA + 3,00%",
+        "Fundos Estruturados",
+        "Renda Fixa"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#475569"
+        ]
+      },
+      "name": "FII OMEGA",
+      "parents": [
+        "Conta Corrente - CPR/(sem estratégia)",
+        "Conta Corrente - CPR",
+        "",
+        "Fundo/Multimercado",
+        "",
+        "Fundo",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "Outros Ativos/Fundos Estruturados",
+        "",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)",
+        "",
+        "Patrimonio",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa/Fundos Estruturados",
+        "Renda Fixa",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "KVyPwvXOjEApXI/C9c6MQClcj8L1zoxAH4XrUVh77kAfhetRWHvuQB+F61FYe+5AAAAAQCQ7hUEAAABwcQV4QXE9Cn8U+nZBH4Xrfyr8jEH2KNxtxG2iQfYo3G3EbaJB7cSwJfSfcEDtxLAl9J9wQO3EsCX0n3BAexSuJ8geZkHhehROqa1TQXsUrqFU2KJBmpmZbq7XpEGamZlurtekQQ=="
+      },
+      "visible": false,
+      "type": "treemap"
+    },
+    {
+      "branchvalues": "total",
+      "customdata": [
+        [
+          "Conta Corrente - Saldo"
+        ],
+        [
+          "Conta Corrente - Saldo"
+        ],
+        [
+          "Conta Corrente - Saldo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Fundo"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Outros Ativos"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ],
+        [
+          "Patrimonio"
+        ]
+      ],
+      "domain": {
+        "x": [
+          0.0,
+          1.0
+        ],
+        "y": [
+          0.0,
+          1.0
+        ]
+      },
+      "hovertemplate": "labels=%{label}<br>valor_liquido=%{value}<br>parent=%{parent}<br>id=%{id}<br>tipo=%{customdata[0]}<extra></extra>",
+      "ids": [
+        "Conta Corrente - Saldo/(sem estratégia)/3543 / 439 - Banco ID - 46963-",
+        "Conta Corrente - Saldo/(sem estratégia)",
+        "Conta Corrente - Saldo",
+        "Fundo/Multimercado/ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Fundo/Multimercado",
+        "Fundo",
+        "Outros Ativos/Imobiliário/FAZENDA NSA, ISA, BOM",
+        "Outros Ativos/Imobiliário/FAZENDA SERVPLAN",
+        "Outros Ativos/Imobiliário",
+        "Outros Ativos",
+        "Patrimonio/(sem estratégia)/0000",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio"
+      ],
+      "labels": [
+        "3543 / 439 - Banco ID - 46963-",
+        "(sem estratégia)",
+        "Conta Corrente - Saldo",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Multimercado",
+        "Fundo",
+        "FAZENDA NSA, ISA, BOM",
+        "FAZENDA SERVPLAN",
+        "Imobiliário",
+        "Outros Ativos",
+        "0000",
+        "(sem estratégia)",
+        "Patrimonio"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981",
+          "#475569",
+          "#475569",
+          "#475569",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#fc7c78",
+          "#10B981",
+          "#10B981",
+          "#10B981"
+        ]
+      },
+      "name": "SUPER FARMS FI NAS CADEIAS PRODUTIVAS AGROINDUSTRIAIS – FIAGRO – IMOBILIÁRIO",
+      "parents": [
+        "Conta Corrente - Saldo/(sem estratégia)",
+        "Conta Corrente - Saldo",
+        "",
+        "Fundo/Multimercado",
+        "Fundo",
+        "",
+        "Outros Ativos/Imobiliário",
+        "Outros Ativos/Imobiliário",
+        "Outros Ativos",
+        "",
+        "Patrimonio/(sem estratégia)",
+        "Patrimonio",
+        ""
+      ],
+      "values": {
+        "dtype": "f8",
+        "bdata": "hetRuJaj8ECF61G4lqPwQIXrUbiWo/BAhetRuB5n3UCF61G4HmfdQIXrUbgeZ91Aw/UoskuHhUEAAAAXdqSQQeJ6FPAbaJtB4noU8Btom0F43pILI2iiQHjekgsjaKJAeN6SCyNookA="
+      },
+      "visible": false,
+      "type": "treemap"
+    }
+  ],
+  "layout": {
+    "template": {
+      "data": {
+        "barpolar": [
+          {
+            "marker": {
+              "line": {
+                "color": "rgb(17,17,17)",
+                "width": 0.5
+              },
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "barpolar"
+          }
+        ],
+        "bar": [
+          {
+            "error_x": {
+              "color": "#f2f5fa"
+            },
+            "error_y": {
+              "color": "#f2f5fa"
+            },
+            "marker": {
+              "line": {
+                "color": "rgb(17,17,17)",
+                "width": 0.5
+              },
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "bar"
+          }
+        ],
+        "carpet": [
+          {
+            "aaxis": {
+              "endlinecolor": "#A2B1C6",
+              "gridcolor": "#506784",
+              "linecolor": "#506784",
+              "minorgridcolor": "#506784",
+              "startlinecolor": "#A2B1C6"
+            },
+            "baxis": {
+              "endlinecolor": "#A2B1C6",
+              "gridcolor": "#506784",
+              "linecolor": "#506784",
+              "minorgridcolor": "#506784",
+              "startlinecolor": "#A2B1C6"
+            },
+            "type": "carpet"
+          }
+        ],
+        "choropleth": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "choropleth"
+          }
+        ],
+        "contourcarpet": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "contourcarpet"
+          }
+        ],
+        "contour": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "contour"
+          }
+        ],
+        "heatmap": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "heatmap"
+          }
+        ],
+        "histogram2dcontour": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "histogram2dcontour"
+          }
+        ],
+        "histogram2d": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "histogram2d"
+          }
+        ],
+        "histogram": [
+          {
+            "marker": {
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "histogram"
+          }
+        ],
+        "mesh3d": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "mesh3d"
+          }
+        ],
+        "parcoords": [
+          {
+            "line": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "parcoords"
+          }
+        ],
+        "pie": [
+          {
+            "automargin": true,
+            "type": "pie"
+          }
+        ],
+        "scatter3d": [
+          {
+            "line": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatter3d"
+          }
+        ],
+        "scattercarpet": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattercarpet"
+          }
+        ],
+        "scattergeo": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattergeo"
+          }
+        ],
+        "scattergl": [
+          {
+            "marker": {
+              "line": {
+                "color": "#283442"
+              }
+            },
+            "type": "scattergl"
+          }
+        ],
+        "scattermapbox": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattermapbox"
+          }
+        ],
+        "scattermap": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattermap"
+          }
+        ],
+        "scatterpolargl": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterpolargl"
+          }
+        ],
+        "scatterpolar": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterpolar"
+          }
+        ],
+        "scatter": [
+          {
+            "marker": {
+              "line": {
+                "color": "#283442"
+              }
+            },
+            "type": "scatter"
+          }
+        ],
+        "scatterternary": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterternary"
+          }
+        ],
+        "surface": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "surface"
+          }
+        ],
+        "table": [
+          {
+            "cells": {
+              "fill": {
+                "color": "#506784"
+              },
+              "line": {
+                "color": "rgb(17,17,17)"
+              }
+            },
+            "header": {
+              "fill": {
+                "color": "#2a3f5f"
+              },
+              "line": {
+                "color": "rgb(17,17,17)"
+              }
+            },
+            "type": "table"
+          }
+        ]
+      },
+      "layout": {
+        "annotationdefaults": {
+          "arrowcolor": "#f2f5fa",
+          "arrowhead": 0,
+          "arrowwidth": 1
+        },
+        "autotypenumbers": "strict",
+        "coloraxis": {
+          "colorbar": {
+            "outlinewidth": 0,
+            "ticks": ""
+          }
+        },
+        "colorscale": {
+          "diverging": [
+            [
+              0,
+              "#8e0152"
+            ],
+            [
+              0.1,
+              "#c51b7d"
+            ],
+            [
+              0.2,
+              "#de77ae"
+            ],
+            [
+              0.3,
+              "#f1b6da"
+            ],
+            [
+              0.4,
+              "#fde0ef"
+            ],
+            [
+              0.5,
+              "#f7f7f7"
+            ],
+            [
+              0.6,
+              "#e6f5d0"
+            ],
+            [
+              0.7,
+              "#b8e186"
+            ],
+            [
+              0.8,
+              "#7fbc41"
+            ],
+            [
+              0.9,
+              "#4d9221"
+            ],
+            [
+              1,
+              "#276419"
+            ]
+          ],
+          "sequential": [
+            [
+              0.0,
+              "#0d0887"
+            ],
+            [
+              0.1111111111111111,
+              "#46039f"
+            ],
+            [
+              0.2222222222222222,
+              "#7201a8"
+            ],
+            [
+              0.3333333333333333,
+              "#9c179e"
+            ],
+            [
+              0.4444444444444444,
+              "#bd3786"
+            ],
+            [
+              0.5555555555555556,
+              "#d8576b"
+            ],
+            [
+              0.6666666666666666,
+              "#ed7953"
+            ],
+            [
+              0.7777777777777778,
+              "#fb9f3a"
+            ],
+            [
+              0.8888888888888888,
+              "#fdca26"
+            ],
+            [
+              1.0,
+              "#f0f921"
+            ]
+          ],
+          "sequentialminus": [
+            [
+              0.0,
+              "#0d0887"
+            ],
+            [
+              0.1111111111111111,
+              "#46039f"
+            ],
+            [
+              0.2222222222222222,
+              "#7201a8"
+            ],
+            [
+              0.3333333333333333,
+              "#9c179e"
+            ],
+            [
+              0.4444444444444444,
+              "#bd3786"
+            ],
+            [
+              0.5555555555555556,
+              "#d8576b"
+            ],
+            [
+              0.6666666666666666,
+              "#ed7953"
+            ],
+            [
+              0.7777777777777778,
+              "#fb9f3a"
+            ],
+            [
+              0.8888888888888888,
+              "#fdca26"
+            ],
+            [
+              1.0,
+              "#f0f921"
+            ]
+          ]
+        },
+        "colorway": [
+          "#636efa",
+          "#EF553B",
+          "#00cc96",
+          "#ab63fa",
+          "#FFA15A",
+          "#19d3f3",
+          "#FF6692",
+          "#B6E880",
+          "#FF97FF",
+          "#FECB52"
+        ],
+        "font": {
+          "color": "#f2f5fa"
+        },
+        "geo": {
+          "bgcolor": "rgb(17,17,17)",
+          "lakecolor": "rgb(17,17,17)",
+          "landcolor": "rgb(17,17,17)",
+          "showlakes": true,
+          "showland": true,
+          "subunitcolor": "#506784"
+        },
+        "hoverlabel": {
+          "align": "left"
+        },
+        "hovermode": "closest",
+        "mapbox": {
+          "style": "dark"
+        },
+        "paper_bgcolor": "rgb(17,17,17)",
+        "plot_bgcolor": "rgb(17,17,17)",
+        "polar": {
+          "angularaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "bgcolor": "rgb(17,17,17)",
+          "radialaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          }
+        },
+        "scene": {
+          "xaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          },
+          "yaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          },
+          "zaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          }
+        },
+        "shapedefaults": {
+          "line": {
+            "color": "#f2f5fa"
+          }
+        },
+        "sliderdefaults": {
+          "bgcolor": "#C8D4E3",
+          "bordercolor": "rgb(17,17,17)",
+          "borderwidth": 1,
+          "tickwidth": 0
+        },
+        "ternary": {
+          "aaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "baxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "bgcolor": "rgb(17,17,17)",
+          "caxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          }
+        },
+        "title": {
+          "x": 0.05
+        },
+        "updatemenudefaults": {
+          "bgcolor": "#506784",
+          "borderwidth": 0
+        },
+        "xaxis": {
+          "automargin": true,
+          "gridcolor": "#283442",
+          "linecolor": "#506784",
+          "ticks": "",
+          "title": {
+            "standoff": 15
+          },
+          "zerolinecolor": "#283442",
+          "zerolinewidth": 2
+        },
+        "yaxis": {
+          "automargin": true,
+          "gridcolor": "#283442",
+          "linecolor": "#506784",
+          "ticks": "",
+          "title": {
+            "standoff": 15
+          },
+          "zerolinecolor": "#283442",
+          "zerolinewidth": 2
+        }
+      }
+    },
+    "title": {
+      "font": {
+        "size": 17,
+        "color": "#F8FAFC"
+      },
+      "text": "COMPOSIÇÃO DO PL — TIPO → ESTRATÉGIA → ATIVO",
+      "x": 0.02,
+      "xanchor": "left"
+    },
+    "font": {
+      "size": 12,
+      "color": "#F8FAFC"
+    },
+    "margin": {
+      "t": 56,
+      "b": 16,
+      "l": 16,
+      "r": 48
+    },
+    "hoverlabel": {
+      "font": {
+        "size": 12,
+        "color": "#F8FAFC"
+      },
+      "bgcolor": "#0D1117",
+      "bordercolor": "#10B981"
+    },
+    "paper_bgcolor": "#0D1117",
+    "plot_bgcolor": "#0D1117",
+    "height": 560
+  }
+}

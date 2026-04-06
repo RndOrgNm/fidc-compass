@@ -43,6 +43,8 @@ export type PlotlyFundFilterFigureProps = {
   /** Sync selection across charts (requires `hideFundSelector`). */
   selectedValue?: string;
   onSelectedValueChange?: (value: string) => void;
+  /** Trace names always shown together with the selected fund (e.g. benchmark line). */
+  pinnedTraceNames?: string[];
 };
 
 export function PlotlyFundFilterFigure({
@@ -50,6 +52,7 @@ export function PlotlyFundFilterFigure({
   hideFundSelector = false,
   selectedValue,
   onSelectedValueChange,
+  pinnedTraceNames = [],
 }: PlotlyFundFilterFigureProps) {
   const [payload, setPayload] = useState<{ data: Data[]; layout: Partial<Layout> } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,13 +86,15 @@ export function PlotlyFundFilterFigure({
       .catch((e: Error) => setError(e.message));
   }, [url]);
 
+  const pinned = useMemo(() => new Set(pinnedTraceNames), [pinnedTraceNames]);
+
   const fundNames = useMemo<string[]>(() => {
     if (!payload?.data) return [];
     return (payload.data as RawTrace[])
       .map((t) => t.name ?? "")
-      .filter(Boolean)
+      .filter((n) => n && !pinned.has(n))
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
-  }, [payload?.data]);
+  }, [payload?.data, pinned]);
 
   useEffect(() => {
     if (isControlled) return;
@@ -100,15 +105,15 @@ export function PlotlyFundFilterFigure({
   const filteredData = useMemo((): Data[] => {
     if (!payload?.data?.length || !selected) return [];
     const traces = payload.data as RawTrace[];
-    const tr = traces.find((t) => t.name === selected);
-    if (!tr) return [];
-    return [
-      {
-        ...tr,
-        showlegend: true,
-      } as Data,
-    ];
-  }, [payload?.data, selected]);
+    const out: Data[] = [];
+    for (const t of traces) {
+      const n = t.name ?? "";
+      if (n === selected || pinned.has(n)) {
+        out.push({ ...t, showlegend: true } as Data);
+      }
+    }
+    return out;
+  }, [payload?.data, selected, pinned]);
 
   const adjustedLayout = useMemo((): Partial<Layout> => {
     if (!payload?.layout) return {};

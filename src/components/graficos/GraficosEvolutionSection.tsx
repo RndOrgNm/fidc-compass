@@ -14,11 +14,13 @@ import {
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
 const COTA_LINES_URL = "/plotly/cota-lines.json";
 
+export type GraficosEvolutionVariant = "pl" | "cota";
+
 /**
- * Shared fund filter + PL and Cota daily evolution charts side by side.
- * Fund list is taken from the PL JSON (same universe as the pipeline export).
+ * Shared fund filter + daily evolution chart(s). Fund list comes from the PL JSON export.
+ * Use `variant` to show only PL or only Cota (e.g. on separate Gráficos category pages).
  */
-export function GraficosEvolutionSection() {
+export function GraficosEvolutionSection({ variant }: { variant: GraficosEvolutionVariant }) {
   const [fundNames, setFundNames] = useState<string[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [loadingNames, setLoadingNames] = useState(true);
@@ -50,7 +52,10 @@ export function GraficosEvolutionSection() {
   }, []);
 
   return (
-    <section aria-label="Evolução diária PL e cota" className="space-y-3">
+    <section
+      aria-label={variant === "pl" ? "Evolução diária do PL" : "Evolução diária da cota"}
+      className="space-y-3"
+    >
       <h2 className="text-lg font-semibold text-foreground">Evolução diária</h2>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -81,7 +86,7 @@ export function GraficosEvolutionSection() {
         </p>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {variant === "pl" ? (
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
           <p className="mb-3 text-sm font-medium text-muted-foreground">
             Evolução do PL por dia
@@ -93,6 +98,7 @@ export function GraficosEvolutionSection() {
             onSelectedValueChange={setSelected}
           />
         </div>
+      ) : (
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
           <p className="mb-3 text-sm font-medium text-muted-foreground">
             Evolução da cota por dia
@@ -104,7 +110,7 @@ export function GraficosEvolutionSection() {
             onSelectedValueChange={setSelected}
           />
         </div>
-      </div>
+      )}
     </section>
   );
 }
