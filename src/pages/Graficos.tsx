@@ -23,6 +23,13 @@ const PL_SLIDES = [
   },
 ] as const;
 
+const PL_CONCENTRACAO_ATIVOS_SLIDE = {
+  id: "concentracao-ativos-top10",
+  file: "concentracao-ativos-top10.json",
+  caption: "Concentração por ativo (top 10) — % do PL",
+  filterable: true,
+} as const satisfies PlotlyCarouselSlide;
+
 const BENCHMARK_PINNED = ["Benchmark (CDI)"] as const;
 
 const COTA_VS_BENCHMARK_SLIDE = {
@@ -125,6 +132,11 @@ export default function Graficos() {
                   ariaLabel="Gráficos de patrimônio líquido"
                   slides={[...PL_SLIDES]}
                 />
+
+                <section aria-label="Concentração por ativo" className="space-y-3">
+                  <h2 className="text-lg font-semibold text-foreground">Concentração</h2>
+                  <PlotlySlideCard slide={PL_CONCENTRACAO_ATIVOS_SLIDE} />
+                </section>
               </div>
             </CarouselItem>
 

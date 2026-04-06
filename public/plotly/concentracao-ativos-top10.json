@@ -1,0 +1,1380 @@
+{
+  "data": [
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "7T1SO2h2k0BI4XqcJ5NvQQ=="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII COTA REAL 7 - SR",
+      "orientation": "h",
+      "text": [
+        "0.0%",
+        "100.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "TLk7fNfRfj8AAAAAAABZQA=="
+      },
+      "y": [
+        "0000",
+        "COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "ynv5MA9WkECQwvWognNHQQ=="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FIDC MINHA CASA MINHA VIDA NP - SR",
+      "orientation": "h",
+      "text": [
+        "0.0%",
+        "100.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "zI7xQkFqoT8AAAAAAABZQA=="
+      },
+      "y": [
+        "0000",
+        "COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 100,00% CDI + 6,00%"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "AAAAABQTQEEAAAAA4HdBQQAAAAA6kFdBAAAAACyqWkEAAAAAvPFfQQAAAADQBmVBAAAAgDRUZUHsUbgeJ1ZsQQAAAICQmoNBAAAAADJQhEE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "ABEL 33 FII RI",
+      "orientation": "h",
+      "text": [
+        "1.4%",
+        "1.5%",
+        "4.2%",
+        "4.7%",
+        "5.7%",
+        "7.5%",
+        "7.6%",
+        "10.0%",
+        "27.8%",
+        "28.8%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "/LPRlL3M9j8TTZlS0Mb4P+ORKOr9tRBAFb41rwzpEkBm/ApCkKcWQKEodlDe0h1Aayvx8qNAHkC1mWazkRgkQAV/1AM6zjtAQaMiGNnPPEA="
+      },
+      "y": [
+        "ALPHA MALL SALA 44",
+        "RECANTO DOS BURITIS",
+        "AVENIDA DAS ACÁCIAS-GO",
+        "VENDA DA PRV PARTICIPAÇÕES - ANT ADM - DtLancto - 31/03/2026 - DtVencto…",
+        "IMOVEL 48 - CAPELA",
+        "LT 5 QD B4 ALPHA FLA",
+        "GLEBA 01 / ITACARÉ-BA",
+        "POLO EMPRESARIAL GOIAS ETAPA 7",
+        "FAZENDA LAGO AZUL GO",
+        "VILA SERRA GRANDE 5"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "mpmZmZk/ucApXI/C9XyEwHsUrkfhMoTA+0F6aVcYaUC4HoXrUQuXQOxRuB4FurNACtejcD1+wkAAAAAAAETGQBWuR+GsAQxB7FG4dgB8mUE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FIAGRO IMOBILIARIO ID GOIANA",
+      "orientation": "h",
+      "text": [
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.0%",
+        "0.0%",
+        "0.0%",
+        "0.0%",
+        "0.0%",
+        "0.2%",
+        "99.9%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "Pwqj55O8eL+ihZ36oxJEv5luguwPykO/dXgqcR2WKD/0GXN0vJNWP3+n+PGmU3M//pTw8kUegj+UtM7edNCFPxjYJSJXcMs/HFD+UsH3WEA="
+      },
+      "y": [
+        "Pagamento de Taxa Custódia - DtLancto - 01/04/2026 - DtVencto - 01/04/2…",
+        "Taxa Administração (Vl Dia: 327,81) - DtLancto - 02/04/2026 - DtVencto …",
+        "Taxa Custódia (Vl Dia: 323,18) - DtLancto - 02/04/2026 - DtVencto - 02/…",
+        "0000",
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVenc…",
+        "Pagamento de Taxa Gestão Ref Fev/26 - A MAIOR - DtLancto - 31/03/2026 -…",
+        "Pagamento de Taxa Administração Ref Set/25 - Pago A Maior - DtLancto - …",
+        "AFAC GOIANA AGRONEGOCIOS 24/01/2025",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "GOIANA AGRONEGOCIOS ADMINISTRACAO E PARTICIPACOES"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "AAAAAADAksDhehSuR3eSwHE9CtejC5HAAAAAAAAAecAAAAAAAABpwHjekgsjaKJAhetRuB5n3UCF61G4lqPwQMP1KLJLh4VBAAAAF3akkEE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "SUPER FARMS FI NAS CADEIAS PRODUTIVAS AGROINDUSTRIAIS – FIAGRO – IMOBILIÁRIO",
+      "orientation": "h",
+      "text": [
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.0%",
+        "0.0%",
+        "0.1%",
+        "39.8%",
+        "61.5%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "fxK9lYBTUb8tks/uTRBRv0PMl2uOgE+/VMOmxwAaN79Uw6bHABonv+bJnK1PAmE/z92nbIgrmz88/uKqQcCuPz/PhMfI5ENAsX2ue97BTkA="
+      },
+      "y": [
+        "Taxa Administração (Vl Dia: 600,00) - DtLancto - 02/04/2026 - DtVencto …",
+        "Pagamento de Taxa Gestão - Ref Set/2025 - DtLancto - 31/03/2026 - DtVen…",
+        "Pagamento de Taxa Administração - Ref Set/2025 - DtLancto - 31/03/2026 …",
+        "Provisão: Despesa - TAXA DE CUSTÓDIA. De:01/09/25 até 30/09/25 - DtLanc…",
+        "Provisão: Despesa - TAXA DE GESTÃO. De:01/09/25 até 30/09/25 - DtLancto…",
+        "0000",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "3543 / 439 - Banco ID - 46963-",
+        "FAZENDA NSA, ISA, BOM",
+        "FAZENDA SERVPLAN"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "BmiVT91oxUApXI9yofxwQQ=="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII COTA REAL 7 - MEZ",
+      "orientation": "h",
+      "text": [
+        "0.1%",
+        "100.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "FebkAFeCrz8AAAAAAABZQA=="
+      },
+      "y": [
+        "0000",
+        "COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 -> Tx = 25,00%"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "AAAAAABq6MAAAAAAAHDHwAAAAAAAQL/AAAAAAACIs8AAAAAAAMCSwAAAAAAAAInAUrgeheszgEA2eyQdQyPMQKRwPQprAfpAAAAAoD6hkUE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII COTA REAL 7",
+      "orientation": "h",
+      "text": [
+        "-0.2%",
+        "-0.1%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.0%",
+        "0.1%",
+        "0.5%",
+        "343.8%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "9st/JUzBzb8gfEcFm5Csv2v9hAMSC6O/xTxmhNbNl7+zydKdFdp2v0RibtIceG6/rSFLuFm/Yz/1tgEejSWxP9Pwrm/Ysd8/05g6pph8dUA="
+      },
+      "y": [
+        "Pagamento de Taxa de Consultoria - DtLancto - 01/04/2026 - DtVencto - 0…",
+        "Pagamento de Taxa Administração - DtLancto - 01/04/2026 - DtVencto - 01…",
+        "Pagamento de Taxa Gestão - DtLancto - 01/04/2026 - DtVencto - 01/04/2026",
+        "Taxa de Consultoria (Vl Dia: 2500,00) - DtLancto - 02/04/2026 - DtVenct…",
+        "Taxa Administração (Vl Dia: 600,00) - DtLancto - 02/04/2026 - DtVencto …",
+        "Taxa Gestão (Vl Dia: 400,00) - DtLancto - 02/04/2026 - DtVencto - 02/04…",
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVenc…",
+        "0000",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Imóvel Matrícula 17.385 - Itajaí/SC"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "7cSwJfSfcEApXI/C9c6MQB+F61FYe+5A4XoUTqmtU0F7FK4nyB5mQXE9Cn8U+nZBAAAAcHEFeEEAAABAJDuFQR+F638q/IxBexSuoVTYokE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII OMEGA",
+      "orientation": "h",
+      "text": [
+        "0.0%",
+        "0.0%",
+        "0.0%",
+        "1.6%",
+        "3.5%",
+        "7.3%",
+        "7.6%",
+        "13.5%",
+        "18.5%",
+        "48.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "zG93UNArFT+2iV+x4VcyP5HTTwemaJM/fX+5xkoP+T+q+tGsXCsMQAtJX4KhQh1APWVU1huXHkDZyLlFeAkrQID+pHCqdDJACUQnYJ//R0A="
+      },
+      "y": [
+        "0000",
+        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 02/04/2026 - DtVenc…",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
+        "TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%",
+        "SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
+        "SCA 02",
+        "GVT 04",
+        "SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
+        "AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL -  Vcto: 27-06-20…"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "AAAAAADAcsAAAAAAAMBywAAAAAAAAGnAexSuR+GqUMAAAAAAAAA+wAAAAAAAADTApfHI7rdWzUCkcD0KI730QAAAAIDRUCdBw/UofP9JSEE="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII ID ANGRA PARTNERS",
+      "orientation": "h",
+      "text": [
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.4%",
+        "2.1%",
+        "19.0%",
+        "79.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "DpmOZ5N6fr8OmY5nk3p+v7QQX5q3UXS/iPQkP/gXW7+krQuGD2JIv8Nzsq5fQUC/1lBkV3nY1z9wm9IkGdsAQLDhazRE8zJALfLnrsq9U0A="
+      },
+      "y": [
+        "Pagamento de Taxa Administração - DtLancto - 01/04/2026 - DtVencto - 01…",
+        "Pagamento de Taxa Administração Ref Dez/25 - DtLancto - 30/03/2026 - Dt…",
+        "Pagamento de Taxa Gestão - DtLancto - 01/04/2026 - DtVencto - 01/04/2026",
+        "Pagamento Taxa de Gestão - Pro-Rata 08/2025 - DtLancto - 30/03/2026 - D…",
+        "Taxa Administração (Vl Dia: 15,00) - DtLancto - 02/04/2026 - DtVencto -…",
+        "Taxa Gestão (Vl Dia: 10,00) - DtLancto - 02/04/2026 - DtVencto - 02/04/…",
+        "0000",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "Nota Comercial Angra -  Vcto: 30-01-2036 -> 100% CDI + 2,00%",
+        "ANGRA PARTNERS DESENVOLVIMENTO IMOBILIÁRIO SPE"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "AAAAAACI08AAAAAAAFjLwAAAAAAAfMXAAAAAAABAn8AAAAAAAOCVwAAAAAAAMJHAuoQATExwkkDsUbgeZYLFQOF6FDaff2FB"
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FIDC ORIGIN RL",
+      "orientation": "h",
+      "text": [
+        "-0.2%",
+        "-0.2%",
+        "-0.1%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.0%",
+        "0.1%",
+        "100.4%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "AUgX0Y0FzL+a5SnffJ3Dv85oZszo0r6/ZwZ52tdqlr/E1Q9lYWKPvz66Hj26qIi/zxEDNkN0ij8Mq5iXFdy+PwsNgED2GllA"
+      },
+      "y": [
+        "Pagamento de Taxa de Gestão - Co-gestão - DtLancto - 01/04/2026 - DtVen…",
+        "Pagamento de Taxa Administração - DtLancto - 01/04/2026 - DtVencto - 01…",
+        "Pagamento de Taxa Gestão - DtLancto - 01/04/2026 - DtVencto - 01/04/2026",
+        "Taxa de Gestão - Co-gestão (Vl Dia: 1000,00) - DtLancto - 02/04/2026 - …",
+        "Taxa Administração (Vl Dia: 700,00) - DtLancto - 02/04/2026 - DtVencto …",
+        "Taxa Gestão (Vl Dia: 550,00) - DtLancto - 02/04/2026 - DtVencto - 02/04…",
+        "0000",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "ORIGIN DC A VENCER"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "40zdlKwMxUA9Ctej5FBUQQ=="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII COTA REAL 77 RL - SR",
+      "orientation": "h",
+      "text": [
+        "0.2%",
+        "100.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "O8JmThPnyT8AAAAAAABZQA=="
+      },
+      "y": [
+        "0000",
+        "COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "rkfhehR6w8AAAAAAAEC/wDMzMzNzi7TAexSuR+FajMAAAAAAAACJwKwjDNioVFlAH4XrUSvuMEGkcD3a2h5UQQAAAEA0WlxBpHA9MkeWZ0E="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII BRASIL INCORPORAÇÃO RL",
+      "orientation": "h",
+      "text": [
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "-0.0%",
+        "0.0%",
+        "4.4%",
+        "20.8%",
+        "29.3%",
+        "48.7%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "NPq7UMwYpL9USlY3VB+gvx59Bb7eMpW/3FwPSfJBbb8gqiPyuctpv2H4XK8UIzo/BKH9siJ4EUAK/4Zy0cI0QIZkWb8/QT1A6OZsc31WSEA="
+      },
+      "y": [
+        "Pagamento de Taxa Gestão - DtLancto - 01/04/2026 - DtVencto - 01/04/2026",
+        "Pagamento de Taxa Administração - DtLancto - 01/04/2026 - DtVencto - 01…",
+        "Liquidação de IR / Dividendo - DtLancto - 30/03/2026 - DtVencto - 30/03…",
+        "Taxa Gestão (Vl Dia: 453,68) - DtLancto - 02/04/2026 - DtVencto - 02/04…",
+        "Taxa Administração (Vl Dia: 400,00) - DtLancto - 02/04/2026 - DtVencto …",
+        "0000",
+        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
+        "164 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "154 - BRASIL INCORPORAÇÃO SPE LTDA",
+        "127 - BRASIL INCORPORAÇÃO SPE LTDA"
+      ],
+      "type": "bar"
+    }
+  ],
+  "layout": {
+    "template": {
+      "data": {
+        "barpolar": [
+          {
+            "marker": {
+              "line": {
+                "color": "rgb(17,17,17)",
+                "width": 0.5
+              },
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "barpolar"
+          }
+        ],
+        "bar": [
+          {
+            "error_x": {
+              "color": "#f2f5fa"
+            },
+            "error_y": {
+              "color": "#f2f5fa"
+            },
+            "marker": {
+              "line": {
+                "color": "rgb(17,17,17)",
+                "width": 0.5
+              },
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "bar"
+          }
+        ],
+        "carpet": [
+          {
+            "aaxis": {
+              "endlinecolor": "#A2B1C6",
+              "gridcolor": "#506784",
+              "linecolor": "#506784",
+              "minorgridcolor": "#506784",
+              "startlinecolor": "#A2B1C6"
+            },
+            "baxis": {
+              "endlinecolor": "#A2B1C6",
+              "gridcolor": "#506784",
+              "linecolor": "#506784",
+              "minorgridcolor": "#506784",
+              "startlinecolor": "#A2B1C6"
+            },
+            "type": "carpet"
+          }
+        ],
+        "choropleth": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "choropleth"
+          }
+        ],
+        "contourcarpet": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "contourcarpet"
+          }
+        ],
+        "contour": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "contour"
+          }
+        ],
+        "heatmap": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "heatmap"
+          }
+        ],
+        "histogram2dcontour": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "histogram2dcontour"
+          }
+        ],
+        "histogram2d": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "histogram2d"
+          }
+        ],
+        "histogram": [
+          {
+            "marker": {
+              "pattern": {
+                "fillmode": "overlay",
+                "size": 10,
+                "solidity": 0.2
+              }
+            },
+            "type": "histogram"
+          }
+        ],
+        "mesh3d": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "type": "mesh3d"
+          }
+        ],
+        "parcoords": [
+          {
+            "line": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "parcoords"
+          }
+        ],
+        "pie": [
+          {
+            "automargin": true,
+            "type": "pie"
+          }
+        ],
+        "scatter3d": [
+          {
+            "line": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatter3d"
+          }
+        ],
+        "scattercarpet": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattercarpet"
+          }
+        ],
+        "scattergeo": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattergeo"
+          }
+        ],
+        "scattergl": [
+          {
+            "marker": {
+              "line": {
+                "color": "#283442"
+              }
+            },
+            "type": "scattergl"
+          }
+        ],
+        "scattermapbox": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattermapbox"
+          }
+        ],
+        "scattermap": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scattermap"
+          }
+        ],
+        "scatterpolargl": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterpolargl"
+          }
+        ],
+        "scatterpolar": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterpolar"
+          }
+        ],
+        "scatter": [
+          {
+            "marker": {
+              "line": {
+                "color": "#283442"
+              }
+            },
+            "type": "scatter"
+          }
+        ],
+        "scatterternary": [
+          {
+            "marker": {
+              "colorbar": {
+                "outlinewidth": 0,
+                "ticks": ""
+              }
+            },
+            "type": "scatterternary"
+          }
+        ],
+        "surface": [
+          {
+            "colorbar": {
+              "outlinewidth": 0,
+              "ticks": ""
+            },
+            "colorscale": [
+              [
+                0.0,
+                "#0d0887"
+              ],
+              [
+                0.1111111111111111,
+                "#46039f"
+              ],
+              [
+                0.2222222222222222,
+                "#7201a8"
+              ],
+              [
+                0.3333333333333333,
+                "#9c179e"
+              ],
+              [
+                0.4444444444444444,
+                "#bd3786"
+              ],
+              [
+                0.5555555555555556,
+                "#d8576b"
+              ],
+              [
+                0.6666666666666666,
+                "#ed7953"
+              ],
+              [
+                0.7777777777777778,
+                "#fb9f3a"
+              ],
+              [
+                0.8888888888888888,
+                "#fdca26"
+              ],
+              [
+                1.0,
+                "#f0f921"
+              ]
+            ],
+            "type": "surface"
+          }
+        ],
+        "table": [
+          {
+            "cells": {
+              "fill": {
+                "color": "#506784"
+              },
+              "line": {
+                "color": "rgb(17,17,17)"
+              }
+            },
+            "header": {
+              "fill": {
+                "color": "#2a3f5f"
+              },
+              "line": {
+                "color": "rgb(17,17,17)"
+              }
+            },
+            "type": "table"
+          }
+        ]
+      },
+      "layout": {
+        "annotationdefaults": {
+          "arrowcolor": "#f2f5fa",
+          "arrowhead": 0,
+          "arrowwidth": 1
+        },
+        "autotypenumbers": "strict",
+        "coloraxis": {
+          "colorbar": {
+            "outlinewidth": 0,
+            "ticks": ""
+          }
+        },
+        "colorscale": {
+          "diverging": [
+            [
+              0,
+              "#8e0152"
+            ],
+            [
+              0.1,
+              "#c51b7d"
+            ],
+            [
+              0.2,
+              "#de77ae"
+            ],
+            [
+              0.3,
+              "#f1b6da"
+            ],
+            [
+              0.4,
+              "#fde0ef"
+            ],
+            [
+              0.5,
+              "#f7f7f7"
+            ],
+            [
+              0.6,
+              "#e6f5d0"
+            ],
+            [
+              0.7,
+              "#b8e186"
+            ],
+            [
+              0.8,
+              "#7fbc41"
+            ],
+            [
+              0.9,
+              "#4d9221"
+            ],
+            [
+              1,
+              "#276419"
+            ]
+          ],
+          "sequential": [
+            [
+              0.0,
+              "#0d0887"
+            ],
+            [
+              0.1111111111111111,
+              "#46039f"
+            ],
+            [
+              0.2222222222222222,
+              "#7201a8"
+            ],
+            [
+              0.3333333333333333,
+              "#9c179e"
+            ],
+            [
+              0.4444444444444444,
+              "#bd3786"
+            ],
+            [
+              0.5555555555555556,
+              "#d8576b"
+            ],
+            [
+              0.6666666666666666,
+              "#ed7953"
+            ],
+            [
+              0.7777777777777778,
+              "#fb9f3a"
+            ],
+            [
+              0.8888888888888888,
+              "#fdca26"
+            ],
+            [
+              1.0,
+              "#f0f921"
+            ]
+          ],
+          "sequentialminus": [
+            [
+              0.0,
+              "#0d0887"
+            ],
+            [
+              0.1111111111111111,
+              "#46039f"
+            ],
+            [
+              0.2222222222222222,
+              "#7201a8"
+            ],
+            [
+              0.3333333333333333,
+              "#9c179e"
+            ],
+            [
+              0.4444444444444444,
+              "#bd3786"
+            ],
+            [
+              0.5555555555555556,
+              "#d8576b"
+            ],
+            [
+              0.6666666666666666,
+              "#ed7953"
+            ],
+            [
+              0.7777777777777778,
+              "#fb9f3a"
+            ],
+            [
+              0.8888888888888888,
+              "#fdca26"
+            ],
+            [
+              1.0,
+              "#f0f921"
+            ]
+          ]
+        },
+        "colorway": [
+          "#636efa",
+          "#EF553B",
+          "#00cc96",
+          "#ab63fa",
+          "#FFA15A",
+          "#19d3f3",
+          "#FF6692",
+          "#B6E880",
+          "#FF97FF",
+          "#FECB52"
+        ],
+        "font": {
+          "color": "#f2f5fa"
+        },
+        "geo": {
+          "bgcolor": "rgb(17,17,17)",
+          "lakecolor": "rgb(17,17,17)",
+          "landcolor": "rgb(17,17,17)",
+          "showlakes": true,
+          "showland": true,
+          "subunitcolor": "#506784"
+        },
+        "hoverlabel": {
+          "align": "left"
+        },
+        "hovermode": "closest",
+        "mapbox": {
+          "style": "dark"
+        },
+        "paper_bgcolor": "rgb(17,17,17)",
+        "plot_bgcolor": "rgb(17,17,17)",
+        "polar": {
+          "angularaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "bgcolor": "rgb(17,17,17)",
+          "radialaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          }
+        },
+        "scene": {
+          "xaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          },
+          "yaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          },
+          "zaxis": {
+            "backgroundcolor": "rgb(17,17,17)",
+            "gridcolor": "#506784",
+            "gridwidth": 2,
+            "linecolor": "#506784",
+            "showbackground": true,
+            "ticks": "",
+            "zerolinecolor": "#C8D4E3"
+          }
+        },
+        "shapedefaults": {
+          "line": {
+            "color": "#f2f5fa"
+          }
+        },
+        "sliderdefaults": {
+          "bgcolor": "#C8D4E3",
+          "bordercolor": "rgb(17,17,17)",
+          "borderwidth": 1,
+          "tickwidth": 0
+        },
+        "ternary": {
+          "aaxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "baxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          },
+          "bgcolor": "rgb(17,17,17)",
+          "caxis": {
+            "gridcolor": "#506784",
+            "linecolor": "#506784",
+            "ticks": ""
+          }
+        },
+        "title": {
+          "x": 0.05
+        },
+        "updatemenudefaults": {
+          "bgcolor": "#506784",
+          "borderwidth": 0
+        },
+        "xaxis": {
+          "automargin": true,
+          "gridcolor": "#283442",
+          "linecolor": "#506784",
+          "ticks": "",
+          "title": {
+            "standoff": 15
+          },
+          "zerolinecolor": "#283442",
+          "zerolinewidth": 2
+        },
+        "yaxis": {
+          "automargin": true,
+          "gridcolor": "#283442",
+          "linecolor": "#506784",
+          "ticks": "",
+          "title": {
+            "standoff": 15
+          },
+          "zerolinecolor": "#283442",
+          "zerolinewidth": 2
+        }
+      }
+    },
+    "title": {
+      "font": {
+        "size": 17,
+        "color": "#F8FAFC"
+      },
+      "text": "CONCENTRAÇÃO POR ATIVO (TOP 10) — % DO PL",
+      "x": 0.02,
+      "xanchor": "left"
+    },
+    "font": {
+      "size": 12,
+      "color": "#F8FAFC"
+    },
+    "hoverlabel": {
+      "font": {
+        "size": 12,
+        "color": "#F8FAFC"
+      },
+      "bgcolor": "#0D1117",
+      "bordercolor": "#10B981"
+    },
+    "margin": {
+      "t": 56,
+      "b": 64,
+      "l": 64,
+      "r": 88
+    },
+    "xaxis": {
+      "title": {
+        "font": {
+          "size": 11,
+          "color": "rgba(248, 250, 252, 0.78)"
+        },
+        "text": "% do patrimônio líquido"
+      },
+      "tickfont": {
+        "color": "rgba(248, 250, 252, 0.78)"
+      },
+      "gridcolor": "rgba(71, 85, 105, 0.35)",
+      "zerolinecolor": "rgba(248, 248, 250, 0.12)",
+      "ticksuffix": "%",
+      "range": [
+        0,
+        null
+      ],
+      "automargin": true
+    },
+    "yaxis": {
+      "title": {
+        "font": {
+          "size": 11,
+          "color": "rgba(248, 250, 252, 0.78)"
+        },
+        "text": "Ativo"
+      },
+      "tickfont": {
+        "color": "rgba(248, 250, 252, 0.78)",
+        "size": 10
+      },
+      "linecolor": "rgba(248, 248, 250, 0.12)",
+      "automargin": true
+    },
+    "paper_bgcolor": "#0D1117",
+    "plot_bgcolor": "#0D1117",
+    "showlegend": false,
+    "hovermode": "closest",
+    "height": 520
+  }
+}
