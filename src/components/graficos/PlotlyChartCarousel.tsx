@@ -3,6 +3,7 @@ import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/com
 import { cn } from "@/lib/utils";
 import { PlotlyFundFilterFigure } from "./PlotlyFundFilterFigure";
 import { PlotlyWebFigure } from "./PlotlyWebFigure";
+import { TableExportButtons } from "./TableExportButtons";
 
 export type PlotlyCarouselSlide = {
   id: string;
@@ -12,8 +13,8 @@ export type PlotlyCarouselSlide = {
   caption: string;
   /** When true renders a fund-selector dropdown instead of showing all traces */
   filterable?: boolean;
-  /** Only relevant when filterable=true: add a «Total Geral» (sum) option as the default */
-  enableTotalGeral?: boolean;
+  /** When true renders Excel/PDF export buttons above the chart */
+  exportable?: boolean;
 };
 
 function CarouselPagination({
@@ -112,13 +113,19 @@ export function PlotlyChartCarousel({
           {slides.map((s) => (
             <CarouselItem key={s.id} className="basis-full">
               <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-                <p className="mb-3 text-sm font-medium text-muted-foreground">{s.caption}</p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-muted-foreground">{s.caption}</p>
+                  {s.exportable && (
+                    <TableExportButtons
+                      url={`/plotly/${s.file}`}
+                      filename={s.id}
+                      title={s.caption}
+                    />
+                  )}
+                </div>
                 <div className="overflow-x-auto">
                   {s.filterable ? (
-                    <PlotlyFundFilterFigure
-                      url={`/plotly/${s.file}`}
-                      enableTotalGeral={s.enableTotalGeral}
-                    />
+                    <PlotlyFundFilterFigure url={`/plotly/${s.file}`} />
                   ) : (
                     <PlotlyWebFigure variant="full" url={`/plotly/${s.file}`} />
                   )}

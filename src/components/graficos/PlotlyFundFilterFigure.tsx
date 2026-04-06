@@ -10,8 +10,6 @@ import {
 
 const Plot = lazy(() => import("react-plotly.js"));
 
-const TOTAL_ID = "__total__";
-
 /** Compact trace type covering what our Plotly JSON exports emit. */
 type RawTrace = {
   name?: string;
@@ -24,83 +22,58 @@ type RawTrace = {
 
 /**
  * Plotly line chart with a fund-selector dropdown.
- *
- * - When *enableTotalGeral* is true (PL charts): default = "Total Geral", built with the same logic
- *   as Home **PL sob gestão**: for each date `t`, sum each fund’s **last** PL on or before `t`
- *   (carry-forward / as-of). On the latest date this matches `plSobGestao` (values in R$ M in JSON).
- * - Otherwise (Cota charts): defaults to the first fund alphabetically. "Todos os fundos" is also
- *   available but shows all traces on one axis (same as original).
+ * «Total Geral» PL is a separate static file (`pl-total-geral.json`) computed in the Python pipeline.
  */
 
-/** Sorted (x,y) points for one trace. */
-function buildSortedPairs(tr: RawTrace): { x: string; y: number }[] {
-  const pairs: { x: string; y: number }[] = [];
-  const xs = tr.x ?? [];
-  const ys = tr.y ?? [];
-  for (let i = 0; i < xs.length; i++) {
-    const x = xs[i];
-    const y = ys[i];
-    if (x != null && y != null && !Number.isNaN(y)) {
-      pairs.push({ x, y: y as number });
-    }
-  }
-  pairs.sort((a, b) => (a.x < b.x ? -1 : a.x > b.x ? 1 : 0));
-  return pairs;
+/** Fund names from static Plotly JSON (e.g. to drive a shared filter for PL + Cota). */
+export function extractFundNamesFromPlotlyPayload(
+  payload: { data?: Data[] } | null
+): string[] {
+  if (!payload?.data) return [];
+  return (payload.data as RawTrace[])
+    .map((t) => t.name ?? "")
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
-/** Last fund PL at or before date `t` (same idea as “último PL conhecido” até a data). */
-function lastYOnOrBefore(pairs: { x: string; y: number }[], t: string): number | null {
-  let last: number | null = null;
-  for (const p of pairs) {
-    if (p.x <= t) last = p.y;
-    else break;
-  }
-  return last;
-}
-
-/**
- * Total Geral series aligned with `compute_home_dashboard_payload` **plSobGestao** on the last day:
- * at each date, sum over funds of last PL ≤ that date (R$ M in exported JSON).
- */
-function totalGeralLikePlSobGestao(traces: RawTrace[]): { x: string[]; y: (number | null)[] } {
-  const perFund = traces.map(buildSortedPairs);
-  const dateSet = new Set<string>();
-  for (const pairs of perFund) {
-    for (const p of pairs) {
-      dateSet.add(p.x);
-    }
-  }
-  const sortedDates = Array.from(dateSet).sort();
-  const y = sortedDates.map((t) => {
-    let sum = 0;
-    let any = false;
-    for (const pairs of perFund) {
-      const v = lastYOnOrBefore(pairs, t);
-      if (v != null) {
-        sum += v;
-        any = true;
-      }
-    }
-    return any ? sum : null;
-  });
-  return { x: sortedDates, y };
-}
+export type PlotlyFundFilterFigureProps = {
+  url: string;
+  /** Hide the built-in fund row — use with `selectedValue` + `onSelectedValueChange` from a parent. */
+  hideFundSelector?: boolean;
+  /** Sync selection across charts (requires `hideFundSelector`). */
+  selectedValue?: string;
+  onSelectedValueChange?: (value: string) => void;
+};
 
 export function PlotlyFundFilterFigure({
   url,
-  enableTotalGeral = false,
-}: {
-  url: string;
-  enableTotalGeral?: boolean;
-}) {
+  hideFundSelector = false,
+  selectedValue,
+  onSelectedValueChange,
+}: PlotlyFundFilterFigureProps) {
   const [payload, setPayload] = useState<{ data: Data[]; layout: Partial<Layout> } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string>("");
+  const [internalSelected, setInternalSelected] = useState<string>("");
+
+  const isControlled =
+    hideFundSelector &&
+    typeof onSelectedValueChange === "function" &&
+    selectedValue !== undefined;
+
+  const selected = isControlled ? selectedValue! : internalSelected;
+
+  const setSelected = (value: string) => {
+    if (isControlled) {
+      onSelectedValueChange!(value);
+    } else {
+      setInternalSelected(value);
+    }
+  };
 
   useEffect(() => {
     setPayload(null);
     setError(null);
-    setSelected("");
+    setInternalSelected("");
     fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error(r.statusText);
@@ -110,7 +83,6 @@ export function PlotlyFundFilterFigure({
       .catch((e: Error) => setError(e.message));
   }, [url]);
 
-  // Fund names extracted from traces (sorted alphabetically)
   const fundNames = useMemo<string[]>(() => {
     if (!payload?.data) return [];
     return (payload.data as RawTrace[])
@@ -119,57 +91,30 @@ export function PlotlyFundFilterFigure({
       .sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [payload?.data]);
 
-  // Set initial selection once funds are known
   useEffect(() => {
-    if (!fundNames.length || selected) return;
-    setSelected(enableTotalGeral ? TOTAL_ID : fundNames[0]);
-  }, [fundNames, selected, enableTotalGeral]);
+    if (isControlled) return;
+    if (!fundNames.length || internalSelected) return;
+    setInternalSelected(fundNames[0]);
+  }, [fundNames, internalSelected, isControlled]);
 
-  // Build the display trace(s) based on selection
   const filteredData = useMemo((): Data[] => {
     if (!payload?.data?.length || !selected) return [];
     const traces = payload.data as RawTrace[];
-
-    // Show a single fund
-    if (selected !== TOTAL_ID) {
-      const tr = traces.find((t) => t.name === selected);
-      if (!tr) return [];
-      return [
-        {
-          ...tr,
-          // Show a legend entry so the fund name appears inside the chart
-          showlegend: true,
-        } as Data,
-      ];
-    }
-
-    // Total Geral: same logic as Home plSobGestao (as-of sum per fund, then sum funds)
-    const { x: sortedDates, y: sumY } = totalGeralLikePlSobGestao(traces);
-
-    // Clone the first trace's shape for consistent styling
-    const base = traces[0];
+    const tr = traces.find((t) => t.name === selected);
+    if (!tr) return [];
     return [
       {
-        ...base,
-        name: "Total Geral",
-        x: sortedDates,
-        y: sumY,
-        line: { ...(base.line ?? {}), color: "#10B981" },
-        marker: { ...(base.marker ?? {}), color: "#10B981" },
-        hovertemplate:
-          "<b>Total Geral</b><br>Data: %{x|%d/%m/%Y}<br>R$ %{y:.2f}M<extra></extra>",
+        ...tr,
         showlegend: true,
       } as Data,
     ];
   }, [payload?.data, selected]);
 
-  // Build adjusted layout: hide the bottom-legend space when showing only one trace
   const adjustedLayout = useMemo((): Partial<Layout> => {
     if (!payload?.layout) return {};
     const base = { ...payload.layout, autosize: true } as Partial<Layout> & Record<string, unknown>;
-    const isSingle = selected !== "" && selected !== TOTAL_ID;
+    const isSingle = Boolean(selected);
 
-    // When showing a single fund shrink the bottom margin (no multi-item legend needed)
     if (isSingle) {
       base.legend = {
         ...(typeof base.legend === "object" && base.legend !== null ? base.legend : {}),
@@ -202,29 +147,28 @@ export function PlotlyFundFilterFigure({
     return <div className="animate-pulse rounded-md bg-muted" style={{ height: layoutHeight }} aria-hidden />;
   }
 
-  return (
-    <div className="space-y-3">
-      {/* Fund selector */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="shrink-0 text-sm font-medium text-muted-foreground">Fundo</span>
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="h-8 w-72 text-sm">
-            <SelectValue placeholder="Selecionar…" />
-          </SelectTrigger>
-          <SelectContent>
-            {enableTotalGeral && (
-              <SelectItem value={TOTAL_ID}>Total Geral</SelectItem>
-            )}
-            {fundNames.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+  const showFundPicker = !hideFundSelector;
 
-      {/* Chart */}
+  return (
+    <div className={showFundPicker ? "space-y-3" : undefined}>
+      {showFundPicker && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="shrink-0 text-sm font-medium text-muted-foreground">Fundo</span>
+          <Select value={selected} onValueChange={setSelected}>
+            <SelectTrigger className="h-8 w-72 text-sm">
+              <SelectValue placeholder="Selecionar…" />
+            </SelectTrigger>
+            <SelectContent>
+              {fundNames.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Suspense
         fallback={
           <div className="animate-pulse rounded-md bg-muted" style={{ height: layoutHeight }} aria-hidden />
