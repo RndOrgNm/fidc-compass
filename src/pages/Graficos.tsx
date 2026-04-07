@@ -30,6 +30,13 @@ const PL_CONCENTRACAO_ATIVOS_SLIDE = {
   filterable: true,
 } as const satisfies PlotlyCarouselSlide;
 
+const PL_COMPOSICAO_TREEMAP_SLIDE = {
+  id: "composicao-pl-treemap",
+  file: "composicao-pl-treemap.json",
+  caption: "Composição do PL por tipo de ativo (treemap: tipo → estratégia → ativo)",
+  filterable: true,
+} as const satisfies PlotlyCarouselSlide;
+
 const BENCHMARK_PINNED = ["Benchmark (CDI)"] as const;
 
 const COTA_VS_BENCHMARK_SLIDE = {
@@ -135,7 +142,10 @@ export default function Graficos() {
 
                 <section aria-label="Concentração por ativo" className="space-y-3">
                   <h2 className="text-lg font-semibold text-foreground">Concentração</h2>
-                  <PlotlySlideCard slide={PL_CONCENTRACAO_ATIVOS_SLIDE} />
+                  <div className="space-y-8">
+                    <PlotlySlideCard slide={PL_COMPOSICAO_TREEMAP_SLIDE} />
+                    <PlotlySlideCard slide={PL_CONCENTRACAO_ATIVOS_SLIDE} />
+                  </div>
                 </section>
               </div>
             </CarouselItem>

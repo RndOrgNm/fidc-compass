@@ -1,136 +1,324 @@
 {
   "data": [
     {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "IWvkg0N6k0AfhetRaZlvQQ=="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "customdata": [
+        100.01,
+        0.01,
+        0.01,
+        0.01,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
+      "ids": [
+        "FII COTA REAL 7 - SR|root",
+        "FII COTA REAL 7 - SR|tipo|Patrimonio",
+        "FII COTA REAL 7 - SR|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 7 - SR|ativo|Patrimonio|Outros / Não classificado|0000",
+        "FII COTA REAL 7 - SR|tipo|Renda Fixa",
+        "FII COTA REAL 7 - SR|est|Renda Fixa|Fundos Estruturados",
+        "FII COTA REAL 7 - SR|ativo|Renda Fixa|Fundos Estruturados|COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 1…"
+      ],
+      "labels": [
+        "PL Total",
+        "Patrimonio",
+        "Outros / Não classificado",
+        "0000",
+        "Renda Fixa",
+        "Fundos Estruturados",
+        "COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 1…"
+      ],
       "marker": {
-        "color": "#10B981",
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981bb",
+          "#10B981bb",
+          "#F59E0B",
+          "#F59E0Bbb",
+          "#F59E0Bbb"
+        ],
         "line": {
-          "width": 0
+          "color": "#0D1117",
+          "width": 1
         }
       },
+      "maxdepth": 3,
       "name": "FII COTA REAL 7 - SR",
-      "orientation": "h",
-      "text": [
-        "0.0%",
-        "100.0%"
+      "parents": [
+        "",
+        "FII COTA REAL 7 - SR|root",
+        "FII COTA REAL 7 - SR|tipo|Patrimonio",
+        "FII COTA REAL 7 - SR|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 7 - SR|root",
+        "FII COTA REAL 7 - SR|tipo|Renda Fixa",
+        "FII COTA REAL 7 - SR|est|Renda Fixa|Fundos Estruturados"
       ],
+      "pathbar": {
+        "visible": true
+      },
+      "root": {
+        "color": "#0D1117"
+      },
       "textfont": {
         "color": "#F8FAFC",
         "size": 11
       },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "Trk7fNfRfj8AAAAAAABZQA=="
+      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
+      "tiling": {
+        "packing": "squarify"
       },
-      "y": [
-        "0000",
-        "COTA SENIOR - FII COTA REAL 7 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%"
+      "values": [
+        16568361.13,
+        1246.57,
+        1246.57,
+        1246.57,
+        16567114.56,
+        16567114.56,
+        16567114.56
       ],
-      "type": "bar"
+      "type": "treemap"
     },
     {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "LggJ40tZkECPwvVIKHhHQQ=="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "customdata": [
+        100.03,
+        0.03,
+        0.03,
+        0.03,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
+      "ids": [
+        "FIDC MINHA CASA MINHA VIDA NP - SR|root",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|tipo|Patrimonio",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|est|Patrimonio|Outros / Não classificado",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|ativo|Patrimonio|Outros / Não classificado|0000",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|tipo|Renda Fixa",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|est|Renda Fixa|Fundos Estruturados",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|ativo|Renda Fixa|Fundos Estruturados|COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 1…"
+      ],
+      "labels": [
+        "PL Total",
+        "Patrimonio",
+        "Outros / Não classificado",
+        "0000",
+        "Renda Fixa",
+        "Fundos Estruturados",
+        "COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 1…"
+      ],
       "marker": {
-        "color": "#10B981",
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981bb",
+          "#10B981bb",
+          "#F59E0B",
+          "#F59E0Bbb",
+          "#F59E0Bbb"
+        ],
         "line": {
-          "width": 0
+          "color": "#0D1117",
+          "width": 1
         }
       },
+      "maxdepth": 3,
       "name": "FIDC MINHA CASA MINHA VIDA NP - SR",
-      "orientation": "h",
-      "text": [
-        "0.0%",
-        "100.0%"
+      "parents": [
+        "",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|root",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|tipo|Patrimonio",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|est|Patrimonio|Outros / Não classificado",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|root",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|tipo|Renda Fixa",
+        "FIDC MINHA CASA MINHA VIDA NP - SR|est|Renda Fixa|Fundos Estruturados"
       ],
+      "pathbar": {
+        "visible": true
+      },
+      "root": {
+        "color": "#0D1117"
+      },
       "textfont": {
         "color": "#F8FAFC",
         "size": 11
       },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "zI7xQkFqoT8AAAAAAABZQA=="
+      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
+      "tiling": {
+        "packing": "squarify"
       },
-      "y": [
-        "0000",
-        "COTA SR MINHA CASA MINHA VIDA -  Vcto: 31-12-2050 -> 100,00% CDI + 6,00%"
+      "values": [
+        3077222.89,
+        1046.32,
+        1046.32,
+        1046.32,
+        3076176.57,
+        3076176.57,
+        3076176.57
       ],
-      "type": "bar"
+      "type": "treemap"
     },
     {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "iMtjTLhtxUDNzMyoewBxQQ=="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "customdata": [
+        100.06,
+        0.06,
+        0.06,
+        0.06,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
+      "ids": [
+        "FII COTA REAL 7 - MEZ|root",
+        "FII COTA REAL 7 - MEZ|tipo|Patrimonio",
+        "FII COTA REAL 7 - MEZ|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 7 - MEZ|ativo|Patrimonio|Outros / Não classificado|0000",
+        "FII COTA REAL 7 - MEZ|tipo|Renda Fixa",
+        "FII COTA REAL 7 - MEZ|est|Renda Fixa|Fundos Estruturados",
+        "FII COTA REAL 7 - MEZ|ativo|Renda Fixa|Fundos Estruturados|COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 ->…"
+      ],
+      "labels": [
+        "PL Total",
+        "Patrimonio",
+        "Outros / Não classificado",
+        "0000",
+        "Renda Fixa",
+        "Fundos Estruturados",
+        "COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 ->…"
+      ],
       "marker": {
-        "color": "#10B981",
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981bb",
+          "#10B981bb",
+          "#F59E0B",
+          "#F59E0Bbb",
+          "#F59E0Bbb"
+        ],
         "line": {
-          "width": 0
+          "color": "#0D1117",
+          "width": 1
         }
       },
+      "maxdepth": 3,
       "name": "FII COTA REAL 7 - MEZ",
-      "orientation": "h",
-      "text": [
-        "0.1%",
-        "100.0%"
+      "parents": [
+        "",
+        "FII COTA REAL 7 - MEZ|root",
+        "FII COTA REAL 7 - MEZ|tipo|Patrimonio",
+        "FII COTA REAL 7 - MEZ|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 7 - MEZ|root",
+        "FII COTA REAL 7 - MEZ|tipo|Renda Fixa",
+        "FII COTA REAL 7 - MEZ|est|Renda Fixa|Fundos Estruturados"
       ],
+      "pathbar": {
+        "visible": true
+      },
+      "root": {
+        "color": "#0D1117"
+      },
       "textfont": {
         "color": "#F8FAFC",
         "size": 11
       },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "E+bkAFeCrz8AAAAAAABZQA=="
+      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
+      "tiling": {
+        "packing": "squarify"
       },
-      "y": [
-        "0000",
-        "COTA MEZANINO - FII COTA REAL 7 -  Vcto: 31-12-2049 -> Tx = 25,00%"
+      "values": [
+        17838741.99,
+        10971.44,
+        10971.44,
+        10971.44,
+        17827770.55,
+        17827770.55,
+        17827770.55
       ],
-      "type": "bar"
+      "type": "treemap"
     },
     {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "r8mWM2kSxUBSuB4VblZUQQ=="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "customdata": [
+        100.2,
+        0.2,
+        0.2,
+        0.2,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
+      "ids": [
+        "FII COTA REAL 77 RL - SR|root",
+        "FII COTA REAL 77 RL - SR|tipo|Patrimonio",
+        "FII COTA REAL 77 RL - SR|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 77 RL - SR|ativo|Patrimonio|Outros / Não classificado|0000",
+        "FII COTA REAL 77 RL - SR|tipo|Renda Fixa",
+        "FII COTA REAL 77 RL - SR|est|Renda Fixa|Fundos Estruturados",
+        "FII COTA REAL 77 RL - SR|ativo|Renda Fixa|Fundos Estruturados|COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,…"
+      ],
+      "labels": [
+        "PL Total",
+        "Patrimonio",
+        "Outros / Não classificado",
+        "0000",
+        "Renda Fixa",
+        "Fundos Estruturados",
+        "COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,…"
+      ],
       "marker": {
-        "color": "#10B981",
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981bb",
+          "#10B981bb",
+          "#F59E0B",
+          "#F59E0Bbb",
+          "#F59E0Bbb"
+        ],
         "line": {
-          "width": 0
+          "color": "#0D1117",
+          "width": 1
         }
       },
+      "maxdepth": 3,
       "name": "FII COTA REAL 77 RL - SR",
-      "orientation": "h",
-      "text": [
-        "0.2%",
-        "100.0%"
+      "parents": [
+        "",
+        "FII COTA REAL 77 RL - SR|root",
+        "FII COTA REAL 77 RL - SR|tipo|Patrimonio",
+        "FII COTA REAL 77 RL - SR|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 77 RL - SR|root",
+        "FII COTA REAL 77 RL - SR|tipo|Renda Fixa",
+        "FII COTA REAL 77 RL - SR|est|Renda Fixa|Fundos Estruturados"
       ],
+      "pathbar": {
+        "visible": true
+      },
+      "root": {
+        "color": "#0D1117"
+      },
       "textfont": {
         "color": "#F8FAFC",
         "size": 11
       },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "O8JmThPnyT8AAAAAAABZQA=="
+      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
+      "tiling": {
+        "packing": "squarify"
       },
-      "y": [
-        "0000",
-        "COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%"
+      "values": [
+        5342173.15,
+        10788.82,
+        10788.82,
+        10788.82,
+        5331384.33,
+        5331384.33,
+        5331384.33
       ],
-      "type": "bar"
+      "type": "treemap"
     }
   ],
   "layout": {
@@ -924,7 +1112,7 @@
         "size": 17,
         "color": "#F8FAFC"
       },
-      "text": "CONCENTRAÇÃO POR ATIVO (TOP 10) — % DO PL",
+      "text": "COMPOSIÇÃO DO PL POR TIPO DE ATIVO",
       "x": 0.02,
       "xanchor": "left"
     },
@@ -942,44 +1130,9 @@
     },
     "margin": {
       "t": 56,
-      "b": 64,
-      "l": 64,
-      "r": 88
-    },
-    "xaxis": {
-      "title": {
-        "font": {
-          "size": 11,
-          "color": "rgba(248, 250, 252, 0.78)"
-        },
-        "text": "% do patrimônio líquido"
-      },
-      "tickfont": {
-        "color": "rgba(248, 250, 252, 0.78)"
-      },
-      "gridcolor": "rgba(71, 85, 105, 0.35)",
-      "zerolinecolor": "rgba(248, 248, 250, 0.12)",
-      "ticksuffix": "%",
-      "range": [
-        0,
-        null
-      ],
-      "automargin": true
-    },
-    "yaxis": {
-      "title": {
-        "font": {
-          "size": 11,
-          "color": "rgba(248, 250, 252, 0.78)"
-        },
-        "text": "Ativo"
-      },
-      "tickfont": {
-        "color": "rgba(248, 250, 252, 0.78)",
-        "size": 10
-      },
-      "linecolor": "rgba(248, 248, 250, 0.12)",
-      "automargin": true
+      "b": 40,
+      "l": 16,
+      "r": 16
     },
     "paper_bgcolor": "#0D1117",
     "plot_bgcolor": "#0D1117",
