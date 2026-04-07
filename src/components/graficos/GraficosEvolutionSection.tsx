@@ -14,11 +14,12 @@ import {
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
 const COTA_LINES_URL = "/plotly/cota-lines.json";
 
-export type GraficosEvolutionVariant = "pl" | "cota";
+export type GraficosEvolutionVariant = "pl" | "cota" | "both";
 
 /**
  * Shared fund filter + daily evolution chart(s). Fund list comes from the PL JSON export.
- * Use `variant` to show only PL or only Cota (e.g. on separate Gráficos category pages).
+ * - `both`: PL and Cota side by side (same fund selection).
+ * - `pl` / `cota`: single chart only.
  */
 export function GraficosEvolutionSection({ variant }: { variant: GraficosEvolutionVariant }) {
   const [fundNames, setFundNames] = useState<string[]>([]);
@@ -51,11 +52,27 @@ export function GraficosEvolutionSection({ variant }: { variant: GraficosEvoluti
     };
   }, []);
 
+  const ariaLabel =
+    variant === "both"
+      ? "Evolução diária PL e cota"
+      : variant === "pl"
+        ? "Evolução diária do PL"
+        : "Evolução diária da cota";
+
+  const chartCard = (caption: string, url: string) => (
+    <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
+      <p className="mb-3 text-sm font-medium text-muted-foreground">{caption}</p>
+      <PlotlyFundFilterFigure
+        url={url}
+        hideFundSelector
+        selectedValue={selected}
+        onSelectedValueChange={setSelected}
+      />
+    </div>
+  );
+
   return (
-    <section
-      aria-label={variant === "pl" ? "Evolução diária do PL" : "Evolução diária da cota"}
-      className="space-y-3"
-    >
+    <section aria-label={ariaLabel} className="space-y-3">
       <h2 className="text-lg font-semibold text-foreground">Evolução diária</h2>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -86,30 +103,15 @@ export function GraficosEvolutionSection({ variant }: { variant: GraficosEvoluti
         </p>
       )}
 
-      {variant === "pl" ? (
-        <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
-            Evolução do PL por dia
-          </p>
-          <PlotlyFundFilterFigure
-            url={PL_EVOLUTION_URL}
-            hideFundSelector
-            selectedValue={selected}
-            onSelectedValueChange={setSelected}
-          />
+      {variant === "both" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {chartCard("Evolução do PL por dia", PL_EVOLUTION_URL)}
+          {chartCard("Evolução da cota por dia", COTA_LINES_URL)}
         </div>
+      ) : variant === "pl" ? (
+        chartCard("Evolução do PL por dia", PL_EVOLUTION_URL)
       ) : (
-        <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
-            Evolução da cota por dia
-          </p>
-          <PlotlyFundFilterFigure
-            url={COTA_LINES_URL}
-            hideFundSelector
-            selectedValue={selected}
-            onSelectedValueChange={setSelected}
-          />
-        </div>
+        chartCard("Evolução da cota por dia", COTA_LINES_URL)
       )}
     </section>
   );

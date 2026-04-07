@@ -80,6 +80,8 @@ export default function Graficos() {
     <div className="mx-auto max-w-6xl space-y-8 pb-8">
       <h1 className="text-2xl font-semibold text-foreground">Gráficos</h1>
 
+      <GraficosEvolutionSection variant="both" />
+
       <div className="space-y-4" aria-label="Categorias de gráficos">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div
@@ -122,8 +124,6 @@ export default function Graficos() {
           <CarouselContent>
             <CarouselItem className="basis-full">
               <div className="space-y-10">
-                <GraficosEvolutionSection variant="pl" />
-
                 <section aria-label="PL total geral" className="space-y-3">
                   <h2 className="text-lg font-semibold text-foreground">PL — Total Geral</h2>
                   <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
@@ -152,8 +152,6 @@ export default function Graficos() {
 
             <CarouselItem className="basis-full">
               <div className="space-y-10">
-                <GraficosEvolutionSection variant="cota" />
-
                 <section aria-label="Gráficos de cota" className="space-y-3">
                   <h2 className="text-lg font-semibold text-foreground">Cota</h2>
                   <div className="space-y-10">
