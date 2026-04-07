@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
@@ -25,13 +25,17 @@ function getPageTitle(pathname: string, override?: string): string {
   if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
   if (pathname.startsWith("/agent")) return "Agente IA";
   if (pathname.startsWith("/graficos")) return "Gráficos";
-  return "FIDC Manager";
+  return "GIAA Compass";
 }
 
 export function AppLayout({ children, title }: AppLayoutProps) {
   const location = useLocation();
 
   const pageTitle = getPageTitle(location.pathname, title);
+
+  useEffect(() => {
+    document.title = `${pageTitle} · GIAA Compass`;
+  }, [pageTitle]);
 
   return (
     <SidebarProvider>

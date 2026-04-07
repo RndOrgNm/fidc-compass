@@ -50,7 +50,6 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0 flex flex-col justify-center overflow-visible">
               <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">
-                {/* FIDC Manager */}
                 GIAA Investimentos
               </h1>
               <p className="text-xs text-sidebar-foreground/70 leading-normal mt-0.5">Gestão de Fundos</p>

@@ -29,7 +29,7 @@ export default function Login() {
     localStorage.setItem("isAuthenticated", "true");
     toast({
       title: "Login realizado!",
-      description: "Bem-vindo de volta ao FIDC Manager.",
+      description: "Bem-vindo de volta ao GIAA Compass.",
     });
     navigate("/");
   };
@@ -41,7 +41,7 @@ export default function Login() {
           <div className="mx-auto w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
             <TrendingUp className="h-8 w-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold">FIDC Manager</CardTitle>
+          <CardTitle className="text-2xl font-bold">GIAA Compass</CardTitle>
           <CardDescription>
             Entre com suas credenciais para acessar o sistema
           </CardDescription>
