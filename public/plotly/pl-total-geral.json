@@ -15,9 +15,6 @@
       "mode": "lines+markers",
       "name": "Total Geral",
       "x": [
-        "2026-02-26T00:00:00",
-        "2026-02-27T00:00:00",
-        "2026-03-02T00:00:00",
         "2026-03-03T00:00:00",
         "2026-03-04T00:00:00",
         "2026-03-05T00:00:00",
@@ -40,11 +37,13 @@
         "2026-03-30T00:00:00",
         "2026-03-31T00:00:00",
         "2026-04-01T00:00:00",
-        "2026-04-02T00:00:00"
+        "2026-04-02T00:00:00",
+        "2026-04-06T00:00:00",
+        "2026-04-07T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "7bVmTF0wjEAWtH9UwTCMQINxR2o/NIxAKfRu6us0jECQ1yAfxjiMQAfmrkbSPYxAiTq1K7tAjECiFEJBCEKMQDbVk/mXSoxAsmjXEOZKjEC3z4XsH0uMQA1QljFgUYxAM6aBm+xhjEDC9XLpmUGMQLV+hnnnQoxAW5OXyoVDjEB2+VrA8VGMQGI81s5AUoxAeoXD2tlZjECKE7Hri1qMQKtcA7ZOW4xA3P+23fpnjECwvzYsJ2mMQGC+isYxRIxArjLPIVNFjEBEl9zNsEWMQA=="
+        "bdata": "KfRu6us0jECQ1yAfxjiMQAfmrkbSPYxAiTq1K7tAjECiFEJBCEKMQDbVk/mXSoxAsmjXEOZKjEC3z4XsH0uMQA1QljFgUYxAM6aBm+xhjEDC9XLpmUGMQLV+hnnnQoxAW5OXyoVDjEB2+VrA8VGMQGI81s5AUoxAeoXD2tlZjECKE7Hri1qMQKtcA7ZOW4xA3P+23fpnjECwvzYsJ2mMQGC+isYxRIxArjLPIVNFjEBEl9zNsEWMQGtzpZZcR4xASgsTHdxtjEA="
       },
       "type": "scatter"
     }

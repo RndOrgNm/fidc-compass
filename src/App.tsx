@@ -14,6 +14,7 @@ import Agent from "./pages/Agent";
 // import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Graficos from "./pages/Graficos";
+import RelatorioTeste from "./pages/RelatorioTeste";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/graficos" element={<AppLayout><Graficos /></AppLayout>} />
+              <Route path="/relatorio-teste" element={<AppLayout><RelatorioTeste /></AppLayout>} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

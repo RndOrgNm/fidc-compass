@@ -17,6 +17,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/pipeline": "Pipeline de Investimentos",
   "/agent": "Agente IA",
   "/graficos": "Gráficos",
+  "/relatorio-teste": "Relatório (Teste)",
 };
 
 function getPageTitle(pathname: string, override?: string): string {
@@ -25,6 +26,7 @@ function getPageTitle(pathname: string, override?: string): string {
   if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
   if (pathname.startsWith("/agent")) return "Agente IA";
   if (pathname.startsWith("/graficos")) return "Gráficos";
+  if (pathname.startsWith("/relatorio-teste")) return "Relatório (Teste)";
   return "GIAA Compass";
 }
 

@@ -3,7 +3,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "IWvkg0N6k0AfhetRaZlvQQ=="
+        "bdata": "3mANX/yBk0C4HoVz8KVvQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -36,7 +36,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "LggJ40tZkECPwvVIKHhHQQ=="
+        "bdata": "7Q/IL8dfkEBmZmZGdoFHQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -58,7 +58,7 @@
       "textposition": "outside",
       "x": {
         "dtype": "f8",
-        "bdata": "zI7xQkFqoT8AAAAAAABZQA=="
+        "bdata": "y47xQkFqoT8AAAAAAABZQA=="
       },
       "y": [
         "0000",
@@ -69,7 +69,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "iMtjTLhtxUDNzMyoewBxQQ=="
+        "bdata": "KC30kXF3xUD2KFw7ng5xQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -91,7 +91,7 @@
       "textposition": "outside",
       "x": {
         "dtype": "f8",
-        "bdata": "E+bkAFeCrz8AAAAAAABZQA=="
+        "bdata": "R46X8np2rz8AAAAAAABZQA=="
       },
       "y": [
         "0000",
@@ -102,7 +102,40 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "r8mWM2kSxUBSuB4VblZUQQ=="
+        "bdata": "Getwt0A1xUApXI9y+Q5SQQ=="
+      },
+      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
+      "marker": {
+        "color": "#10B981",
+        "line": {
+          "width": 0
+        }
+      },
+      "name": "FII COTA REAL 77 RL - MEZ",
+      "orientation": "h",
+      "text": [
+        "0.2%",
+        "100.0%"
+      ],
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "textposition": "outside",
+      "x": {
+        "dtype": "f8",
+        "bdata": "ZdMRLjRczT8AAAAAAABZQA=="
+      },
+      "y": [
+        "0000",
+        "COTA MEZ - FII COTA REAL 77 -  Vcto: 31-12-2049 -> Tx = 25,00%"
+      ],
+      "type": "bar"
+    },
+    {
+      "customdata": {
+        "dtype": "f8",
+        "bdata": "McYlL+gdxUApXI+ChmFUQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {

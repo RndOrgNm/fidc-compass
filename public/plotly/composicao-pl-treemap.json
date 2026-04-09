@@ -70,13 +70,13 @@
         "packing": "squarify"
       },
       "values": [
-        16568361.13,
-        1246.57,
-        1246.57,
-        1246.57,
-        16567114.56,
-        16567114.56,
-        16567114.56
+        16594020.11,
+        1248.5,
+        1248.5,
+        1248.5,
+        16592771.61,
+        16592771.61,
+        16592771.61
       ],
       "type": "treemap"
     },
@@ -150,13 +150,13 @@
         "packing": "squarify"
       },
       "values": [
-        3077222.89,
-        1046.32,
-        1046.32,
-        1046.32,
-        3076176.57,
-        3076176.57,
-        3076176.57
+        3081988.49,
+        1047.94,
+        1047.94,
+        1047.94,
+        3080940.55,
+        3080940.55,
+        3080940.55
       ],
       "type": "treemap"
     },
@@ -230,13 +230,93 @@
         "packing": "squarify"
       },
       "values": [
-        17838741.99,
-        10971.44,
-        10971.44,
-        10971.44,
-        17827770.55,
-        17827770.55,
-        17827770.55
+        17896658.6,
+        10990.89,
+        10990.89,
+        10990.89,
+        17885667.71,
+        17885667.71,
+        17885667.71
+      ],
+      "type": "treemap"
+    },
+    {
+      "customdata": [
+        100.23,
+        0.23,
+        0.23,
+        0.23,
+        100.0,
+        100.0,
+        100.0
+      ],
+      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
+      "ids": [
+        "FII COTA REAL 77 RL - MEZ|root",
+        "FII COTA REAL 77 RL - MEZ|tipo|Patrimonio",
+        "FII COTA REAL 77 RL - MEZ|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 77 RL - MEZ|ativo|Patrimonio|Outros / Não classificado|0000",
+        "FII COTA REAL 77 RL - MEZ|tipo|Renda Fixa",
+        "FII COTA REAL 77 RL - MEZ|est|Renda Fixa|Fundos Estruturados",
+        "FII COTA REAL 77 RL - MEZ|ativo|Renda Fixa|Fundos Estruturados|COTA MEZ - FII COTA REAL 77 -  Vcto: 31-12-2049 -> Tx …"
+      ],
+      "labels": [
+        "PL Total",
+        "Patrimonio",
+        "Outros / Não classificado",
+        "0000",
+        "Renda Fixa",
+        "Fundos Estruturados",
+        "COTA MEZ - FII COTA REAL 77 -  Vcto: 31-12-2049 -> Tx …"
+      ],
+      "marker": {
+        "colors": [
+          "#10B981",
+          "#10B981",
+          "#10B981bb",
+          "#10B981bb",
+          "#F59E0B",
+          "#F59E0Bbb",
+          "#F59E0Bbb"
+        ],
+        "line": {
+          "color": "#0D1117",
+          "width": 1
+        }
+      },
+      "maxdepth": 3,
+      "name": "FII COTA REAL 77 RL - MEZ",
+      "parents": [
+        "",
+        "FII COTA REAL 77 RL - MEZ|root",
+        "FII COTA REAL 77 RL - MEZ|tipo|Patrimonio",
+        "FII COTA REAL 77 RL - MEZ|est|Patrimonio|Outros / Não classificado",
+        "FII COTA REAL 77 RL - MEZ|root",
+        "FII COTA REAL 77 RL - MEZ|tipo|Renda Fixa",
+        "FII COTA REAL 77 RL - MEZ|est|Renda Fixa|Fundos Estruturados"
+      ],
+      "pathbar": {
+        "visible": true
+      },
+      "root": {
+        "color": "#0D1117"
+      },
+      "textfont": {
+        "color": "#F8FAFC",
+        "size": 11
+      },
+      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
+      "tiling": {
+        "packing": "squarify"
+      },
+      "values": [
+        4744784.3,
+        10858.51,
+        10858.51,
+        10858.51,
+        4733925.79,
+        4733925.79,
+        4733925.79
       ],
       "type": "treemap"
     },
@@ -310,13 +390,13 @@
         "packing": "squarify"
       },
       "values": [
-        5342173.15,
-        10788.82,
-        10788.82,
-        10788.82,
-        5331384.33,
-        5331384.33,
-        5331384.33
+        5353557.85,
+        10811.81,
+        10811.81,
+        10811.81,
+        5342746.04,
+        5342746.04,
+        5342746.04
       ],
       "type": "treemap"
     }
