@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
-import { FileSpreadsheet, FileDown, BarChart2, Loader2, Trash2, Upload } from "lucide-react";
+import { FileSpreadsheet, FileDown, BarChart2, Loader2, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -19,9 +19,12 @@ const FILE_ACCEPT =
   ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-const BASE_URL = import.meta.env.VITE_REPORT_API_URL ?? "http://localhost:8001";
-const API_URL = `${BASE_URL}/report`;
-const PREVIEW_URL = `${BASE_URL}/report/preview`;
+// API Gateway base URL — set VITE_REPORT_API_URL to the API Gateway invoke URL in production
+// e.g. https://abc123.execute-api.us-east-1.amazonaws.com
+const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const PRESIGN_URL = `${BASE_URL}/presign`;
+const WORKER_URL = `${BASE_URL}/report`;
+const ARTIFACTS_URL = `${BASE_URL}/artifacts`;
 
 /** Same source as Gráficos → Evolução diária (fund list from PL traces). */
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
@@ -30,7 +33,7 @@ const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
 
 type PlotlyFig = { data: Data[]; layout: Partial<Layout>; [key: string]: unknown };
 
-type PreviewPayload = {
+type ConfigPayload = {
   spe_order: string[];
   historico_financeiro: PlotlyFig;
   historico_vendas: PlotlyFig;
@@ -39,7 +42,26 @@ type PreviewPayload = {
   premio: PlotlyFig | null;
 };
 
-const CHART_TITLES: Record<keyof Omit<PreviewPayload, "spe_order">, string> = {
+type ArtifactPayload = {
+  jobId: string;
+  configUrl: string;
+  pdfUrl: string;
+};
+
+// Job async status (maps to Lambda pipeline stages)
+type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
+
+const JOB_STATUS_LABEL: Record<JobStatus, string> = {
+  idle: "",
+  presigning: "Preparando upload…",
+  uploading: "Enviando arquivos para o servidor…",
+  processing: "Processando dados e gráficos…",
+  rendering: "Gerando PDF…",
+  completed: "Relatório pronto!",
+  error: "",
+};
+
+const CHART_TITLES: Record<keyof Omit<ConfigPayload, "spe_order">, string> = {
   historico_financeiro: "1. Histórico Financeiro",
   historico_vendas: "2. Histórico Vendas",
   inadimplencia: "3. Relação de Inadimplência",
@@ -73,12 +95,12 @@ export default function RelatorioTeste() {
 
   const [files, setFiles] = useState<File[]>([]);
   const [rejectNote, setRejectNote] = useState<string | null>(null);
-  const [genState, setGenState] = useState<ActionState>("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [previewState, setPreviewState] = useState<ActionState>("idle");
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewData, setPreviewData] = useState<PreviewPayload | null>(null);
+  // Lambda job state
+  const [jobStatus, setJobStatus] = useState<JobStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [configData, setConfigData] = useState<ConfigPayload | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   const [fundNames, setFundNames] = useState<string[]>([]);
   const [selectedFund, setSelectedFund] = useState("");
@@ -163,74 +185,121 @@ export default function RelatorioTeste() {
     setFiles([]);
     setRejectNote(null);
     setErrorMsg(null);
-    setGenState("idle");
+    setJobStatus("idle");
+    setConfigData(null);
+    setPdfUrl(null);
   };
 
-  // ── Build shared FormData ─────────────────────────────────────────────────
+  // ── Lambda job flow ───────────────────────────────────────────────────────
 
-  const buildForm = () => {
-    const form = new FormData();
-    for (const f of files) form.append("files", f, f.name);
-    form.append("fii_fund_name", selectedFund.trim());
-    return form;
+  const _delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+  const _pollArtifacts = async (jobId: string): Promise<ArtifactPayload> => {
+    // Poll every 2 s, up to 5 minutes
+    for (let i = 0; i < 150; i++) {
+      await _delay(2000);
+      const res = await fetch(ARTIFACTS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId }),
+      });
+      if (res.status === 200) return res.json() as Promise<ArtifactPayload>;
+      if (res.status === 404) throw new Error("Job não encontrado no servidor.");
+      if (res.status === 500) {
+        const b = await res.json().catch(() => ({})) as Record<string, string>;
+        throw new Error(b.error ?? "Erro interno ao verificar o relatório.");
+      }
+      // 409 → still processing; continue polling
+    }
+    throw new Error("Timeout: o relatório não foi concluído em 5 minutos.");
   };
 
-  // ── PDF generation ───────────────────────────────────────────────────────
+  const runJob = async () => {
+    if (files.length === 0 || !fundReady || !BASE_URL) return;
 
-  const generatePdf = async () => {
-    if (files.length === 0) return;
-
-    setGenState("loading");
+    setJobStatus("presigning");
     setErrorMsg(null);
+    setConfigData(null);
+    setPdfUrl(null);
 
     try {
-      const res = await fetch(API_URL, { method: "POST", body: buildForm() });
+      // 1. Request presigned PUT URLs from the presign Lambda
+      const presignRes = await fetch(PRESIGN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: files.map((f) => ({
+            name: f.name,
+            contentType: f.type || "text/csv",
+          })),
+        }),
+      });
+      if (!presignRes.ok) {
+        const b = await presignRes.json().catch(() => ({})) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao preparar upload (${presignRes.status})`);
+      }
+      const { jobId, bucket, uploads } = await presignRes.json() as {
+        jobId: string;
+        bucket: string;
+        uploads: Array<{ key: string; url: string; headers: Record<string, string> }>;
+      };
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(body.detail ?? `Erro ${res.status}`);
+      // 2. Upload each file directly to S3 via presigned PUT URLs
+      setJobStatus("uploading");
+      await Promise.all(
+        uploads.map((upload, i) =>
+          fetch(upload.url, {
+            method: "PUT",
+            headers: upload.headers,
+            body: files[i],
+          }).then((r) => {
+            if (!r.ok) throw new Error(`Upload de '${files[i].name}' falhou (HTTP ${r.status})`);
+          })
+        )
+      );
+
+      // 3. Trigger the worker Lambda (processes data, builds config.json, invokes renderer)
+      setJobStatus("processing");
+      const workerRes = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bucket,
+          jobId,
+          inputKeys: uploads.map((u) => u.key),
+          fiiFundName: selectedFund.trim(),
+        }),
+      });
+      if (!workerRes.ok) {
+        const b = await workerRes.json().catch(() => ({})) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "relatorio-fidc.pdf";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      // 4. Poll the artifact Lambda until rendering is complete
+      setJobStatus("rendering");
+      const artifacts = await _pollArtifacts(jobId);
 
-      setGenState("idle");
+      // 5. Fetch config.json (Plotly figures) from S3 via presigned GET URL
+      const configRes = await fetch(artifacts.configUrl);
+      if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
+      setConfigData(await configRes.json() as ConfigPayload);
+      setPdfUrl(artifacts.pdfUrl);
+      setJobStatus("completed");
+
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
-      setGenState("error");
+      setJobStatus("error");
     }
   };
 
-  // ── Chart preview ────────────────────────────────────────────────────────
-
-  const loadPreview = async () => {
-    if (files.length === 0) return;
-
-    setPreviewState("loading");
-    setPreviewError(null);
-    setPreviewData(null);
-
-    try {
-      const res = await fetch(PREVIEW_URL, { method: "POST", body: buildForm() });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({ detail: res.statusText }));
-        throw new Error(body.detail ?? `Erro ${res.status}`);
-      }
-
-      setPreviewData(await res.json() as PreviewPayload);
-      setPreviewState("idle");
-    } catch (err) {
-      setPreviewError(err instanceof Error ? err.message : "Erro desconhecido.");
-      setPreviewState("error");
-    }
+  const downloadPdf = () => {
+    if (!pdfUrl) return;
+    const a = document.createElement("a");
+    a.href = pdfUrl;
+    a.download = "relatorio-fidc.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   const fundReady =
@@ -239,9 +308,9 @@ export default function RelatorioTeste() {
     fundNames.length > 0 &&
     selectedFund.trim().length >= 2;
 
-  const canAct = files.length > 0 && fundReady;
-  const canGenerate = canAct && genState !== "loading";
-  const canPreview = canAct && previewState !== "loading";
+  const isRunning = jobStatus !== "idle" && jobStatus !== "completed" && jobStatus !== "error";
+  const canAct = files.length > 0 && fundReady && !!BASE_URL;
+  const canRun = canAct && !isRunning;
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -422,46 +491,75 @@ export default function RelatorioTeste() {
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             type="button"
-            variant="outline"
-            disabled={!canPreview}
-            onClick={loadPreview}
+            disabled={!canRun}
+            onClick={runJob}
             className="h-9 gap-2"
           >
-            {previewState === "loading" ? (
+            {isRunning ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Carregando gráficos…
+                {JOB_STATUS_LABEL[jobStatus]}
               </>
             ) : (
               <>
                 <BarChart2 className="h-4 w-4" aria-hidden />
-                Visualizar gráficos
+                Gerar relatório
               </>
             )}
           </Button>
 
-          <Button
-            type="button"
-            disabled={!canGenerate}
-            onClick={generatePdf}
-            className="h-9 gap-2"
-          >
-            {genState === "loading" ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Gerando…
-              </>
-            ) : (
-              <>
-                <FileDown className="h-4 w-4" aria-hidden />
-                Gerar PDF
-              </>
-            )}
-          </Button>
+          {jobStatus === "completed" && pdfUrl && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={downloadPdf}
+              className="h-9 gap-2"
+            >
+              <FileDown className="h-4 w-4" aria-hidden />
+              Download PDF
+            </Button>
+          )}
+
+          {jobStatus === "completed" && (
+            <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-4 w-4" aria-hidden />
+              Concluído
+            </span>
+          )}
         </div>
+
+        {/* Progress indicator */}
+        {isRunning && (
+          <div className="mt-4 space-y-1">
+            {(["presigning", "uploading", "processing", "rendering"] as JobStatus[]).map((step) => {
+              const stepIndex = ["presigning", "uploading", "processing", "rendering"].indexOf(step);
+              const currentIndex = ["presigning", "uploading", "processing", "rendering"].indexOf(jobStatus as string);
+              const done = stepIndex < currentIndex;
+              const active = step === jobStatus;
+              return (
+                <div
+                  key={step}
+                  className={cn(
+                    "flex items-center gap-2 text-xs",
+                    done ? "text-muted-foreground" : active ? "text-foreground font-medium" : "text-muted-foreground/50",
+                  )}
+                >
+                  {done ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" aria-hidden />
+                  ) : active ? (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                  ) : (
+                    <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-current opacity-30" aria-hidden />
+                  )}
+                  {JOB_STATUS_LABEL[step]}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {errorMsg && (
           <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
@@ -469,13 +567,13 @@ export default function RelatorioTeste() {
           </p>
         )}
 
-        {previewError && (
-          <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-            {previewError}
+        {!BASE_URL && (
+          <p className="mt-3 text-xs text-amber-600 dark:text-amber-500" role="status">
+            Configure <code className="rounded bg-muted px-1 py-0.5">VITE_REPORT_API_URL</code> com a URL do API Gateway.
           </p>
         )}
 
-        {!canAct && (
+        {BASE_URL && !canAct && !isRunning && (
           <p className="mt-3 text-xs text-muted-foreground">
             {!fundReady
               ? "Aguarde o fundo estar disponível e selecionado."
@@ -485,11 +583,11 @@ export default function RelatorioTeste() {
       </section>
 
       {/* ── Chart preview ────────────────────────────────────────────────── */}
-      {previewData && (
+      {configData && (
         <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
           <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
           {(Object.keys(CHART_TITLES) as Array<keyof typeof CHART_TITLES>).map((key) => {
-            const fig = previewData[key];
+            const fig = configData[key];
             if (!fig) return null;
             return (
               <div
