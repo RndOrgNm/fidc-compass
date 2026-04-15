@@ -15,7 +15,6 @@
       "mode": "lines+markers",
       "name": "Total Geral",
       "x": [
-        "2026-03-06T00:00:00",
         "2026-03-09T00:00:00",
         "2026-03-10T00:00:00",
         "2026-03-11T00:00:00",
@@ -39,11 +38,12 @@
         "2026-04-07T00:00:00",
         "2026-04-08T00:00:00",
         "2026-04-09T00:00:00",
-        "2026-04-10T00:00:00"
+        "2026-04-10T00:00:00",
+        "2026-04-13T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "5CYPsIs1ikD9AJzF2DaKQJDB7X1oP4pADVUxlbY/ikASvN9w8D+KQGg88LUwRopAjpLbH71WikAb4sxtajaKQA9r4P23N4pAtX/xTlY4ikDQ5bREwkaKQL0oMFMRR4pA1XEdX6pOikDk/wpwXE+KQAZJXTofUIpAN+wQYstcikAKrJCw912KQLuq5EoCOYpACB8ppiM6ikCfgzZSgTqKQMZf/xotPIpApfdsoaxiikBcHd9iTl2KQDBVWamSYIpASHRLguJcikA="
+        "bdata": "/QCcxdg2ikCQwe19aD+KQA1VMZW2P4pAErzfcPA/ikBoPPC1MEaKQI6S2x+9VopAG+LMbWo2ikAPa+D9tzeKQLV/8U5WOIpA0OW0RMJGikC9KDBTEUeKQNVxHV+qTopA5P8KcFxPikAGSV06H1CKQDfsEGLLXIpACqyQsPddikC7quRKAjmKQAgfKaYjOopAn4M2UoE6ikDGX/8aLTyKQKX3bKGsYopAXB3fYk5dikAwVVmpkmCKQEh0S4LiXIpASLMm1Et1ikA="
       },
       "type": "scatter"
     }

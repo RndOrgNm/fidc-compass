@@ -70,13 +70,13 @@
         "packing": "squarify"
       },
       "values": [
-        16619718.86,
-        1250.43,
-        1250.43,
-        1250.43,
-        16618468.43,
-        16618468.43,
-        16618468.43
+        16645457.43,
+        1252.37,
+        1252.37,
+        1252.37,
+        16644205.06,
+        16644205.06,
+        16644205.06
       ],
       "type": "treemap"
     },
@@ -150,13 +150,13 @@
         "packing": "squarify"
       },
       "values": [
-        3086761.49,
-        1049.57,
-        1049.57,
-        1049.57,
-        3085711.92,
-        3085711.92,
-        3085711.92
+        3091541.89,
+        1051.19,
+        1051.19,
+        1051.19,
+        3090490.7,
+        3090490.7,
+        3090490.7
       ],
       "type": "treemap"
     },
@@ -230,299 +230,13 @@
         "packing": "squarify"
       },
       "values": [
-        17928381.34,
-        11010.37,
-        11010.37,
-        11010.37,
-        17917370.97,
-        17917370.97,
-        17917370.97
-      ],
-      "type": "treemap"
-    },
-    {
-      "customdata": [
-        100.04,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.01,
-        0.01,
-        0.01,
-        46.95,
-        46.95,
-        13.52,
-        7.65,
-        7.32,
-        18.46,
-        0.0,
-        0.0,
-        0.0,
-        53.08,
-        53.08,
-        47.96,
-        1.57,
-        3.54
-      ],
-      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
-      "ids": [
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Conta Corrente - CPR",
-        "FII OMEGA|est|Conta Corrente - CPR|Outros / Não classificado",
-        "FII OMEGA|ativo|Conta Corrente - CPR|Outros / Não classificado|Diferimento - Taxa de Fiscalização CVM - DtLancto - 10…",
-        "FII OMEGA|ativo|Conta Corrente - CPR|Outros / Não classificado|Pagamento de Taxa de Gestão - REF JAN/2026 - DtLancto …",
-        "FII OMEGA|tipo|Conta Corrente - Saldo",
-        "FII OMEGA|est|Conta Corrente - Saldo|Outros / Não classificado",
-        "FII OMEGA|ativo|Conta Corrente - Saldo|Outros / Não classificado|1793 / 439 - Banco ID - 46301-8",
-        "FII OMEGA|tipo|Fundo",
-        "FII OMEGA|est|Fundo|Multimercado",
-        "FII OMEGA|ativo|Fundo|Multimercado|ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "FII OMEGA|tipo|Outros Ativos",
-        "FII OMEGA|est|Outros Ativos|Fundos Estruturados",
-        "FII OMEGA|ativo|Outros Ativos|Fundos Estruturados|GVT 04",
-        "FII OMEGA|ativo|Outros Ativos|Fundos Estruturados|SCA 02",
-        "FII OMEGA|ativo|Outros Ativos|Fundos Estruturados|SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
-        "FII OMEGA|ativo|Outros Ativos|Fundos Estruturados|SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
-        "FII OMEGA|tipo|Patrimonio",
-        "FII OMEGA|est|Patrimonio|Outros / Não classificado",
-        "FII OMEGA|ativo|Patrimonio|Outros / Não classificado|0000",
-        "FII OMEGA|tipo|Renda Fixa",
-        "FII OMEGA|est|Renda Fixa|Fundos Estruturados",
-        "FII OMEGA|ativo|Renda Fixa|Fundos Estruturados|AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL …",
-        "FII OMEGA|ativo|Renda Fixa|Fundos Estruturados|NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
-        "FII OMEGA|ativo|Renda Fixa|Fundos Estruturados|TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%"
-      ],
-      "labels": [
-        "PL Total",
-        "Conta Corrente - CPR",
-        "Outros / Não classificado",
-        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 10…",
-        "Pagamento de Taxa de Gestão - REF JAN/2026 - DtLancto …",
-        "Conta Corrente - Saldo",
-        "Outros / Não classificado",
-        "1793 / 439 - Banco ID - 46301-8",
-        "Fundo",
-        "Multimercado",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "Outros Ativos",
-        "Fundos Estruturados",
-        "GVT 04",
-        "SCA 02",
-        "SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
-        "SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
-        "Patrimonio",
-        "Outros / Não classificado",
-        "0000",
-        "Renda Fixa",
-        "Fundos Estruturados",
-        "AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL …",
-        "NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
-        "TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%"
-      ],
-      "marker": {
-        "colors": [
-          "#10B981",
-          "#EF4444",
-          "#EF4444bb",
-          "#EF4444bb",
-          "#EF4444bb",
-          "#14B8A6",
-          "#14B8A6bb",
-          "#14B8A6bb",
-          "#6366F1",
-          "#6366F1bb",
-          "#6366F1bb",
-          "#EC4899",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#10B981",
-          "#10B981bb",
-          "#10B981bb",
-          "#F59E0B",
-          "#F59E0Bbb",
-          "#F59E0Bbb",
-          "#F59E0Bbb",
-          "#F59E0Bbb"
-        ],
-        "line": {
-          "color": "#0D1117",
-          "width": 1
-        }
-      },
-      "maxdepth": 3,
-      "name": "FII OMEGA",
-      "parents": [
-        "",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Conta Corrente - CPR",
-        "FII OMEGA|est|Conta Corrente - CPR|Outros / Não classificado",
-        "FII OMEGA|est|Conta Corrente - CPR|Outros / Não classificado",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Conta Corrente - Saldo",
-        "FII OMEGA|est|Conta Corrente - Saldo|Outros / Não classificado",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Fundo",
-        "FII OMEGA|est|Fundo|Multimercado",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Outros Ativos",
-        "FII OMEGA|est|Outros Ativos|Fundos Estruturados",
-        "FII OMEGA|est|Outros Ativos|Fundos Estruturados",
-        "FII OMEGA|est|Outros Ativos|Fundos Estruturados",
-        "FII OMEGA|est|Outros Ativos|Fundos Estruturados",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Patrimonio",
-        "FII OMEGA|est|Patrimonio|Outros / Não classificado",
-        "FII OMEGA|root",
-        "FII OMEGA|tipo|Renda Fixa",
-        "FII OMEGA|est|Renda Fixa|Fundos Estruturados",
-        "FII OMEGA|est|Renda Fixa|Fundos Estruturados",
-        "FII OMEGA|est|Renda Fixa|Fundos Estruturados"
-      ],
-      "pathbar": {
-        "visible": true
-      },
-      "root": {
-        "color": "#0D1117"
-      },
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
-      "tiling": {
-        "packing": "squarify"
-      },
-      "values": [
-        329418050.48,
-        8665.79,
-        8665.79,
-        665.79,
-        8000.0,
-        444.0,
-        444.0,
-        444.0,
-        33663.84,
-        33663.84,
-        33663.84,
-        154591798.93,
-        154591798.93,
-        44524680.0,
-        25188119.0,
-        24092999.94,
-        60785999.99,
-        265.94,
-        265.94,
-        265.94,
-        174783211.98,
-        174783211.98,
-        157940984.26,
-        5183087.29,
-        11659140.43
-      ],
-      "type": "treemap"
-    },
-    {
-      "customdata": [
-        100.55,
-        0.49,
-        0.49,
-        0.49,
-        100.05,
-        100.05,
-        100.05,
-        0.01,
-        0.01,
-        0.01
-      ],
-      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
-      "ids": [
-        "FIDC ORIGIN RL|root",
-        "FIDC ORIGIN RL|tipo|Fundo",
-        "FIDC ORIGIN RL|est|Fundo|Multimercado",
-        "FIDC ORIGIN RL|ativo|Fundo|Multimercado|ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "FIDC ORIGIN RL|tipo|Outros Ativos",
-        "FIDC ORIGIN RL|est|Outros Ativos|Fundos Estruturados",
-        "FIDC ORIGIN RL|ativo|Outros Ativos|Fundos Estruturados|ORIGIN DC A VENCER",
-        "FIDC ORIGIN RL|tipo|Patrimonio",
-        "FIDC ORIGIN RL|est|Patrimonio|Outros / Não classificado",
-        "FIDC ORIGIN RL|ativo|Patrimonio|Outros / Não classificado|0000"
-      ],
-      "labels": [
-        "PL Total",
-        "Fundo",
-        "Multimercado",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "Outros Ativos",
-        "Fundos Estruturados",
-        "ORIGIN DC A VENCER",
-        "Patrimonio",
-        "Outros / Não classificado",
-        "0000"
-      ],
-      "marker": {
-        "colors": [
-          "#10B981",
-          "#6366F1",
-          "#6366F1bb",
-          "#6366F1bb",
-          "#EC4899",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#10B981",
-          "#10B981bb",
-          "#10B981bb"
-        ],
-        "line": {
-          "color": "#0D1117",
-          "width": 1
-        }
-      },
-      "maxdepth": 3,
-      "name": "FIDC ORIGIN RL",
-      "parents": [
-        "",
-        "FIDC ORIGIN RL|root",
-        "FIDC ORIGIN RL|tipo|Fundo",
-        "FIDC ORIGIN RL|est|Fundo|Multimercado",
-        "FIDC ORIGIN RL|root",
-        "FIDC ORIGIN RL|tipo|Outros Ativos",
-        "FIDC ORIGIN RL|est|Outros Ativos|Fundos Estruturados",
-        "FIDC ORIGIN RL|root",
-        "FIDC ORIGIN RL|tipo|Patrimonio",
-        "FIDC ORIGIN RL|est|Patrimonio|Outros / Não classificado"
-      ],
-      "pathbar": {
-        "visible": true
-      },
-      "root": {
-        "color": "#0D1117"
-      },
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
-      "tiling": {
-        "packing": "squarify"
-      },
-      "values": [
-        9284350.72,
-        45019.42,
-        45019.42,
-        45019.42,
-        9238144.43,
-        9238144.43,
-        9238144.43,
-        1186.87,
-        1186.87,
-        1186.87
+        17960160.23,
+        11029.89,
+        11029.89,
+        11029.89,
+        17949130.34,
+        17949130.34,
+        17949130.34
       ],
       "type": "treemap"
     },
@@ -596,29 +310,35 @@
         "packing": "squarify"
       },
       "values": [
-        4753194.81,
-        10877.75,
-        10877.75,
-        10877.75,
-        4742317.06,
-        4742317.06,
-        4742317.06
+        4838756.68,
+        10897.03,
+        10897.03,
+        10897.03,
+        4827859.65,
+        4827859.65,
+        4827859.65
       ],
       "type": "treemap"
     },
     {
       "customdata": [
-        100.2,
-        0.2,
-        0.2,
-        0.2,
-        100.0,
-        100.0,
-        100.0
+        100.13,
+        16.8,
+        16.8,
+        16.8,
+        0.13,
+        0.13,
+        0.13,
+        83.2,
+        83.2,
+        83.2
       ],
       "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
       "ids": [
         "FII COTA REAL 77 RL - SR|root",
+        "FII COTA REAL 77 RL - SR|tipo|Conta Corrente - Saldo",
+        "FII COTA REAL 77 RL - SR|est|Conta Corrente - Saldo|Outros / Não classificado",
+        "FII COTA REAL 77 RL - SR|ativo|Conta Corrente - Saldo|Outros / Não classificado|3787 / 439 - Banco ID - 46824-",
         "FII COTA REAL 77 RL - SR|tipo|Patrimonio",
         "FII COTA REAL 77 RL - SR|est|Patrimonio|Outros / Não classificado",
         "FII COTA REAL 77 RL - SR|ativo|Patrimonio|Outros / Não classificado|0000",
@@ -628,6 +348,9 @@
       ],
       "labels": [
         "PL Total",
+        "Conta Corrente - Saldo",
+        "Outros / Não classificado",
+        "3787 / 439 - Banco ID - 46824-",
         "Patrimonio",
         "Outros / Não classificado",
         "0000",
@@ -638,6 +361,9 @@
       "marker": {
         "colors": [
           "#10B981",
+          "#6366F1",
+          "#6366F1bb",
+          "#6366F1bb",
           "#10B981",
           "#10B981bb",
           "#10B981bb",
@@ -654,6 +380,9 @@
       "name": "FII COTA REAL 77 RL - SR",
       "parents": [
         "",
+        "FII COTA REAL 77 RL - SR|root",
+        "FII COTA REAL 77 RL - SR|tipo|Conta Corrente - Saldo",
+        "FII COTA REAL 77 RL - SR|est|Conta Corrente - Saldo|Outros / Não classificado",
         "FII COTA REAL 77 RL - SR|root",
         "FII COTA REAL 77 RL - SR|tipo|Patrimonio",
         "FII COTA REAL 77 RL - SR|est|Patrimonio|Outros / Não classificado",
@@ -676,141 +405,16 @@
         "packing": "squarify"
       },
       "values": [
-        5337120.15,
-        10778.62,
-        10778.62,
-        10778.62,
-        5326341.53,
-        5326341.53,
-        5326341.53
-      ],
-      "type": "treemap"
-    },
-    {
-      "customdata": [
-        103.01,
-        0.02,
-        0.02,
-        0.02,
-        4.28,
-        4.28,
-        4.28,
-        98.7,
-        98.7,
-        48.68,
-        29.26,
-        20.76,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "hovertemplate": "<b>%{label}</b><br>Valor líquido: R$ %{value:,.2f}<br>% do PL: %{customdata:.2f}%<extra></extra>",
-      "ids": [
-        "FII BRASIL INCORPORAÇÃO RL|root",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Conta Corrente - Saldo",
-        "FII BRASIL INCORPORAÇÃO RL|est|Conta Corrente - Saldo|Outros / Não classificado",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Conta Corrente - Saldo|Outros / Não classificado|3924 / N/C - N/C - 64089566-N/C",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Fundo",
-        "FII BRASIL INCORPORAÇÃO RL|est|Fundo|Multimercado",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Fundo|Multimercado|ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Outros Ativos",
-        "FII BRASIL INCORPORAÇÃO RL|est|Outros Ativos|Fundos Estruturados",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Outros Ativos|Fundos Estruturados|127 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Outros Ativos|Fundos Estruturados|154 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Outros Ativos|Fundos Estruturados|164 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Patrimonio",
-        "FII BRASIL INCORPORAÇÃO RL|est|Patrimonio|Outros / Não classificado",
-        "FII BRASIL INCORPORAÇÃO RL|ativo|Patrimonio|Outros / Não classificado|0000"
-      ],
-      "labels": [
-        "PL Total",
-        "Conta Corrente - Saldo",
-        "Outros / Não classificado",
-        "3924 / N/C - N/C - 64089566-N/C",
-        "Fundo",
-        "Multimercado",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "Outros Ativos",
-        "Fundos Estruturados",
-        "127 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "154 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "164 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "Patrimonio",
-        "Outros / Não classificado",
-        "0000"
-      ],
-      "marker": {
-        "colors": [
-          "#10B981",
-          "#14B8A6",
-          "#14B8A6bb",
-          "#14B8A6bb",
-          "#6366F1",
-          "#6366F1bb",
-          "#6366F1bb",
-          "#EC4899",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#EC4899bb",
-          "#10B981",
-          "#10B981bb",
-          "#10B981bb"
-        ],
-        "line": {
-          "color": "#0D1117",
-          "width": 1
-        }
-      },
-      "maxdepth": 3,
-      "name": "FII BRASIL INCORPORAÇÃO RL",
-      "parents": [
-        "",
-        "FII BRASIL INCORPORAÇÃO RL|root",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Conta Corrente - Saldo",
-        "FII BRASIL INCORPORAÇÃO RL|est|Conta Corrente - Saldo|Outros / Não classificado",
-        "FII BRASIL INCORPORAÇÃO RL|root",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Fundo",
-        "FII BRASIL INCORPORAÇÃO RL|est|Fundo|Multimercado",
-        "FII BRASIL INCORPORAÇÃO RL|root",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Outros Ativos",
-        "FII BRASIL INCORPORAÇÃO RL|est|Outros Ativos|Fundos Estruturados",
-        "FII BRASIL INCORPORAÇÃO RL|est|Outros Ativos|Fundos Estruturados",
-        "FII BRASIL INCORPORAÇÃO RL|est|Outros Ativos|Fundos Estruturados",
-        "FII BRASIL INCORPORAÇÃO RL|root",
-        "FII BRASIL INCORPORAÇÃO RL|tipo|Patrimonio",
-        "FII BRASIL INCORPORAÇÃO RL|est|Patrimonio|Outros / Não classificado"
-      ],
-      "pathbar": {
-        "visible": true
-      },
-      "root": {
-        "color": "#0D1117"
-      },
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "texttemplate": "<b>%{label}</b><br>%{customdata:.1f}%",
-      "tiling": {
-        "packing": "squarify"
-      },
-      "values": [
-        26166285.57,
-        5563.24,
-        5563.24,
-        5563.24,
-        1087351.04,
-        1087351.04,
-        1087351.04,
-        25073269.98,
-        25073269.98,
-        12366393.57,
-        7432401.0,
-        5274475.41,
-        101.31,
-        101.31,
-        101.31
+        8046429.16,
+        1350000.0,
+        1350000.0,
+        1350000.0,
+        10793.91,
+        10793.91,
+        10793.91,
+        6685635.25,
+        6685635.25,
+        6685635.25
       ],
       "type": "treemap"
     }

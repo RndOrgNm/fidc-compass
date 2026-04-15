@@ -3,7 +3,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "8uaoSriJk0Bcj8KNfLJvQQ=="
+        "bdata": "OviAR3eRk0AfheuhDb9vQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -36,7 +36,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "STF1D0VmkEBcj8L1x4pHQQ=="
+        "bdata": "vPLYg8VskECamZlZHZRHQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -69,7 +69,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "r6QoQS+BxUC4HoWvWxZxQQ=="
+        "bdata": "4rc0WvGKxUDXo3ClHB5xQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -102,103 +102,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "uB6F61HOhEAAAAAAAEC/QBSuR+H6b+BAKVyP0pvFU0Fcj8KN8DxmQXE9Cn8U+nZBAAAAcHEFeEEAAABAJDuFQR+F638q/IxBuB6F8PnTokE="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
-      "marker": {
-        "color": "#10B981",
-        "line": {
-          "width": 0
-        }
-      },
-      "name": "FII OMEGA",
-      "orientation": "h",
-      "text": [
-        "0.0%",
-        "0.0%",
-        "0.0%",
-        "1.6%",
-        "3.5%",
-        "7.3%",
-        "7.6%",
-        "13.5%",
-        "18.5%",
-        "48.0%"
-      ],
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "bVgrC1uAKj/kxshz9+ZjPzuDUSDh74Q/Imvoii4v+T9A8JSZVVMMQDRS9hhARB1AmZokRc2YHkA5auJb9worQIBkVfCvdTJAf4idlGf7R0A="
-      },
-      "y": [
-        "Diferimento - Taxa de Fiscalização CVM - DtLancto - 10/04/2026 - DtVenc…",
-        "Pagamento de Taxa de Gestão - REF JAN/2026 - DtLancto - 08/04/2026 - Dt…",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "NC-HABITARE -  Vcto: 05-09-2029 -> Tx = 27,00%",
-        "TRAVESSIA - DB -  Vcto: 06-04-2029 -> Tx = 27,00%",
-        "SOU + NITERÓI EMP. IMOBILIÁRIO SPE LTDA.",
-        "SCA 02",
-        "GVT 04",
-        "SOU + VITAL BRASIL EMP. IMOBILIÁRIO SPE LTDA",
-        "AGVT PARTICIPAÇÕES SOCIETÁRIAS S.A. _ NÃO CONVERSÍVEL -  Vcto: 27-06-20…"
-      ],
-      "type": "bar"
-    },
-    {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "AAAAAACI08AAAAAAAFjLwAAAAAAAWLvAAAAAAAAks8AAAAAAABSuwAAAAAAAYGXAgL65an6LkkAK16NwbfvlQFyPwg3QnmFB"
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
-      "marker": {
-        "color": "#10B981",
-        "line": {
-          "width": 0
-        }
-      },
-      "name": "FIDC ORIGIN RL",
-      "orientation": "h",
-      "text": [
-        "-0.2%",
-        "-0.2%",
-        "-0.1%",
-        "-0.1%",
-        "-0.0%",
-        "-0.0%",
-        "0.0%",
-        "0.5%",
-        "100.1%"
-      ],
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "G7hbz9S5y79GZ/Nde2jDv0Zn8117aLO/Y13u6d8rq7/NJPKAVFmlv63zDdfdV16/DKO9zGFTij9WtiSWgTTfP9Iyw8NlA1lA"
-      },
-      "y": [
-        "Pagamento de Taxa de Gestão - Co-gestão - REF MAR/26 - DtLancto - 08/04…",
-        "Pagamento de Taxa Administração - REF MAR/26 - DtLancto - 08/04/2026 - …",
-        "Taxa de Gestão - Co-gestão (Vl Dia: 1000,00) - DtLancto - 10/04/2026 - …",
-        "Taxa Administração (Vl Dia: 700,00) - DtLancto - 10/04/2026 - DtVencto …",
-        "Taxa Gestão (Vl Dia: 550,00) - DtLancto - 10/04/2026 - DtVencto - 10/04…",
-        "PAGAMENTO DE IOF - REF 10/04 - DtLancto - 10/04/2026 - DtVencto - 10/04…",
-        "0000",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "ORIGIN DC A VENCER"
-      ],
-      "type": "bar"
-    },
-    {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "G+ZlaOA+xUA9CtdDKxdSQQ=="
+        "bdata": "fUcmdIRIxUCamZnptGpSQQ=="
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -220,7 +124,7 @@
       "textposition": "outside",
       "x": {
         "dtype": "f8",
-        "bdata": "ZtMRLjRczT8AAAAAAABZQA=="
+        "bdata": "m6R1Wx3kzD8AAAAAAABZQA=="
       },
       "y": [
         "0000",
@@ -231,7 +135,7 @@
     {
       "customdata": {
         "dtype": "f8",
-        "bdata": "0c23+04NxUAfhethgVFUQQ=="
+        "bdata": "qQZN9/MUxUAAAAAAcJk0QQAAANDwgFlB"
       },
       "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
       "marker": {
@@ -243,8 +147,9 @@
       "name": "FII COTA REAL 77 RL - SR",
       "orientation": "h",
       "text": [
-        "0.2%",
-        "100.0%"
+        "0.1%",
+        "16.8%",
+        "83.2%"
       ],
       "textfont": {
         "color": "#F8FAFC",
@@ -253,60 +158,12 @@
       "textposition": "outside",
       "x": {
         "dtype": "f8",
-        "bdata": "OsJmThPnyT8AAAAAAABZQA=="
+        "bdata": "Fv6I1ZMxwT8WuQyh18wwQLrRvBfKzFRA"
       },
       "y": [
         "0000",
+        "3787 / 439 - Banco ID - 46824-",
         "COTA SR - FII COTA REAL 77 -  Vcto: 31-12-2049 -> 100,00% CDI + 6,00%"
-      ],
-      "type": "bar"
-    },
-    {
-      "customdata": {
-        "dtype": "f8",
-        "bdata": "MzMzM4z0JsEzMzMzc4u0wArXo3A9z6jAAAAAAADgpcBIMURy6VNZQArXo3A9u7VApHA9CneXMEGkcD3a2h5UQQAAAEA0WlxBpHA9MkeWZ0E="
-      },
-      "hovertemplate": "<b>%{y}</b><br>% do PL: %{x:.2f}%<br>Valor líquido: %{customdata:,.2f}<br><extra></extra>",
-      "marker": {
-        "color": "#10B981",
-        "line": {
-          "width": 0
-        }
-      },
-      "name": "FII BRASIL INCORPORAÇÃO RL",
-      "orientation": "h",
-      "text": [
-        "-3.0%",
-        "-0.0%",
-        "-0.0%",
-        "-0.0%",
-        "0.0%",
-        "0.0%",
-        "4.3%",
-        "20.8%",
-        "29.3%",
-        "48.7%"
-      ],
-      "textfont": {
-        "color": "#F8FAFC",
-        "size": 11
-      },
-      "textposition": "outside",
-      "x": {
-        "dtype": "f8",
-        "bdata": "hXfGfk+wB8B2bezvfjOVv12ZuHwrmom/WIErRe2Shr9i+FyvFCM6P+M2BAj+bJY/GpKzOy0fEUDRNaxVbsM0QAsuSdIcQj1AkF4kXjVXSEA="
-      },
-      "y": [
-        "ITBI - DtLancto - 30/03/2026 - DtVencto - 30/03/2026",
-        "Liquidação de IR / Dividendo - DtLancto - 30/03/2026 - DtVencto - 30/03…",
-        "Taxa Gestão (Vl Dia: 453,63) - DtLancto - 10/04/2026 - DtVencto - 10/04…",
-        "Taxa Administração (Vl Dia: 400,00) - DtLancto - 10/04/2026 - DtVencto …",
-        "0000",
-        "3924 / N/C - N/C - 64089566-N/C",
-        "ID RF LONGO PRAZO FUNDO DE INVESTIMENTO EM RENDA FIXA",
-        "164 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "154 - BRASIL INCORPORAÇÃO SPE LTDA",
-        "127 - BRASIL INCORPORAÇÃO SPE LTDA"
       ],
       "type": "bar"
     }
