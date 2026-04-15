@@ -101,6 +101,7 @@ export default function RelatorioTeste() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [configData, setConfigData] = useState<ConfigPayload | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
 
   const [fundNames, setFundNames] = useState<string[]>([]);
   const [selectedFund, setSelectedFund] = useState("");
@@ -292,14 +293,32 @@ export default function RelatorioTeste() {
     }
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!pdfUrl) return;
-    const a = document.createElement("a");
-    a.href = pdfUrl;
-    a.download = "relatorio-fidc.pdf";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // Cross-origin presigned S3 URLs ignore <a download>; fetch as blob then save with a same-origin object URL.
+    setPdfDownloading(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(pdfUrl);
+      if (!res.ok) throw new Error(`Download falhou (HTTP ${res.status})`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = "relatorio-fidc.pdf";
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Falha ao baixar o PDF.");
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   const fundReady =
@@ -515,11 +534,21 @@ export default function RelatorioTeste() {
             <Button
               type="button"
               variant="outline"
-              onClick={downloadPdf}
+              disabled={pdfDownloading}
+              onClick={() => void downloadPdf()}
               className="h-9 gap-2"
             >
-              <FileDown className="h-4 w-4" aria-hidden />
-              Download PDF
+              {pdfDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Baixando…
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4" aria-hidden />
+                  Download PDF
+                </>
+              )}
             </Button>
           )}
 
