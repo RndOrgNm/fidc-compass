@@ -1,5 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
-import { FileSpreadsheet, FileDown, BarChart2, Loader2, Trash2, Upload, CheckCircle2 } from "lucide-react";
+import { FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, Upload, CheckCircle2 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.re
 const PRESIGN_URL = `${BASE_URL}/presign`;
 const WORKER_URL = `${BASE_URL}/report`;
 const ARTIFACTS_URL = `${BASE_URL}/artifacts`;
+const REPORT_RUNS_URL = `${BASE_URL}/report-runs`;
 
 /** Same source as Gráficos → Evolução diária (fund list from PL traces). */
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
@@ -102,6 +103,7 @@ export default function RelatorioTeste() {
   const [configData, setConfigData] = useState<ConfigPayload | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [loadingLastReport, setLoadingLastReport] = useState(false);
 
   const [fundNames, setFundNames] = useState<string[]>([]);
   const [selectedFund, setSelectedFund] = useState("");
@@ -213,6 +215,47 @@ export default function RelatorioTeste() {
       // 409 → still processing; continue polling
     }
     throw new Error("Timeout: o relatório não foi concluído em 5 minutos.");
+  };
+
+  const loadLastReport = async () => {
+    if (!fundReady || !BASE_URL || loadingLastReport) return;
+    setLoadingLastReport(true);
+    setErrorMsg(null);
+
+    try {
+      // 1. Fetch the latest run for this fund
+      const listRes = await fetch(
+        `${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(selectedFund.trim())}&limit=1`,
+      );
+      if (!listRes.ok) {
+        const b = await listRes.json().catch(() => ({})) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao buscar relatórios (${listRes.status})`);
+      }
+      const runs = await listRes.json() as Array<{ id: string }>;
+      if (!runs.length) {
+        setErrorMsg("Nenhum relatório encontrado para este fundo. Gere um primeiro.");
+        return;
+      }
+
+      // 2. Presign the artifacts for that run
+      const presignRes = await fetch(`${REPORT_RUNS_URL}/${runs[0].id}/presign`);
+      if (!presignRes.ok) {
+        const b = await presignRes.json().catch(() => ({})) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao obter URLs do relatório (${presignRes.status})`);
+      }
+      const artifact = await presignRes.json() as { configUrl: string; pdfUrl: string };
+
+      // 3. Fetch config.json and hydrate the page as if the job just completed
+      const configRes = await fetch(artifact.configUrl);
+      if (!configRes.ok) throw new Error("Falha ao carregar dados dos gráficos.");
+      setConfigData(await configRes.json() as ConfigPayload);
+      setPdfUrl(artifact.pdfUrl);
+      setJobStatus("completed");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar relatório anterior.");
+    } finally {
+      setLoadingLastReport(false);
+    }
   };
 
   const runJob = async () => {
@@ -529,6 +572,28 @@ export default function RelatorioTeste() {
               </>
             )}
           </Button>
+
+          {BASE_URL && fundReady && !isRunning && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loadingLastReport}
+              onClick={() => void loadLastReport()}
+              className="h-9 gap-2"
+            >
+              {loadingLastReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Carregando…
+                </>
+              ) : (
+                <>
+                  <History className="h-4 w-4" aria-hidden />
+                  Carregar último relatório
+                </>
+              )}
+            </Button>
+          )}
 
           {jobStatus === "completed" && pdfUrl && (
             <Button
