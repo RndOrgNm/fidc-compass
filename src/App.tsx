@@ -45,7 +45,8 @@ const App = () => (
               <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
               <Route path="/graficos" element={<AppLayout><Graficos /></AppLayout>} />
-              <Route path="/relatorio-teste" element={<AppLayout><RelatorioTeste /></AppLayout>} />
+              <Route path="/controle-de-obras" element={<AppLayout><RelatorioTeste /></AppLayout>} />
+              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-obras" replace />} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

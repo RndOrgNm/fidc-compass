@@ -378,13 +378,6 @@ export default function RelatorioTeste() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">Controle de obras</span> — selecione o fundo (mesma lista
-        que em Gráficos), depois envie os CSVs de vendas. Unidades em estoque (FII) são identificadas quando o
-        nome do fundo aparece no cliente. O rótulo de cada carteira no PDF vem do nome do arquivo. Opcional: CSV
-        de Fluxo Financeiro com &quot;fluxo&quot; no nome. Cronogramas são ignorados.
-      </p>
-
       {/* ── Fundo (first) ───────────────────────────────────────────────── */}
       <section
         aria-label="Fundo do controle"
