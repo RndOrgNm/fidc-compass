@@ -58,7 +58,7 @@ const JOB_STATUS_LABEL: Record<JobStatus, string> = {
   uploading: "Enviando arquivos para o servidor…",
   processing: "Processando dados e gráficos…",
   rendering: "Gerando PDF…",
-  completed: "Relatório pronto!",
+  completed: "Controle concluído!",
   error: "",
 };
 
@@ -210,11 +210,11 @@ export default function RelatorioTeste() {
       if (res.status === 404) throw new Error("Job não encontrado no servidor.");
       if (res.status === 500) {
         const b = await res.json().catch(() => ({})) as Record<string, string>;
-        throw new Error(b.error ?? "Erro interno ao verificar o relatório.");
+        throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
       }
       // 409 → still processing; continue polling
     }
-    throw new Error("Timeout: o relatório não foi concluído em 5 minutos.");
+    throw new Error("Timeout: o processamento não foi concluído em 5 minutos.");
   };
 
   const loadLastReport = async () => {
@@ -229,11 +229,11 @@ export default function RelatorioTeste() {
       );
       if (!listRes.ok) {
         const b = await listRes.json().catch(() => ({})) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao buscar relatórios (${listRes.status})`);
+        throw new Error(b.error ?? `Erro ao buscar histórico (${listRes.status})`);
       }
       const runs = await listRes.json() as Array<{ id: string }>;
       if (!runs.length) {
-        setErrorMsg("Nenhum relatório encontrado para este fundo. Gere um primeiro.");
+        setErrorMsg("Nenhum controle salvo para este fundo. Execute um primeiro.");
         return;
       }
 
@@ -241,7 +241,7 @@ export default function RelatorioTeste() {
       const presignRes = await fetch(`${REPORT_RUNS_URL}/${runs[0].id}/presign`);
       if (!presignRes.ok) {
         const b = await presignRes.json().catch(() => ({})) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao obter URLs do relatório (${presignRes.status})`);
+        throw new Error(b.error ?? `Erro ao obter URLs dos arquivos (${presignRes.status})`);
       }
       const artifact = await presignRes.json() as { configUrl: string; pdfUrl: string };
 
@@ -252,7 +252,7 @@ export default function RelatorioTeste() {
       setPdfUrl(artifact.pdfUrl);
       setJobStatus("completed");
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar relatório anterior.");
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar o último controle.");
     } finally {
       setLoadingLastReport(false);
     }
@@ -349,7 +349,7 @@ export default function RelatorioTeste() {
       try {
         const a = document.createElement("a");
         a.href = objectUrl;
-        a.download = "relatorio-fidc.pdf";
+        a.download = "controle-obras-fidc.pdf";
         a.rel = "noopener";
         document.body.appendChild(a);
         a.click();
@@ -379,15 +379,15 @@ export default function RelatorioTeste() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <p className="text-sm text-muted-foreground">
-        Selecione o fundo (mesma lista que em Gráficos), depois envie os CSVs de vendas. Unidades em estoque
-        (FII) são identificadas quando o nome do fundo aparece no cliente. O rótulo de cada carteira no PDF vem
-        do nome do arquivo. Opcional: CSV de Fluxo Financeiro com &quot;fluxo&quot; no nome. Cronogramas são
-        ignorados.
+        <span className="font-medium text-foreground">Controle de obras</span> — selecione o fundo (mesma lista
+        que em Gráficos), depois envie os CSVs de vendas. Unidades em estoque (FII) são identificadas quando o
+        nome do fundo aparece no cliente. O rótulo de cada carteira no PDF vem do nome do arquivo. Opcional: CSV
+        de Fluxo Financeiro com &quot;fluxo&quot; no nome. Cronogramas são ignorados.
       </p>
 
       {/* ── Fundo (first) ───────────────────────────────────────────────── */}
       <section
-        aria-label="Fundo do relatório"
+        aria-label="Fundo do controle"
         className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Fundo</h2>
@@ -395,7 +395,7 @@ export default function RelatorioTeste() {
         {!namesError && fundNames.length > 0 && (
           <div className="space-y-1.5">
             <Label htmlFor={fundSelectId} className="text-xs text-muted-foreground">
-              Relatório para
+              Controle para
             </Label>
             <Select
               value={selectedFund}
@@ -548,7 +548,7 @@ export default function RelatorioTeste() {
 
       {/* ── Geração ─────────────────────────────────────────────────────── */}
       <section
-        aria-label="Geração do relatório"
+        aria-label="Ações do controle de obras"
         className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
@@ -568,7 +568,7 @@ export default function RelatorioTeste() {
             ) : (
               <>
                 <BarChart2 className="h-4 w-4" aria-hidden />
-                Gerar relatório
+                Gerar exportação
               </>
             )}
           </Button>
@@ -589,7 +589,7 @@ export default function RelatorioTeste() {
               ) : (
                 <>
                   <History className="h-4 w-4" aria-hidden />
-                  Carregar último relatório
+                  Carregar último controle
                 </>
               )}
             </Button>
