@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { initialsFromTwoGivenNames } from "@/lib/user-initials";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
@@ -40,12 +39,9 @@ export function AppSidebar() {
     user?.firstName ||
     user?.primaryEmailAddress?.emailAddress ||
     "Usuário";
-  const initials = initialsFromTwoGivenNames(
-    user?.fullName,
-    user?.firstName,
-    user?.lastName,
-    user?.primaryEmailAddress?.emailAddress,
-  );
+  const initials =
+    (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
+    displayName.slice(0, 2).toUpperCase();
   const avatarUrl = user?.imageUrl;
 
   const handleLogout = async () => {
@@ -121,7 +117,7 @@ export function AppSidebar() {
           <Avatar className="h-10 w-10">
             {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
             <AvatarFallback className="bg-primary text-primary-foreground">
-              {initials}
+              {initials.toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (

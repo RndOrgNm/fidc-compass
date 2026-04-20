@@ -1,13 +1,10 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { initialsFromTwoGivenNames } from "@/lib/user-initials";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -34,19 +31,6 @@ function getPageTitle(pathname: string, override?: string): string {
 
 export function AppLayout({ children, title }: AppLayoutProps) {
   const location = useLocation();
-  const { user } = useUser();
-
-  const headerInitials = initialsFromTwoGivenNames(
-    user?.fullName,
-    user?.firstName,
-    user?.lastName,
-    user?.primaryEmailAddress?.emailAddress,
-  );
-  const headerAvatarUrl = user?.imageUrl;
-  const headerName =
-    user?.fullName ||
-    user?.primaryEmailAddress?.emailAddress ||
-    "Usuário";
 
   const pageTitle = getPageTitle(location.pathname, title);
 
@@ -73,15 +57,6 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                   5
                 </Badge>
               </Button>
-              
-              <Avatar className="h-9 w-9">
-                {headerAvatarUrl && (
-                  <AvatarImage src={headerAvatarUrl} alt={headerName} />
-                )}
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {headerInitials}
-                </AvatarFallback>
-              </Avatar>
             </div>
           </header>
 
