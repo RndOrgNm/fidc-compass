@@ -1,6 +1,7 @@
-import { Home, Bot, TrendingUp, LineChart, FileText } from "lucide-react";
+import { Home, Bot, TrendingUp, LineChart, FileText, LogOut } from "lucide-react";
 // import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useClerk, useUser } from "@clerk/clerk-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +14,8 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
@@ -29,11 +31,22 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const collapsed = state === "collapsed";
 
-  // Auth temporarily disabled; keep handler commented for later reuse
-  // const handleLogout = () => {
-  //   localStorage.removeItem("isAuthenticated");
-  //   navigate("/login");
-  // };
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
+  const displayName =
+    user?.fullName ||
+    user?.firstName ||
+    user?.primaryEmailAddress?.emailAddress ||
+    "Usuário";
+  const initials =
+    (user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "") ||
+    displayName.slice(0, 2).toUpperCase();
+  const avatarUrl = user?.imageUrl;
+
+  const handleLogout = async () => {
+    await signOut({ redirectUrl: "/" });
+  };
 
   const getNavCls = (isActive: boolean) =>
     isActive
@@ -102,17 +115,22 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border px-4 py-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">JV</AvatarFallback>
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {initials.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-sidebar-foreground truncate">João Vitor</p>
-              <p className="text-xs text-sidebar-foreground/70 truncate">Gestor</p>
+              <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                {displayName}
+              </p>
+              <p className="text-xs text-sidebar-foreground/70 truncate">
+                {user?.primaryEmailAddress?.emailAddress ?? "Conta conectada"}
+              </p>
             </div>
           )}
         </div>
-        {/* Auth temporarily disabled; keep logout UI commented for future use */}
-        {/*
         {!collapsed && (
           <Button
             variant="ghost"
@@ -124,7 +142,6 @@ export function AppSidebar() {
             Sair
           </Button>
         )}
-        */}
       </SidebarFooter>
     </Sidebar>
   );

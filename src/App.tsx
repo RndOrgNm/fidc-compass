@@ -6,12 +6,12 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { ChatProvider } from "./contexts/ChatContext";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import Home from "./pages/Home";
 // import Pipeline from "./pages/Pipeline"; // hidden for now — re-enable with /pipeline routes below
 import Agent from "./pages/Agent";
-// Auth temporarily disabled
-// import Login from "./pages/Login";
-// import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Graficos from "./pages/Graficos";
 import RelatorioTeste from "./pages/RelatorioTeste";
@@ -27,13 +27,19 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Auth routes temporarily disabled */}
-              {/*
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              */}
+              {/* Clerk Account Portal: these routes only redirect (no embedded UI) */}
+              <Route path="/login/*" element={<Login />} />
+              <Route path="/sign-up/*" element={<Register />} />
+              <Route path="/register" element={<Navigate to="/sign-up" replace />} />
 
-              <Route path="/" element={<AppLayout><Home /></AppLayout>} />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <AppLayout><Home /></AppLayout>
+                  </RequireAuth>
+                }
+              />
               {/* Pipeline — hidden for now; send bookmarks to Home (re-enable routes + Pipeline import)
               <Route path="/pipeline" element={<AppLayout><Pipeline /></AppLayout>} />
               <Route path="/pipeline/cedentes" element={<AppLayout><Pipeline /></AppLayout>} />
@@ -42,10 +48,38 @@ const App = () => (
               <Route path="/pipeline/recebiveis/:workflowId" element={<AppLayout><Pipeline /></AppLayout>} />
               */}
               <Route path="/pipeline/*" element={<Navigate to="/" replace />} />
-              <Route path="/agent" element={<AppLayout><Agent /></AppLayout>} />
-              <Route path="/agent/:conversationId" element={<AppLayout><Agent /></AppLayout>} />
-              <Route path="/graficos" element={<AppLayout><Graficos /></AppLayout>} />
-              <Route path="/controle-de-obras" element={<AppLayout><RelatorioTeste /></AppLayout>} />
+              <Route
+                path="/agent"
+                element={
+                  <RequireAuth>
+                    <AppLayout><Agent /></AppLayout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/agent/:conversationId"
+                element={
+                  <RequireAuth>
+                    <AppLayout><Agent /></AppLayout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/graficos"
+                element={
+                  <RequireAuth>
+                    <AppLayout><Graficos /></AppLayout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/controle-de-obras"
+                element={
+                  <RequireAuth>
+                    <AppLayout><RelatorioTeste /></AppLayout>
+                  </RequireAuth>
+                }
+              />
               <Route path="/relatorio-teste" element={<Navigate to="/controle-de-obras" replace />} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
@@ -60,4 +94,3 @@ const App = () => (
 );
 
 export default App;
-
