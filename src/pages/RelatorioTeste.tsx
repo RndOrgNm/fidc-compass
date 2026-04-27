@@ -302,7 +302,9 @@ export default function RelatorioTeste() {
         )
       );
 
-      // 3. Trigger the worker Lambda (processes data, builds config.json, invokes renderer)
+      // 3. Trigger the worker Lambda — returns 202 (accepted) immediately;
+      //    the heavy pipeline runs asynchronously and the artifact poll below
+      //    waits for completion. 200 is also accepted for backwards compat.
       setJobStatus("processing");
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
@@ -314,7 +316,7 @@ export default function RelatorioTeste() {
           fiiFundName: selectedFund.trim(),
         }),
       });
-      if (!workerRes.ok) {
+      if (workerRes.status !== 202 && workerRes.status !== 200) {
         const b = await workerRes.json().catch(() => ({})) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }

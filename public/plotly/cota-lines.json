@@ -15,10 +15,6 @@
       "mode": "lines+markers",
       "name": "ABEL 33 FII RI",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -37,11 +33,14 @@
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "vKc4L7DroEBSobJIhuugQP/h191y66BAPjQ9cl/roEDh5KcGTOugQLoOm+ks66BAGfEy/UXroEB15IqDJuugQGOpYBoT66BAQN2Cnf/qoEAXMJr49eugQKoYfNTi66BAURXwvhTsoEB2x5xGAOygQCSNG8ja66BAC1GVIcbroEAeKCKJseugQKzs1L/a66BAceehOqbroEBWb+Tsj+ugQK3MjGV766BADmR/0WbroEAGN0pFMuugQA=="
+        "bdata": "4eSnBkzroEC6DpvpLOugQBnxMv1F66BAdeSKgybroEBjqWAaE+ugQEDdgp3/6qBAFzCa+PXroECqGHzU4uugQFEV8L4U7KBAdsecRgDsoEAkjRvI2uugQAtRlSHG66BAHigiibHroECs7NS/2uugQHHnoTqm66BAVm/k7I/roECtzIxle+ugQA5kf9Fm66BABjdKRTLroEALexz+F+ugQI7tMWgD66BAGt7Nz+7qoEA="
       },
       "type": "scatter"
     },
@@ -60,10 +59,6 @@
       "mode": "lines+markers",
       "name": "FIAGRO IMOBILIARIO ID GOIANA",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -81,11 +76,13 @@
         "2026-04-13T00:00:00",
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
-        "2026-04-16T00:00:00"
+        "2026-04-16T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "3DZC9WUPaUDz9HyTJw9pQN77RDPpDmlAjBy30qoOaUDTn2BzbA5pQMJQhxUuDmlArBoI8gEaaUDbOnKDxRlpQK28qtSIGWlAGNLhIUwZaUBipR9gDxlpQHggmavSGGlAxKWVCJUYaUCEv3hpVxhpQG7DpM8ZGGlA7QFn59wXaUDqfmfenhdpQAmS89VgF2lAy6sIceQWaUCVHW7JohZpQBpR+yllFmlAhwwWFCcWaUA="
+        "bdata": "059gc2wOaUDCUIcVLg5pQKwaCPIBGmlA2zpyg8UZaUCtvKrUiBlpQBjS4SFMGWlAYqUfYA8ZaUB4IJmr0hhpQMSllQiVGGlAhL94aVcYaUBuw6TPGRhpQO0BZ+fcF2lA6n5n3p4XaUAJkvPVYBdpQMurCHHkFmlAlR1uyaIWaUAaUfspZRZpQIcMFhQnFmlACIlZ1GwVaUC6fofDLhVpQA=="
       },
       "type": "scatter"
     },
@@ -104,10 +101,6 @@
       "mode": "lines+markers",
       "name": "FIDC MINHA CASA MINHA VIDA NP",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -123,11 +116,14 @@
         "2026-04-09T00:00:00",
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
-        "2026-04-16T00:00:00"
+        "2026-04-16T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "NGB3V+EckEChTjdYrR2QQKV/MI16HpBAxQNnfEUfkEC+loAtGSCQQBm7r5AOIZBAZRIeAuUhkEAFQMupuyKQQP1DwEKSI5BADxj7/WgkkEAOfftjXyWQQKpbZqY2JpBAt+xzKeQmkECf4noMbSiQQOeZLCgbKZBA01IWEacokEAgjZZFVSmQQHKDRlWYNZBAE1B2bVY2kEBykXNJKjeQQA=="
+        "bdata": "vpaALRkgkEAZu6+QDiGQQGUSHgLlIZBABUDLqbsikED9Q8BCkiOQQA8Y+/1oJJBADn37Y18lkECqW2amNiaQQLfscynkJpBAn+J6DG0okEDnmSwoGymQQNNSFhGnKJBAII2WRVUpkEByg0ZVmDWQQBNQdm1WNpBAcpFzSSo3kEBnce+vmDeQQPjiauh7OJBAR6Lh3l45kEA="
       },
       "type": "scatter"
     },
@@ -146,10 +142,6 @@
       "mode": "lines+markers",
       "name": "FIDC MINHA CASA MINHA VIDA NP - SR",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -170,11 +162,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "8hGM3hgskEB5mA9rVi+QQH0LiJyUMpBAipbZc9M1kEBUd5/CCTmQQJXqyLJAPJBAaUceRng/kEDPjZ98sEKQQEDs+VjpRZBAmLHT1SJJkECEYNn1XEyQQOv707qXT5BAAdjCJNNSkEAccvkwD1aQQEEkCeNLWZBA3Gh8NolckEC1Gcgvx1+QQAm3CM4FY5BA8D11D0VmkED9M4P4hGmQQBA0boPFbJBA0n+DtAZwkECrWYiKSHOQQMHvMgWLdpBAe0yDJs55kEA="
+        "bdata": "VHefwgk5kECV6siyQDyQQGlHHkZ4P5BAz42ffLBCkEBA7PlY6UWQQJix09UiSZBAhGDZ9VxMkEDr+9O6l0+QQAHYwiTTUpBAHHL5MA9WkEBBJAnjS1mQQNxofDaJXJBAtRnIL8dfkEAJtwjOBWOQQPA9dQ9FZpBA/TOD+IRpkEAQNG6DxWyQQNJ/g7QGcJBAq1mIikhzkEDB7zIFi3aQQHtMgybOeZBAk/DO6xF9kED6e2tYVoCQQHs4WGqbg5BA"
       },
       "type": "scatter"
     },
@@ -193,10 +188,6 @@
       "mode": "lines+markers",
       "name": "FIDC ORIGIN RL",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -217,11 +208,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "BjGvp6owkkB0Lr3kFDaSQIbKfXqBO5JAIEdSVvBAkkA0iCiJYUaSQNHJtRXVS5JAfTLvBg9KkkCNl24Sh0+SQEDhJoIAVZJAiAkPP3xakkCZZCZJ+l+SQPypjqh6ZZJAncntTeJqkkCsMwBMTHCSQDR6HKO4dZJAWREcNCd7kkAfjDPhloCSQN5DmXgJhpJAPrK5an6LkkDdDmhE8JCSQBSiz4lFlpJA2ucQvLqbkkBSBIJKMqGSQBLowDCsppJAYWHSKSmskkA="
+        "bdata": "NIgoiWFGkkDRybUV1UuSQH0y7wYPSpJAjZduEodPkkBA4SaCAFWSQIgJDz98WpJAmWQmSfpfkkD8qY6oemWSQJ3J7U3iapJArDMATExwkkA0ehyjuHWSQFkRHDQne5JAH4wz4ZaAkkDeQ5l4CYaSQD6yuWp+i5JA3Q5oRPCQkkAUos+JRZaSQNrnELy6m5JAUgSCSjKhkkAS6MAwrKaSQGFh0ikprJJApinAf6ixkkBKLIQwKreSQNe7BTOuvJJA"
       },
       "type": "scatter"
     },
@@ -240,10 +234,6 @@
       "mode": "lines+markers",
       "name": "FII BLUE ROCK TWO RL",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -258,11 +248,14 @@
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "y4LsaUUD8j/W5RBI9AjyP0QCoVCqSPI/AgCVZPwv8j+vhKQFHj7yP1fhffID+fE/zB1HvfFf8j+T7r6Vsm3yPyMczInqe/I/ZbDa4yKK8j9vZhWyypfyP/7oxLM+NPE/shHK88dB8T99rvh+UU/xPyTZfo1/avE/mZ+XYQ548T8qbRbUXJPxPyptFtRck/E/pkucaJmt8T8="
+        "bdata": "r4SkBR4+8j9X4X3yA/nxP8wdR73xX/I/k+6+lbJt8j8jHMyJ6nvyP2Ww2uMiivI/b2YVssqX8j/+6MSzPjTxP7IRyvPHQfE/fa74flFP8T8k2X6Nf2rxP5mfl2EOePE/Km0W1FyT8T8qbRbUXJPxP6ZLnGiZrfE/qeeTyzW78T/n5U3R08jxP+EoWGelzvE/"
       },
       "type": "scatter"
     },
@@ -281,10 +274,6 @@
       "mode": "lines+markers",
       "name": "FII BRASIL INCORPORAÇÃO RL",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -305,11 +294,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "3c22R21VWUC7xCZsXlVZQFEsfQlRVVlAZ8IGdkJVWUBokAbgNFVZQDyZyYEoVVlA/GIhABlVWUCubxblCFVZQFxVF2z6VFlAh2+8lutUWUDjsCx/21RZQNnlIXTMVFlAGHPfg7pUWUDHdxDYqFRZQDtK65CXVFlA9ELPoIBUWUBgbXMAEFRZQBGipcD8U1lAozc/culTWUDBvkKL0VNZQBycwim3xFlAZKtPYuV3WUC8yGcm1ndZQDlTtoLFd1lAW7JL0LZ3WUA="
+        "bdata": "aJAG4DRVWUA8mcmBKFVZQPxiIQAZVVlArm8W5QhVWUBcVRds+lRZQIdvvJbrVFlA47Asf9tUWUDZ5SF0zFRZQBhz34O6VFlAx3cQ2KhUWUA7SuuQl1RZQPRCz6CAVFlAYG1zABBUWUARoqXA/FNZQKM3P3LpU1lAwb5Ci9FTWUAcnMIpt8RZQGSrT2Lld1lAvMhnJtZ3WUA5U7aCxXdZQFuyS9C2d1lArQRiRKh3WUDnjrx7mXdZQI5lsJiHd1lA"
       },
       "type": "scatter"
     },
@@ -328,10 +320,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 7",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -350,11 +338,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "FK6J/QIfzEAMaLfQJRrMQFVWDSFBFcxAM7UZ5VkQzEAjqHX2KgPMQMzAt5/N9ctASncZdvGCzECk+Fsvw3bMQJb3xPySasxAsmqtO29ZzEBhuhic/UvMQLT8p7iJPsxAD34kHUMjzEDZr78V0SDMQFl2mOF0FMxAfzMQz1oEzECi4kmc8eLLQJoc4y+iMctATRYxS2Ejy0A6ZrCU9RPLQKsqbjvDBctAYCzjERBiy0C2C3I8/+TKQA=="
+        "bdata": "I6h19ioDzEDMwLefzfXLQEp3GXbxgsxApPhbL8N2zECW98T8kmrMQLJqrTtvWcxAYboYnP1LzEC0/Ke4iT7MQA9+JB1DI8xA2a+/FdEgzEBZdpjhdBTMQH8zEM9aBMxAouJJnPHiy0CaHOMvojHLQE0WMUthI8tAOmawlPUTy0CrKm47wwXLQGAs4xEQYstAtgtyPP/kykCFckekcNTKQNgsl42MxcpA56vD1aW2ykA="
       },
       "type": "scatter"
     },
@@ -373,10 +364,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 7 - MEZ",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -397,11 +384,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "V/nQSyIqxUAL2IoN7y7FQOTBUOa8M8VAVkAl14s4xUAgtGDaWz3FQHO0cPosQsVAKjzDL/9GxUCAo5l+0kvFQAvNGuGmUMVAcSDBYHxVxUCshxb2UlrFQCm3J6cqX8VAmkZRbwNkxUCJaZVP3WjFQE7GY0y4bcVAcNXQYZRyxUDEM/SRcXfFQAQWZdtPfMVAwqkoQS+BxUBapAW/D4bFQH17MlrxisVAqoRAEdSPxUA28pLit5TFQNe/LdCcmcVAQaAS24KexUA="
+        "bdata": "ILRg2ls9xUBztHD6LELFQCo8wy//RsVAgKOZftJLxUALzRrhplDFQHEgwWB8VcVArIcW9lJaxUAptyenKl/FQJpGUW8DZMVAiWmVT91oxUBOxmNMuG3FQHDV0GGUcsVAxDP0kXF3xUAEFmXbT3zFQMKpKEEvgcVAWqQFvw+GxUB9ezJa8YrFQKqEQBHUj8VANvKS4reUxUDXvy3QnJnFQEGgEtuCnsVAtLLYAWqjxUBEY7NEUqjFQH7abqM7rcVA"
       },
       "type": "scatter"
     },
@@ -420,10 +410,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 7 - SR",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -444,11 +430,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "0xCXFGpEk0AihbphRkiTQCiNA3UjTJNASokTTgFQk0CmX2T61FOTQIcKQGmpV5NADXD/mX5bk0C4PNaMVF+TQPBvjkIrY5NA6F0nuwJnk0BtsqH22mqTQLLB/PSzbpNA0TYGto1yk0CZEFI7aHaTQIim5INDepNAhfYkjx9+k0CRrA1f/IGTQHobOPPZhZNAvpqoSriJk0ATgMFml42TQBHIgEd3kZNAuXYe7FeVk0BY3vpVOZmTQIj/S4QbnZNAZyQIeP6gk0A="
+        "bdata": "pl9k+tRTk0CHCkBpqVeTQA1w/5l+W5NAuDzWjFRfk0Dwb45CK2OTQOhdJ7sCZ5NAbbKh9tpqk0Cywfz0s26TQNE2BraNcpNAmRBSO2h2k0CIpuSDQ3qTQIX2JI8ffpNAkawNX/yBk0B6Gzjz2YWTQL6aqEq4iZNAE4DBZpeNk0ARyIBHd5GTQLl2HuxXlZNAWN76VTmZk0CI/0uEG52TQGckCHj+oJNAnRirMOKkk0BKzcOuxqiTQGdV+PGrrJNA"
       },
       "type": "scatter"
     },
@@ -467,10 +456,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 77 RL",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -482,11 +467,13 @@
         "2026-04-07T00:00:00",
         "2026-04-08T00:00:00",
         "2026-04-09T00:00:00",
-        "2026-04-13T00:00:00"
+        "2026-04-13T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "yt3n6ttRJEHOTWHwxE8kQVZY29qsTSRBwBLd15NLJEHHubDIfUkkQTwafx1oRyRBEVXXPc1CJEE22KtKUT8kQfZNUHM5PSRBbh136aWmI0ERtPoVSqQjQYzfDL/voSNBQQWwwP6XI0GYyYnrUvUiQYO+FTtF/iJBYmN/6eH4IkE="
+        "bdata": "x7mwyH1JJEE8Gn8daEckQRFV1z3NQiRBNtirSlE/JEH2TVBzOT0kQW4dd+mlpiNBEbT6FUqkI0GM3wy/76EjQUEFsMD+lyNBmMmJ61L1IkGDvhU7Rf4iQWJjf+nh+CJBtYJLKC7VIkFe4RMVT9IiQQ=="
       },
       "type": "scatter"
     },
@@ -505,10 +492,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 77 RL - MEZ",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -528,11 +511,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "E0MX+c3oxECVTfPti+3EQFnmCPRK8sRAkmL8Cwv3xEDHrM01zPvEQFNJU3OOAMVA70A6yFEFxUBboNUwFgrFQNZa0rDbDsVAFy3+PqITxUDDPSLoaRjFQOvKoaQyHcVAaw8Yd/whxUBTyu9dkyvFQIYny3tgMMVAAvBwt0A1xUBif34EEDrFQPTvZWjgPsVA7S2j4LFDxUCKQiZ0hEjFQOMaPB9YTcVAneJp4CxSxUDJf5q9AlfFQM4h47DZW8VA"
+        "bdata": "x6zNNcz7xEBTSVNzjgDFQO9AOshRBcVAW6DVMBYKxUDWWtKw2w7FQBct/j6iE8VAwz0i6GkYxUDryqGkMh3FQGsPGHf8IcVAU8rvXZMrxUCGJ8t7YDDFQALwcLdANcVAYn9+BBA6xUD072Vo4D7FQO0to+CxQ8VAikImdIRIxUDjGjwfWE3FQJ3iaeAsUsVAyX+avQJXxUDOIeOw2VvFQDPa7MCxYMVAfRP55IplxUD9Rr8mZWrFQA=="
       },
       "type": "scatter"
     },
@@ -551,10 +537,6 @@
       "mode": "lines+markers",
       "name": "FII COTA REAL 77 RL - SR",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -575,11 +557,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "k4YB6KHCxECTIWSsUcjEQF0tf1cDzsRAOlj/57bTxEDmFHCRYNnEQB2coRsM38RAMuc6ibnkxECfCzzaaOrEQBtb+A8a8MRAAU3GKc31xEArxUwqgvvEQJjDixE5AcVAw12D3/EGxUBDR92UrAzFQNXFljNpEsVAIVYDvScYxUCtPQWj+QTFQAOqReUjCcVA1sa3+04NxUDKuV7kehHFQHWZs6GnFcVAIGwlMtUZxUBhn0qXAx7FQH0/FNAyIsVAtSqR3WImxUA="
+        "bdata": "5hRwkWDZxEAdnKEbDN/EQDLnOom55MRAnws82mjqxEAbW/gPGvDEQAFNxinN9cRAK8VMKoL7xECYw4sROQHFQMNdg9/xBsVAQ0fdlKwMxUDVxZYzaRLFQCFWA70nGMVArT0Fo/kExUADqkXlIwnFQNbGt/tODcVAyrle5HoRxUB1mbOhpxXFQCBsJTLVGcVAYZ9KlwMexUB9PxTQMiLFQLUqkd1iJsVAUG2yvpMqxUA5BJZ1xS7FQKh4lv/3MsVA"
       },
       "type": "scatter"
     },
@@ -600,11 +585,13 @@
       "x": [
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
-        "2026-04-16T00:00:00"
+        "2026-04-16T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "8cpgUp3CWUDECpZuu8FZQNCjHKvYzllA"
+        "bdata": "8cpgUp3CWUDECpZuu8FZQNCjHKvYzllAPm4qGLZqWUB7lN/cPm1ZQA=="
       },
       "type": "scatter"
     },
@@ -623,10 +610,6 @@
       "mode": "lines+markers",
       "name": "FII ID ANGRA PARTNERS",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -646,11 +629,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "If28SrZKzUD3MryfpEvNQC+BQtqTTM1AOqBbnoJNzUD+ALXibk7NQMYx9edbT81AOLZkdkdQzUD9/w9iMVHNQED35UwcUs1AGDM2sghTzUBpGz2G9FPNQCophwHhVM1A5UnrUsxVzUD+9cjut1bNQGTCN+ajV81Aea+cNY1YzUCXvOhIb1nNQGof4epaWs1ApFZWIitczUCdgh17qFzNQCTSeBqdXc1AKLft+4hezUAiZ4pOdF/NQPHoLbtgYM1A"
+        "bdata": "/gC14m5OzUDGMfXnW0/NQDi2ZHZHUM1A/f8PYjFRzUBA9+VMHFLNQBgzNrIIU81AaRs9hvRTzUAqKYcB4VTNQOVJ61LMVc1A/vXI7rdWzUBkwjfmo1fNQHmvnDWNWM1Al7zoSG9ZzUBqH+HqWlrNQKRWViIrXM1AnYIde6hczUAk0nganV3NQCi37fuIXs1AImeKTnRfzUDx6C27YGDNQHbFa2JNYc1A8d6LDjpizUBDXklRJWPNQA=="
       },
       "type": "scatter"
     },
@@ -669,10 +655,6 @@
       "mode": "lines+markers",
       "name": "FII OMEGA",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -693,11 +675,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "/FHUmWuRcEA3yvJcfJJwQEdSdwqOk3BAsX3x2p+UcEB6qI7RsZVwQFH7a4H2lnBAagGQyQiYcEB8RkNCG5lwQBQDyeAtmnBAfeG+o0CbcEATJjGtkpxwQG0q/xiynXBA7uBQjdGecEBklbEl9J9wQEvqwhcvn3BA3Tfndd6fcEBO6Udgj6BwQK85ME42pnBAp1U2pAifcEAmk/AQCKlwQDDi0JVXqnBA9qZUT6ercEDcP4E996xwQEQLXGBHrnBAMXg9PcuvcEA="
+        "bdata": "eqiO0bGVcEBR+2uB9pZwQGoBkMkImHBAfEZDQhuZcEAUA8ngLZpwQH3hvqNAm3BAEyYxrZKccEBtKv8Ysp1wQO7gUI3RnnBAZJWxJfSfcEBL6sIXL59wQN0353Xen3BATulHYI+gcECvOTBONqZwQKdVNqQIn3BAJpPwEAipcEAw4tCVV6pwQPamVE+nq3BA3D+BPfescEBEC1xgR65wQDF4PT3Lr3BASXbXnzWxcEDU0fVthrJwQLyAsLbWs3BA"
       },
       "type": "scatter"
     },
@@ -716,10 +701,6 @@
       "mode": "lines+markers",
       "name": "FIM DCKR",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -734,11 +715,14 @@
         "2026-04-13T00:00:00",
         "2026-04-14T00:00:00",
         "2026-04-15T00:00:00",
-        "2026-04-16T00:00:00"
+        "2026-04-16T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "12SV69A98j/0rQd6RUPyP5KiY0FAgvI/mHm82ptp8j8gRb7HcHfyPzxrMyXEMvI/qfLiaZ6Y8j9WxOGzEqbyP6jEt6j9s/I/WdVY4+jB8j9ao3lbRM/yPwAAAAAAAAAAKtVPSedt8T/Bjr3mbnrxPxev5PBqZfE/gwS9Hul/8T+bYTgR3IzxP9JZJPW3p/E/77nhsX6n8T8="
+        "bdata": "IEW+x3B38j88azMlxDLyP6ny4mmemPI/VsThsxKm8j+oxLeo/bPyP1nVWOPowfI/WqN5W0TP8j8AAAAAAAAAACrVT0nnbfE/wY695m568T8Xr+TwamXxP4MEvR7pf/E/m2E4EdyM8T/SWST1t6fxP++54bF+p/E/WYKU8VLO8T+9Y6FrmdvxP9zGlzck4fE/"
       },
       "type": "scatter"
     },
@@ -757,10 +741,6 @@
       "mode": "lines+markers",
       "name": "SUPER FARMS FI NAS CADEIAS PRODUTIVAS AGROINDUSTRIAIS – FIAGRO – IMOBILIÁRIO",
       "x": [
-        "2026-03-16T00:00:00",
-        "2026-03-17T00:00:00",
-        "2026-03-18T00:00:00",
-        "2026-03-19T00:00:00",
         "2026-03-20T00:00:00",
         "2026-03-23T00:00:00",
         "2026-03-24T00:00:00",
@@ -780,11 +760,14 @@
         "2026-04-15T00:00:00",
         "2026-04-16T00:00:00",
         "2026-04-17T00:00:00",
-        "2026-04-20T00:00:00"
+        "2026-04-20T00:00:00",
+        "2026-04-22T00:00:00",
+        "2026-04-23T00:00:00",
+        "2026-04-24T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "xowqopZookAMlkW8imiiQKc5Hth+aKJA2YWT8nJookAtwC0OZ2iiQBGrP8KEaKJAKtfj13hookAnD4/tbGiiQMbeKAVhaKJAtFNaHFVookBzWRoySWiiQBUbFEk9aKJAKcopKjBookAtBpMLI2iiQMaoa+0VaKJA+DcmkwhookB/PKpQ+2eiQCDrLQ7uZ6JAL+qLa9NnokAWuIZjw2eiQBnQ4veaZ6JAK623tI1nokCb+mlxgGeiQG+lUy5zZ6JA"
+        "bdata": "LcAtDmdookARqz/ChGiiQCrX49d4aKJAJw+P7WxookDG3igFYWiiQLRTWhxVaKJAc1kaMklookAVGxRJPWiiQCnKKSowaKJALQaTCyNookDGqGvtFWiiQPg3JpMIaKJAfzyqUPtnokAg6y0O7meiQC/qi2vTZ6JAFriGY8NnokAZ0OL3mmeiQCutt7SNZ6JAm/ppcYBnokBvpVMuc2eiQCVcROtlZ6JA+QYuqFhnokAeoahkS2eiQA=="
       },
       "type": "scatter"
     }
