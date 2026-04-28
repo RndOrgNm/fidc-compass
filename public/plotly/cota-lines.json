@@ -1558,7 +1558,7 @@
         }
       }
     },
-    "title": {
+      "title": {
       "font": {
         "size": 17,
         "color": "#F8FAFC"
@@ -1599,8 +1599,8 @@
       "r": 40
     },
     "xaxis": {
-      "title": {
-        "font": {
+    "title": {
+      "font": {
           "size": 11,
           "color": "rgba(248, 250, 252, 0.78)"
         },
