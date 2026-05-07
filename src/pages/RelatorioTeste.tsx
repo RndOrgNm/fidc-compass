@@ -324,25 +324,57 @@ export default function RelatorioTeste() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId }),
       });
-      if (res.status === 200) return res.json() as Promise<ArtifactPayload>;
       if (res.status === 404) throw new Error("Job não encontrado no servidor.");
+
+      // Older artifact Lambda: 409 while queued/processing (shows as error in DevTools)
       if (res.status === 409) {
         const b = await res.json().catch(() => ({})) as {
           error?: string;
           status?: string;
           detail?: string;
         };
-        // Worker writes manifest status "failed" — surface immediately instead of polling until timeout
         if (b.status === "failed") {
           throw new Error(b.detail ?? b.error ?? "O processamento falhou no servidor.");
         }
-        // queued | processing — keep polling
         continue;
       }
+
       if (res.status === 500) {
         const b = await res.json().catch(() => ({})) as Record<string, string>;
         throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
       }
+
+      if (res.status !== 200) {
+        throw new Error(`Resposta inesperada ao verificar artefatos (${res.status}).`);
+      }
+
+      const data = (await res.json()) as {
+        ready?: boolean;
+        jobId?: string;
+        status?: string;
+        detail?: string;
+        configUrl?: string;
+        pdfUrl?: string;
+        pptxUrl?: string;
+      };
+
+      // Current Lambda: HTTP 200 + ready:false until manifest.status === "completed"
+      if (data.ready === false) {
+        if (data.status === "failed") {
+          throw new Error(data.detail ?? "O processamento falhou no servidor.");
+        }
+        continue;
+      }
+
+      if (data.configUrl && data.pdfUrl && data.jobId) {
+        return {
+          jobId: data.jobId,
+          configUrl: data.configUrl,
+          pdfUrl: data.pdfUrl,
+          pptxUrl: data.pptxUrl,
+        };
+      }
+      throw new Error("Resposta inválida ao verificar artefatos.");
     }
     throw new Error(
       "Timeout: o processamento não foi concluído a tempo (espere até ~15 min no servidor). " +
