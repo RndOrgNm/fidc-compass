@@ -33,6 +33,34 @@ const REPORT_RUNS_URL = `${BASE_URL}/report-runs`;
 
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
 
+/** HTML/XML error pages make `response.json()` throw "Unexpected token '<'". */
+function tryParseJsonRecord(text: string): Record<string, unknown> {
+  try {
+    const v = JSON.parse(text) as unknown;
+    return typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
+  const t = text.trimStart();
+  if (!t.startsWith("{") && !t.startsWith("[")) {
+    const nonJson =
+      /^<!doctype/i.test(t) || /^<html/i.test(t) || /^<\?xml/i.test(t);
+    throw new Error(
+      nonJson
+        ? `${label}: o servidor devolveu ${/^<\?xml/i.test(t) ? "XML" : "HTML"} em vez de JSON (HTTP ${httpStatus}). Confira VITE_REPORT_API_URL e se o endpoint/API Gateway está correto.`
+        : `${label}: resposta não é JSON (HTTP ${httpStatus}).`,
+    );
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`${label}: JSON inválido (HTTP ${httpStatus}).`);
+  }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type PlotlyFig = { data: Data[]; layout: Partial<Layout>; [key: string]: unknown };
@@ -227,7 +255,11 @@ export default function RelatorioTeste() {
     setNamesError(null);
     setLoadingFunds(true);
     fetch(PL_EVOLUTION_URL)
-      .then((r) => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(r.statusText);
+        const text = await r.text();
+        return parseJsonText<unknown>(text, "Lista de fundos (plotly)", r.status);
+      })
       .then((payload) => {
         if (cancelled) return;
         const names = extractFundNamesFromPlotlyPayload(payload);
@@ -249,11 +281,12 @@ export default function RelatorioTeste() {
     setHistoryError(null);
     try {
       const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
+      const histText = await res.text();
       if (!res.ok) {
-        const b = await res.json().catch(() => ({})) as Record<string, string>;
+        const b = tryParseJsonRecord(histText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      setRuns(await res.json() as ReportRun[]);
+      setRuns(parseJsonText<ReportRun[]>(histText, "Histórico", res.status));
     } catch (err) {
       setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
     } finally {
@@ -324,11 +357,13 @@ export default function RelatorioTeste() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId }),
       });
+      const raw = await res.text();
+
       if (res.status === 404) throw new Error("Job não encontrado no servidor.");
 
       // Older artifact Lambda: 409 while queued/processing (shows as error in DevTools)
       if (res.status === 409) {
-        const b = await res.json().catch(() => ({})) as {
+        const b = tryParseJsonRecord(raw) as {
           error?: string;
           status?: string;
           detail?: string;
@@ -340,15 +375,22 @@ export default function RelatorioTeste() {
       }
 
       if (res.status === 500) {
-        const b = await res.json().catch(() => ({})) as Record<string, string>;
+        const b = tryParseJsonRecord(raw) as Record<string, string>;
         throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
       }
 
       if (res.status !== 200) {
-        throw new Error(`Resposta inesperada ao verificar artefatos (${res.status}).`);
+        const trimmed = raw.trimStart();
+        const html = /^<!doctype/i.test(trimmed) || /^<html/i.test(trimmed);
+        const head = trimmed.slice(0, 80);
+        throw new Error(
+          html
+            ? `Artefatos: o servidor devolveu HTML (HTTP ${res.status}), possível falha no API Gateway ou URL incorreta.`
+            : `Resposta inesperada ao verificar artefatos (${res.status}).${head ? ` Corpo: ${head}…` : ""}`,
+        );
       }
 
-      const data = (await res.json()) as {
+      const data = parseJsonText<{
         ready?: boolean;
         jobId?: string;
         status?: string;
@@ -356,7 +398,7 @@ export default function RelatorioTeste() {
         configUrl?: string;
         pdfUrl?: string;
         pptxUrl?: string;
-      };
+      }>(raw, "Artefatos", res.status);
 
       // Current Lambda: HTTP 200 + ready:false until manifest.status === "completed"
       if (data.ready === false) {
@@ -411,15 +453,16 @@ export default function RelatorioTeste() {
           })),
         }),
       });
+      const presignText = await presignRes.text();
       if (!presignRes.ok) {
-        const b = await presignRes.json().catch(() => ({})) as Record<string, string>;
+        const b = tryParseJsonRecord(presignText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao preparar upload (${presignRes.status})`);
       }
-      const { jobId, bucket, uploads } = await presignRes.json() as {
+      const { jobId, bucket, uploads } = parseJsonText<{
         jobId: string;
         bucket: string;
         uploads: Array<{ key: string; role: string; url: string; headers: Record<string, string> }>;
-      };
+      }>(presignText, "Presign", presignRes.status);
 
       // 2. Upload files directly to S3
       setJobStatus("uploading");
@@ -456,8 +499,9 @@ export default function RelatorioTeste() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(workerBody),
       });
+      const workerText = await workerRes.text();
       if (workerRes.status !== 202 && workerRes.status !== 200) {
-        const b = await workerRes.json().catch(() => ({})) as Record<string, string>;
+        const b = tryParseJsonRecord(workerText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }
 
@@ -465,10 +509,11 @@ export default function RelatorioTeste() {
       setJobStatus("rendering");
       const artifacts = await _pollArtifacts(jobId);
 
-      // 5. Fetch config.json
+      // 5. Fetch config.json (presigned S3 URL — errors are often XML, not JSON)
       const configRes = await fetch(artifacts.configUrl);
+      const configText = await configRes.text();
       if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
-      setConfigData(await configRes.json() as ConfigPayload);
+      setConfigData(parseJsonText<ConfigPayload>(configText, "config.json", configRes.status));
       setPdfUrl(artifacts.pdfUrl);
       if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
       setJobStatus("completed");
@@ -487,14 +532,20 @@ export default function RelatorioTeste() {
     setErrorMsg(null);
     try {
       const res = await fetch(`${REPORT_RUNS_URL}/${run.id}/presign`);
+      const presignRunText = await res.text();
       if (!res.ok) {
-        const b = await res.json().catch(() => ({})) as Record<string, string>;
+        const b = tryParseJsonRecord(presignRunText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao obter URLs (${res.status})`);
       }
-      const artifact = await res.json() as { configUrl: string; pdfUrl: string; pptxUrl?: string };
+      const artifact = parseJsonText<{ configUrl: string; pdfUrl: string; pptxUrl?: string }>(
+        presignRunText,
+        "URLs do relatório",
+        res.status,
+      );
       const configRes = await fetch(artifact.configUrl);
+      const cfgHistText = await configRes.text();
       if (!configRes.ok) throw new Error("Falha ao carregar dados dos gráficos.");
-      setConfigData(await configRes.json() as ConfigPayload);
+      setConfigData(parseJsonText<ConfigPayload>(cfgHistText, "config.json", configRes.status));
       setPdfUrl(artifact.pdfUrl);
       setPptxUrl(artifact.pptxUrl ?? null);
       setJobStatus("completed");
