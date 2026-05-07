@@ -312,9 +312,13 @@ export default function RelatorioTeste() {
 
   const _delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
+  /** Matches Lambda worker max timeout (900 s default); 2 s × 450 ≈ 15 min */
+  const ARTIFACT_POLL_MAX_ATTEMPTS = 450;
+  const ARTIFACT_POLL_INTERVAL_MS = 2000;
+
   const _pollArtifacts = async (jobId: string): Promise<ArtifactPayload> => {
-    for (let i = 0; i < 150; i++) {
-      await _delay(2000);
+    for (let i = 0; i < ARTIFACT_POLL_MAX_ATTEMPTS; i++) {
+      await _delay(ARTIFACT_POLL_INTERVAL_MS);
       const res = await fetch(ARTIFACTS_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -322,12 +326,28 @@ export default function RelatorioTeste() {
       });
       if (res.status === 200) return res.json() as Promise<ArtifactPayload>;
       if (res.status === 404) throw new Error("Job não encontrado no servidor.");
+      if (res.status === 409) {
+        const b = await res.json().catch(() => ({})) as {
+          error?: string;
+          status?: string;
+          detail?: string;
+        };
+        // Worker writes manifest status "failed" — surface immediately instead of polling until timeout
+        if (b.status === "failed") {
+          throw new Error(b.detail ?? b.error ?? "O processamento falhou no servidor.");
+        }
+        // queued | processing — keep polling
+        continue;
+      }
       if (res.status === 500) {
         const b = await res.json().catch(() => ({})) as Record<string, string>;
         throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
       }
     }
-    throw new Error("Timeout: o processamento não foi concluído em 5 minutos.");
+    throw new Error(
+      "Timeout: o processamento não foi concluído a tempo (espere até ~15 min no servidor). " +
+        "Se os dados são grandes ou há modelo PPTX, tente novamente ou aumente o timeout do Lambda.",
+    );
   };
 
   const runJob = async () => {
