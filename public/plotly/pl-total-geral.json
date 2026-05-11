@@ -1,7 +1,7 @@
 {
   "data": [
     {
-      "connectgaps": false,
+      "connectgaps": true,
       "hovertemplate": "<b>Total Geral</b><br>Data: %{x|%d/%m/%Y}<br>R$ %{y:.2f}M<extra></extra>",
       "line": {
         "color": "#10B981",
@@ -15,16 +15,6 @@
       "mode": "lines+markers",
       "name": "Total Geral",
       "x": [
-        "2026-03-20T00:00:00",
-        "2026-03-23T00:00:00",
-        "2026-03-24T00:00:00",
-        "2026-03-25T00:00:00",
-        "2026-03-26T00:00:00",
-        "2026-03-27T00:00:00",
-        "2026-03-30T00:00:00",
-        "2026-03-31T00:00:00",
-        "2026-04-01T00:00:00",
-        "2026-04-02T00:00:00",
         "2026-04-06T00:00:00",
         "2026-04-07T00:00:00",
         "2026-04-08T00:00:00",
@@ -38,11 +28,19 @@
         "2026-04-20T00:00:00",
         "2026-04-22T00:00:00",
         "2026-04-23T00:00:00",
-        "2026-04-24T00:00:00"
+        "2026-04-24T00:00:00",
+        "2026-04-27T00:00:00",
+        "2026-04-28T00:00:00",
+        "2026-04-29T00:00:00",
+        "2026-04-30T00:00:00",
+        "2026-05-04T00:00:00",
+        "2026-05-06T00:00:00",
+        "2026-05-07T00:00:00",
+        "2026-05-08T00:00:00"
       ],
       "y": {
         "dtype": "f8",
-        "bdata": "0OW0RMJGikC9KDBTEUeKQNVxHV+qTopA5P8KcFxPikAGSV06H1CKQDfsEGLLXIpACqyQsPddikC7quRKAjmKQAgfKaYjOopAn4M2UoE6ikDGX/8aLTyKQKX3bKGsYopAXB3fYk5dikAwVVmpkmCKQEh0S4LiXIpAwiJtgHVqikDUxbfBgn6MQG8TD6QKhIxAOOLiC++FjEApEwpTXImMQE3j7t53moxAF6fOYbaSjEC1wx13S5SMQNfQH/1Do4xA"
+        "bdata": "W0FP2vaNiUCl92yhrGKKQFwd32JOXYpAMFVZqZJgikBIdEuC4lyKQMIibYB1aopA1MW3wYJ+jEBvEw+kCoSMQDji4gvvhYxAKRMKU1yJjEBN4+7ed5qMQBenzmG2koxAtcMdd0uUjEDX0B/9Q6OMQNBVoR7upoxA+f8nNSqojEBfpGFCZqmMQPEhbm+zhYxAGjZvQWO2jECeZrshkbKMQLQevkzss4xAEvlXJIidjEA="
       },
       "type": "scatter"
     }
