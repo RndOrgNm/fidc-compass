@@ -6,6 +6,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -46,6 +47,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -84,6 +86,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -120,6 +123,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -164,6 +168,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -207,6 +212,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -247,6 +253,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -290,6 +297,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -328,6 +336,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -372,6 +381,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -416,6 +426,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -451,6 +462,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -495,6 +507,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -539,6 +552,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -569,6 +583,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -611,6 +626,7 @@
       "line": {
         "color": "#10B981",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -654,6 +670,7 @@
       "line": {
         "color": "#475569",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
@@ -694,6 +711,7 @@
       "line": {
         "color": "#fc7c78",
         "shape": "linear",
+        "simplify": false,
         "width": 2
       },
       "marker": {
