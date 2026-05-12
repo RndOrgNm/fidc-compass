@@ -59,9 +59,9 @@ export function GraficosEvolutionSection({ variant }: { variant: GraficosEvoluti
         ? "Evolução diária do PL"
         : "Evolução diária da cota";
 
-  const chartCard = (caption: string, url: string) => (
-    <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-      <p className="mb-3 text-sm font-medium text-muted-foreground">{caption}</p>
+  const chartBlock = (caption: string, url: string) => (
+    <div className="min-w-0 space-y-3">
+      <p className="text-sm font-medium text-muted-foreground">{caption}</p>
       <PlotlyFundFilterFigure
         url={url}
         hideFundSelector
@@ -104,14 +104,14 @@ export function GraficosEvolutionSection({ variant }: { variant: GraficosEvoluti
       )}
 
       {variant === "both" ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {chartCard("Evolução do PL por dia", PL_EVOLUTION_URL)}
-          {chartCard("Evolução da cota por dia", COTA_LINES_URL)}
+        <div className="grid gap-6 md:grid-cols-2">
+          {chartBlock("Evolução do PL por dia", PL_EVOLUTION_URL)}
+          {chartBlock("Evolução da cota por dia", COTA_LINES_URL)}
         </div>
       ) : variant === "pl" ? (
-        chartCard("Evolução do PL por dia", PL_EVOLUTION_URL)
+        chartBlock("Evolução do PL por dia", PL_EVOLUTION_URL)
       ) : (
-        chartCard("Evolução da cota por dia", COTA_LINES_URL)
+        chartBlock("Evolução da cota por dia", COTA_LINES_URL)
       )}
     </section>
   );
