@@ -17,12 +17,12 @@ export type PlotlyCarouselSlide = {
 };
 
 /**
- * Single Plotly JSON figure in the same card chrome as carousel slides (caption + optional export).
+ * Single Plotly JSON figure for carousel slides: caption + optional export + chart (no card frame).
  */
 export function PlotlySlideCard({ slide }: { slide: PlotlyCarouselSlide }) {
   return (
-    <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="min-w-0 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-muted-foreground">{slide.caption}</p>
         {slide.exportable && (
           <TableExportButtons
@@ -32,7 +32,7 @@ export function PlotlySlideCard({ slide }: { slide: PlotlyCarouselSlide }) {
           />
         )}
       </div>
-      <div className="overflow-x-auto">
+      <div className="min-w-0 overflow-x-auto">
         {slide.filterable ? (
           <PlotlyFundFilterFigure
             url={`/plotly/${slide.file}`}

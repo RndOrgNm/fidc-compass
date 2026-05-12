@@ -126,8 +126,8 @@ export default function Graficos() {
               <div className="space-y-10">
                 <section aria-label="PL total geral" className="space-y-3">
                   <h2 className="text-lg font-semibold text-foreground">PL — Total Geral</h2>
-                  <div className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-3 py-4 shadow-sm sm:px-4 sm:py-5">
-                    <p className="mb-3 text-sm font-medium text-muted-foreground">
+                  <div className="min-w-0 space-y-3">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Patrimônio líquido agregado (mesma lógica que PL sob gestão na Home)
                     </p>
                     <PlotlyWebFigure variant="full" url="/plotly/pl-total-geral.json" />
