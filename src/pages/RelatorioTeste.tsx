@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
 import {
-  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, Upload,
-  CheckCircle2, Presentation, FileText,
+  FileSpreadsheet, BarChart2, Loader2, Trash2,
+  CheckCircle2, Presentation,
 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
@@ -13,27 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { extractFundNamesFromPlotlyPayload } from "@/components/graficos/PlotlyFundFilterFigure";
 import { cn } from "@/lib/utils";
 
 const Plot = lazy(() => import("react-plotly.js"));
 
-const SPREADSHEET_ACCEPT =
-  ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
+const EXCEL_ACCEPT =
+  ".xlsx,.xls,application/vnd.ms-excel," +
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-const PPTX_ACCEPT =
-  ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const BASE_URL = (import.meta.env.VITE_AGENT_SERVICES_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const PRESIGN_URL = `${BASE_URL}/fund-report/presign`;
+const BUILD_URL = `${BASE_URL}/fund-report/build`;
+const JOB_URL = (id: string) => `${BASE_URL}/fund-report/jobs/${encodeURIComponent(id)}`;
+const FUNDS_URL = `${BASE_URL}/fund-report/funds`;
 
-const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
-const PRESIGN_URL = `${BASE_URL}/presign`;
-const WORKER_URL = `${BASE_URL}/report`;
-const ARTIFACTS_URL = `${BASE_URL}/artifacts`;
-const REPORT_RUNS_URL = `${BASE_URL}/report-runs`;
-
-const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
-
-/** HTML/XML error pages make `response.json()` throw "Unexpected token '<'". */
 function tryParseJsonRecord(text: string): Record<string, unknown> {
   try {
     const v = JSON.parse(text) as unknown;
@@ -50,7 +43,7 @@ function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
       /^<!doctype/i.test(t) || /^<html/i.test(t) || /^<\?xml/i.test(t);
     throw new Error(
       nonJson
-        ? `${label}: o servidor devolveu ${/^<\?xml/i.test(t) ? "XML" : "HTML"} em vez de JSON (HTTP ${httpStatus}). Confira VITE_REPORT_API_URL e se o endpoint/API Gateway está correto.`
+        ? `${label}: o servidor devolveu ${/^<\?xml/i.test(t) ? "XML" : "HTML"} em vez de JSON (HTTP ${httpStatus}). Confira VITE_AGENT_SERVICES_URL.`
         : `${label}: resposta não é JSON (HTTP ${httpStatus}).`,
     );
   }
@@ -65,46 +58,32 @@ function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
 
 type PlotlyFig = { data: Data[]; layout: Partial<Layout>; [key: string]: unknown };
 
-type ConfigPayload = {
-  spe_order: string[];
-  historico_financeiro: PlotlyFig;
-  historico_vendas: PlotlyFig;
-  inadimplencia: PlotlyFig;
-  vendas_estoque: PlotlyFig;
-  premio: PlotlyFig | null;
+type FundInfo = { fund_id: string; display_name: string };
+
+type JobStatusPayload = {
+  job_id: string;
+  fund_id: string;
+  fund_name: string;
+  status: "pending" | "running" | "completed" | "failed";
+  figures: Record<string, PlotlyFig>;
+  tables: Record<string, string[][]>;
+  pptx_url: string | null;
+  error: string | null;
+  sources: unknown[];
 };
 
-type ArtifactPayload = {
-  jobId: string;
-  configUrl: string;
-  pdfUrl: string;
-  pptxUrl?: string;
-};
+type UiStatus = "idle" | "presigning" | "uploading" | "running" | "completed" | "error";
 
-type ReportRun = {
-  id: string;
-  fundName: string;
-  jobId: string;
-  configKey: string;
-  pdfKey: string;
-  pptxKey?: string;
-  status: string;
-  createdAt: string | null;
-};
-
-type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
-
-const JOB_STATUS_LABEL: Record<JobStatus, string> = {
+const STATUS_LABEL: Record<UiStatus, string> = {
   idle: "",
   presigning: "Preparando upload…",
-  uploading: "Enviando arquivos para o servidor…",
-  processing: "Processando dados e gráficos…",
-  rendering: "Gerando relatório…",
-  completed: "Controle concluído!",
+  uploading: "Enviando arquivo…",
+  running: "Agente gerando os gráficos…",
+  completed: "Concluído!",
   error: "",
 };
 
-const CHART_TITLES: Record<keyof Omit<ConfigPayload, "spe_order">, string> = {
+const CHART_TITLES: Record<string, string> = {
   historico_financeiro: "1. Histórico Financeiro",
   historico_vendas: "2. Histórico Vendas",
   inadimplencia: "3. Relação de Inadimplência",
@@ -118,499 +97,201 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleString("pt-BR", {
-      day: "2-digit", month: "2-digit", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-// ── Single-file picker component ──────────────────────────────────────────────
-
-function SingleFilePicker({
-  label,
-  description,
-  accept,
-  file,
-  icon: Icon,
-  onFile,
-  onClear,
-  disabled,
-}: {
-  label: string;
-  description: string;
-  accept: string;
-  file: File | null;
-  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  onFile: (f: File) => void;
-  onClear: () => void;
-  disabled?: boolean;
-}) {
-  const id = useId();
-  const ref = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
-        {label}
-      </Label>
-      <input
-        ref={ref}
-        id={id}
-        type="file"
-        accept={accept}
-        className="sr-only"
-        disabled={disabled}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onFile(f);
-          e.target.value = "";
-        }}
-      />
-      {file ? (
-        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5 text-sm">
-          <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-foreground">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={onClear}
-            disabled={disabled}
-            aria-label={`Remover ${file.name}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={cn(
-            "flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-4 text-left transition-colors",
-            "hover:border-primary/50 hover:bg-muted/30",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            disabled && "pointer-events-none opacity-50",
-          )}
-          disabled={disabled}
-          onClick={() => ref.current?.click()}
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
-            <Icon className="h-4 w-4 text-primary" aria-hidden />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{description}</p>
-            <p className="text-xs text-muted-foreground">Clique para selecionar</p>
-          </div>
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RelatorioTeste() {
   const fundSelectId = useId();
-  const unidadesInputId = useId();
-  const unidadesRef = useRef<HTMLInputElement>(null);
+  const fileInputId = useId();
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  // Fundo selection
-  const [fundNames, setFundNames] = useState<string[]>([]);
-  const [selectedFund, setSelectedFund] = useState("");
+  // Funds
+  const [funds, setFunds] = useState<FundInfo[]>([]);
+  const [selectedFundId, setSelectedFundId] = useState("");
   const [loadingFunds, setLoadingFunds] = useState(true);
-  const [namesError, setNamesError] = useState<string | null>(null);
+  const [fundsError, setFundsError] = useState<string | null>(null);
 
-  // File inputs (three separate)
-  const [templateFile, setTemplateFile] = useState<File | null>(null);
-  const [fluxoFile, setFluxoFile] = useState<File | null>(null);
-  const [unidadesFiles, setUnidadesFiles] = useState<File[]>([]);
-  const [unidadesRejectNote, setUnidadesRejectNote] = useState<string | null>(null);
+  // Single Excel file
+  const [excelFile, setExcelFile] = useState<File | null>(null);
 
   // Job state
-  const [jobStatus, setJobStatus] = useState<JobStatus>("idle");
+  const [uiStatus, setUiStatus] = useState<UiStatus>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [configData, setConfigData] = useState<ConfigPayload | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [figures, setFigures] = useState<Record<string, PlotlyFig> | null>(null);
   const [pptxUrl, setPptxUrl] = useState<string | null>(null);
-  const [pdfDownloading, setPdfDownloading] = useState(false);
-  const [pptxDownloading, setPptxDownloading] = useState(false);
 
-  // History
-  const [runs, setRuns] = useState<ReportRun[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [historyError, setHistoryError] = useState<string | null>(null);
-
-  // Load fund names from PL evolution JSON
+  // ── Load funds list ─────────────────────────────────────────────────────
   useEffect(() => {
+    if (!BASE_URL) { setLoadingFunds(false); return; }
     let cancelled = false;
-    setNamesError(null);
+    setFundsError(null);
     setLoadingFunds(true);
-    fetch(PL_EVOLUTION_URL)
+    fetch(FUNDS_URL)
       .then(async (r) => {
-        if (!r.ok) throw new Error(r.statusText);
         const text = await r.text();
-        return parseJsonText<unknown>(text, "Lista de fundos (plotly)", r.status);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return parseJsonText<FundInfo[]>(text, "Lista de fundos", r.status);
       })
-      .then((payload) => {
+      .then((list) => {
         if (cancelled) return;
-        const names = extractFundNamesFromPlotlyPayload(payload);
-        setFundNames(names);
-        if (names.length > 0) setSelectedFund(names[0]);
+        setFunds(list);
+        if (list.length > 0) setSelectedFundId(list[0].fund_id);
       })
-      .catch((e: Error) => { if (!cancelled) setNamesError(e.message); })
+      .catch((e: Error) => { if (!cancelled) setFundsError(e.message); })
       .finally(() => { if (!cancelled) setLoadingFunds(false); });
     return () => { cancelled = true; };
   }, []);
 
-  // Load history when fund is ready
-  const fundReady =
-    !loadingFunds && !namesError && fundNames.length > 0 && selectedFund.trim().length >= 2;
-
-  const loadHistory = useCallback(async (fund: string) => {
-    if (!BASE_URL || !fund) return;
-    setLoadingHistory(true);
-    setHistoryError(null);
-    try {
-      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
-      const histText = await res.text();
-      if (!res.ok) {
-        const b = tryParseJsonRecord(histText) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
-      }
-      setRuns(parseJsonText<ReportRun[]>(histText, "Histórico", res.status));
-    } catch (err) {
-      setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (fundReady && BASE_URL) void loadHistory(selectedFund);
-  }, [fundReady, selectedFund, loadHistory]);
-
-  // ── Unidades multi-file management ───────────────────────────────────────
-
-  const addUnidadesFiles = useCallback((list: FileList | File[]) => {
-    const incoming = Array.from(list);
-    const valid: File[] = [];
-    let rejected = 0;
-    for (const f of incoming) {
-      const lower = f.name.toLowerCase();
-      const ok =
-        lower.endsWith(".csv") || lower.endsWith(".xlsx") || lower.endsWith(".xls") ||
-        f.type === "text/csv" ||
-        f.type === "application/vnd.ms-excel" ||
-        f.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      if (ok) valid.push(f);
-      else rejected += 1;
-    }
-    setUnidadesRejectNote(
-      rejected > 0 ? `${rejected} arquivo(s) ignorado(s) — use CSV ou Excel (.xlsx / .xls).` : null,
-    );
-    if (!valid.length) return;
-    setUnidadesFiles((prev) => {
-      const seen = new Set(prev.map((p) => `${p.name}-${p.size}`));
-      const merged = [...prev];
-      for (const f of valid) {
-        const key = `${f.name}-${f.size}`;
-        if (!seen.has(key)) { seen.add(key); merged.push(f); }
-      }
-      return merged;
-    });
-  }, []);
-
-  const clearAll = () => {
-    setTemplateFile(null);
-    setFluxoFile(null);
-    setUnidadesFiles([]);
-    setUnidadesRejectNote(null);
+  const clearAll = useCallback(() => {
+    setExcelFile(null);
     setErrorMsg(null);
-    setJobStatus("idle");
-    setConfigData(null);
-    setPdfUrl(null);
+    setUiStatus("idle");
+    setJobId(null);
+    setFigures(null);
     setPptxUrl(null);
-  };
+  }, []);
 
-  // ── Job flow ──────────────────────────────────────────────────────────────
+  // ── Job flow ────────────────────────────────────────────────────────────
 
-  const _delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+  const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-  /** Matches Lambda worker max timeout (900 s default); 2 s × 450 ≈ 15 min */
-  const ARTIFACT_POLL_MAX_ATTEMPTS = 450;
-  const ARTIFACT_POLL_INTERVAL_MS = 2000;
+  const POLL_INTERVAL_MS = 2000;
+  const POLL_MAX_ATTEMPTS = 450; // ~15 min
 
-  const _pollArtifacts = async (jobId: string): Promise<ArtifactPayload> => {
-    for (let i = 0; i < ARTIFACT_POLL_MAX_ATTEMPTS; i++) {
-      await _delay(ARTIFACT_POLL_INTERVAL_MS);
-      const res = await fetch(ARTIFACTS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId }),
-      });
-      const raw = await res.text();
-
-      if (res.status === 404) throw new Error("Job não encontrado no servidor.");
-
-      // Older artifact Lambda: 409 while queued/processing (shows as error in DevTools)
-      if (res.status === 409) {
-        const b = tryParseJsonRecord(raw) as {
-          error?: string;
-          status?: string;
-          detail?: string;
-        };
-        if (b.status === "failed") {
-          throw new Error(b.detail ?? b.error ?? "O processamento falhou no servidor.");
-        }
-        continue;
+  const pollJob = useCallback(async (id: string): Promise<JobStatusPayload> => {
+    for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
+      await delay(POLL_INTERVAL_MS);
+      const res = await fetch(JOB_URL(id));
+      const text = await res.text();
+      if (res.status === 404) throw new Error("Job não encontrado.");
+      if (!res.ok) {
+        const b = tryParseJsonRecord(text) as Record<string, string>;
+        throw new Error(b.detail ?? b.error ?? `Erro ao consultar job (${res.status}).`);
       }
-
-      if (res.status === 500) {
-        const b = tryParseJsonRecord(raw) as Record<string, string>;
-        throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
+      const payload = parseJsonText<JobStatusPayload>(text, "Job status", res.status);
+      if (payload.status === "completed") return payload;
+      if (payload.status === "failed") {
+        throw new Error(payload.error ?? "O processamento falhou no servidor.");
       }
-
-      if (res.status !== 200) {
-        const trimmed = raw.trimStart();
-        const html = /^<!doctype/i.test(trimmed) || /^<html/i.test(trimmed);
-        const head = trimmed.slice(0, 80);
-        throw new Error(
-          html
-            ? `Artefatos: o servidor devolveu HTML (HTTP ${res.status}), possível falha no API Gateway ou URL incorreta.`
-            : `Resposta inesperada ao verificar artefatos (${res.status}).${head ? ` Corpo: ${head}…` : ""}`,
-        );
-      }
-
-      const data = parseJsonText<{
-        ready?: boolean;
-        jobId?: string;
-        status?: string;
-        detail?: string;
-        configUrl?: string;
-        pdfUrl?: string;
-        pptxUrl?: string;
-      }>(raw, "Artefatos", res.status);
-
-      // Current Lambda: HTTP 200 + ready:false until manifest.status === "completed"
-      if (data.ready === false) {
-        if (data.status === "failed") {
-          throw new Error(data.detail ?? "O processamento falhou no servidor.");
-        }
-        continue;
-      }
-
-      if (data.configUrl && data.pdfUrl && data.jobId) {
-        return {
-          jobId: data.jobId,
-          configUrl: data.configUrl,
-          pdfUrl: data.pdfUrl,
-          pptxUrl: data.pptxUrl,
-        };
-      }
-      throw new Error("Resposta inválida ao verificar artefatos.");
     }
-    throw new Error(
-      "Timeout: o processamento não foi concluído a tempo (espere até ~15 min no servidor). " +
-        "Se os dados são grandes ou há modelo PPTX, tente novamente ou aumente o timeout do Lambda.",
-    );
-  };
+    throw new Error("Timeout: o processamento demorou demais.");
+  }, []);
 
   const runJob = async () => {
-    if (!fluxoFile || unidadesFiles.length === 0 || !fundReady || !BASE_URL) return;
+    if (!excelFile || !selectedFundId || !BASE_URL) return;
 
-    setJobStatus("presigning");
+    setUiStatus("presigning");
     setErrorMsg(null);
-    setConfigData(null);
-    setPdfUrl(null);
+    setFigures(null);
     setPptxUrl(null);
 
     try {
-      // Build ordered list of files with roles
-      type FileWithRole = { file: File; role: "template" | "fluxo" | "unidades" };
-      const fileList: FileWithRole[] = [];
-      if (templateFile) fileList.push({ file: templateFile, role: "template" });
-      fileList.push({ file: fluxoFile, role: "fluxo" });
-      unidadesFiles.forEach((f) => fileList.push({ file: f, role: "unidades" }));
+      // 1. Presign
+      const contentType =
+        excelFile.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      const psRes = await fetch(PRESIGN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: excelFile.name, content_type: contentType }),
+      });
+      const psText = await psRes.text();
+      if (!psRes.ok) {
+        const b = tryParseJsonRecord(psText) as Record<string, string>;
+        throw new Error(b.detail ?? b.error ?? `Presign falhou (${psRes.status}).`);
+      }
+      const ps = parseJsonText<{ job_id: string; s3_key: string; upload_url: string }>(
+        psText, "Presign", psRes.status,
+      );
+      setJobId(ps.job_id);
 
-      // 1. Request presigned PUT URLs
-      const presignRes = await fetch(PRESIGN_URL, {
+      // 2. Upload to S3
+      setUiStatus("uploading");
+      const upRes = await fetch(ps.upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: excelFile,
+      });
+      if (!upRes.ok) throw new Error(`Upload falhou (HTTP ${upRes.status}).`);
+
+      // 3. Kick off the build
+      setUiStatus("running");
+      const fundDisplay = funds.find((f) => f.fund_id === selectedFundId)?.display_name ?? selectedFundId;
+      const buildRes = await fetch(BUILD_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          files: fileList.map(({ file, role }) => ({
-            name: file.name,
-            contentType: file.type || "application/octet-stream",
-            role,
-          })),
+          fund_id: selectedFundId,
+          job_id: ps.job_id,
+          fund_name: fundDisplay,
+          s3_key: ps.s3_key,
         }),
       });
-      const presignText = await presignRes.text();
-      if (!presignRes.ok) {
-        const b = tryParseJsonRecord(presignText) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao preparar upload (${presignRes.status})`);
-      }
-      const { jobId, bucket, uploads } = parseJsonText<{
-        jobId: string;
-        bucket: string;
-        uploads: Array<{ key: string; role: string; url: string; headers: Record<string, string> }>;
-      }>(presignText, "Presign", presignRes.status);
-
-      // 2. Upload files directly to S3
-      setJobStatus("uploading");
-      await Promise.all(
-        uploads.map((upload, i) =>
-          fetch(upload.url, {
-            method: "PUT",
-            headers: upload.headers,
-            body: fileList[i].file,
-          }).then((r) => {
-            if (!r.ok) throw new Error(`Upload de '${fileList[i].file.name}' falhou (HTTP ${r.status})`);
-          }),
-        ),
-      );
-
-      // Separate keys by role
-      const templateKey = uploads.find((u) => u.role === "template")?.key ?? null;
-      const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
-      const unidadesKeys = uploads.filter((u) => u.role === "unidades").map((u) => u.key);
-
-      // 3. Trigger the worker
-      setJobStatus("processing");
-      const workerBody: Record<string, unknown> = {
-        bucket,
-        jobId,
-        fluxoKey,
-        unidadesKeys,
-        fiiFundName: selectedFund.trim(),
-      };
-      if (templateKey) workerBody.templateKey = templateKey;
-
-      const workerRes = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(workerBody),
-      });
-      const workerText = await workerRes.text();
-      if (workerRes.status !== 202 && workerRes.status !== 200) {
-        const b = tryParseJsonRecord(workerText) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
+      const buildText = await buildRes.text();
+      if (!buildRes.ok) {
+        const b = tryParseJsonRecord(buildText) as Record<string, string>;
+        throw new Error(b.detail ?? b.error ?? `Erro ao iniciar processamento (${buildRes.status}).`);
       }
 
-      // 4. Poll for artifacts
-      setJobStatus("rendering");
-      const artifacts = await _pollArtifacts(jobId);
-
-      // 5. Fetch config.json (presigned S3 URL — errors are often XML, not JSON)
-      const configRes = await fetch(artifacts.configUrl);
-      const configText = await configRes.text();
-      if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
-      setConfigData(parseJsonText<ConfigPayload>(configText, "config.json", configRes.status));
-      setPdfUrl(artifacts.pdfUrl);
-      if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
-      setJobStatus("completed");
-
-      // Refresh history
-      void loadHistory(selectedFund);
-
+      // 4. Poll
+      const final = await pollJob(ps.job_id);
+      setFigures(final.figures);
+      setPptxUrl(final.pptx_url);
+      setUiStatus("completed");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
-      setJobStatus("error");
+      setUiStatus("error");
     }
   };
 
-  const loadRunArtifacts = async (run: ReportRun) => {
-    if (!BASE_URL) return;
+  const downloadPptx = async () => {
+    if (!pptxUrl) return;
     setErrorMsg(null);
     try {
-      const res = await fetch(`${REPORT_RUNS_URL}/${run.id}/presign`);
-      const presignRunText = await res.text();
-      if (!res.ok) {
-        const b = tryParseJsonRecord(presignRunText) as Record<string, string>;
-        throw new Error(b.error ?? `Erro ao obter URLs (${res.status})`);
-      }
-      const artifact = parseJsonText<{ configUrl: string; pdfUrl: string; pptxUrl?: string }>(
-        presignRunText,
-        "URLs do relatório",
-        res.status,
-      );
-      const configRes = await fetch(artifact.configUrl);
-      const cfgHistText = await configRes.text();
-      if (!configRes.ok) throw new Error("Falha ao carregar dados dos gráficos.");
-      setConfigData(parseJsonText<ConfigPayload>(cfgHistText, "config.json", configRes.status));
-      setPdfUrl(artifact.pdfUrl);
-      setPptxUrl(artifact.pptxUrl ?? null);
-      setJobStatus("completed");
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar controle.");
-    }
-  };
-
-  const downloadFile = async (
-    url: string,
-    filename: string,
-    setLoading: (b: boolean) => void,
-  ) => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Download falhou (HTTP ${res.status})`);
+      const res = await fetch(pptxUrl);
+      if (!res.ok) throw new Error(`Download falhou (HTTP ${res.status}).`);
       const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       try {
         const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = filename;
+        a.href = url;
+        a.download = `controle-obras-${selectedFundId}.pptx`;
         a.rel = "noopener";
         document.body.appendChild(a);
         a.click();
         a.remove();
       } finally {
-        URL.revokeObjectURL(objectUrl);
+        URL.revokeObjectURL(url);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Falha ao baixar o arquivo.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  const isRunning = jobStatus !== "idle" && jobStatus !== "completed" && jobStatus !== "error";
-  const canRun = !!fluxoFile && unidadesFiles.length > 0 && fundReady && !!BASE_URL && !isRunning;
+  const isRunning = uiStatus !== "idle" && uiStatus !== "completed" && uiStatus !== "error";
+  const canRun = !!excelFile && !!selectedFundId && !!BASE_URL && !isRunning;
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
 
-      {/* ── Fundo ──────────────────────────────────────────────────────── */}
+      {/* Fundo */}
       <section
         aria-label="Fundo do controle"
         className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Fundo</h2>
 
-        {!namesError && fundNames.length > 0 && (
+        {!fundsError && funds.length > 0 && (
           <div className="space-y-1.5">
-            <Label htmlFor={fundSelectId} className="text-xs text-muted-foreground">
-              Controle para
-            </Label>
-            <Select value={selectedFund} onValueChange={setSelectedFund} disabled={loadingFunds}>
+            <Label htmlFor={fundSelectId} className="text-xs text-muted-foreground">Controle para</Label>
+            <Select value={selectedFundId} onValueChange={setSelectedFundId} disabled={loadingFunds}>
               <SelectTrigger id={fundSelectId} className="h-9 w-full max-w-md text-sm">
                 <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
               </SelectTrigger>
               <SelectContent>
-                {fundNames.map((name) => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                {funds.map((f) => (
+                  <SelectItem key={f.fund_id} value={f.fund_id}>{f.display_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -619,210 +300,127 @@ export default function RelatorioTeste() {
         {loadingFunds && (
           <p className="text-sm text-muted-foreground" role="status">Carregando lista de fundos…</p>
         )}
-        {namesError && (
+        {fundsError && (
           <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
-            Não foi possível carregar a lista de fundos ({namesError}).
+            Não foi possível carregar a lista de fundos ({fundsError}).
           </p>
         )}
-        {!loadingFunds && !namesError && fundNames.length === 0 && (
+        {!loadingFunds && !fundsError && funds.length === 0 && (
           <p className="text-sm text-muted-foreground" role="status">
-            Nenhum fundo encontrado. Gere o export de gráficos ou atualize os dados.
+            Nenhum fundo encontrado. Adicione um arquivo de instruções em{" "}
+            <code>agent-services/src/fund_report/instructions/&lt;fund_id&gt;.md</code>.
           </p>
         )}
       </section>
 
-      {/* ── Entrada ────────────────────────────────────────────────────── */}
+      {/* Entrada */}
       <section
-        aria-label="Upload de arquivos"
+        aria-label="Upload de arquivo"
         className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
-          {(templateFile || fluxoFile || unidadesFiles.length > 0) && (
+          {excelFile && (
             <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll} disabled={isRunning}>
-              Limpar tudo
+              Limpar
             </Button>
           )}
         </div>
 
-        <div className="space-y-5">
-          {/* Modelo PPTX */}
-          <SingleFilePicker
-            label="Modelo PPTX (opcional)"
-            description="Template PowerPoint para geração do PPTX"
-            accept={PPTX_ACCEPT}
-            file={templateFile}
-            icon={Presentation}
-            onFile={setTemplateFile}
-            onClear={() => setTemplateFile(null)}
+        <div className="space-y-2">
+          <Label htmlFor={fileInputId} className="text-xs font-medium text-muted-foreground">
+            Planilha do fundo * <span className="font-normal">(Excel com abas SPE + Fluxo Financeiro)</span>
+          </Label>
+          <input
+            ref={fileRef}
+            id={fileInputId}
+            type="file"
+            accept={EXCEL_ACCEPT}
+            className="sr-only"
             disabled={isRunning}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) setExcelFile(f);
+              e.target.value = "";
+            }}
           />
 
-          {/* Fluxo Financeiro */}
-          <SingleFilePicker
-            label="Fluxo Financeiro *"
-            description="Arquivo CSV de fluxo financeiro"
-            accept={SPREADSHEET_ACCEPT}
-            file={fluxoFile}
-            icon={FileText}
-            onFile={setFluxoFile}
-            onClear={() => setFluxoFile(null)}
-            disabled={isRunning}
-          />
-
-          {/* Unidades / Vendas SPE */}
-          <div className="space-y-2">
-            <Label htmlFor={unidadesInputId} className="text-xs font-medium text-muted-foreground">
-              Unidades / Vendas SPE * (vários arquivos)
-            </Label>
-            <input
-              ref={unidadesRef}
-              id={unidadesInputId}
-              type="file"
-              accept={SPREADSHEET_ACCEPT}
-              multiple
-              className="sr-only"
-              disabled={isRunning}
-              aria-label="Selecionar arquivos de unidades"
-              onChange={(e) => {
-                if (e.target.files?.length) addUnidadesFiles(e.target.files);
-                e.target.value = "";
-              }}
-            />
-
-            <div
-              role="button"
-              tabIndex={isRunning ? -1 : 0}
-              aria-label="Abrir seletor de arquivos SPE ou arrastar aqui"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  unidadesRef.current?.click();
-                }
-              }}
-              onClick={() => !isRunning && unidadesRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isRunning && e.dataTransfer.files?.length) addUnidadesFiles(e.dataTransfer.files);
-              }}
+          {excelFile ? (
+            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5 text-sm">
+              <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-foreground">{excelFile.name}</p>
+                <p className="text-xs text-muted-foreground">{formatBytes(excelFile.size)}</p>
+              </div>
+              <Button
+                type="button" variant="ghost" size="icon"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                onClick={() => setExcelFile(null)}
+                disabled={isRunning}
+                aria-label={`Remover ${excelFile.name}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
               className={cn(
-                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 transition-colors",
+                "flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 text-left transition-colors",
                 "hover:border-primary/50 hover:bg-muted/30",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isRunning && "pointer-events-none opacity-50",
               )}
+              disabled={isRunning}
+              onClick={() => fileRef.current?.click()}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
                 <FileSpreadsheet className="h-4 w-4 text-primary" aria-hidden />
               </div>
-              <p className="text-center text-sm text-muted-foreground">
-                Arraste ou clique para adicionar arquivos SPE
-                <span className="mt-0.5 block text-xs">CSV, XLSX ou XLS · vários de uma vez</span>
-              </p>
-            </div>
-
-            {unidadesRejectNote && (
-              <p className="text-sm text-amber-600 dark:text-amber-500" role="status">
-                {unidadesRejectNote}
-              </p>
-            )}
-
-            {unidadesFiles.length > 0 && (
-              <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
-                {unidadesFiles.map((file, index) => (
-                  <li
-                    key={`${file.name}-${file.size}-${index}`}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-foreground">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => setUnidadesFiles((prev) => prev.filter((_, i) => i !== index))}
-                      disabled={isRunning}
-                      aria-label={`Remover ${file.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Clique para selecionar o arquivo Excel</p>
+                <p className="text-xs text-muted-foreground">XLSX ou XLS · uma aba por SPE + aba Fluxo Financeiro</p>
+              </div>
+            </button>
+          )}
         </div>
       </section>
 
-      {/* ── Ações ──────────────────────────────────────────────────────── */}
+      {/* Ações */}
       <section
-        aria-label="Ações do controle de obras"
+        aria-label="Ações do controle"
         className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            disabled={!canRun}
-            onClick={() => void runJob()}
-            className="h-9 gap-2"
-          >
+          <Button type="button" disabled={!canRun} onClick={() => void runJob()} className="h-9 gap-2">
             {isRunning ? (
-              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{JOB_STATUS_LABEL[jobStatus]}</>
+              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{STATUS_LABEL[uiStatus]}</>
             ) : (
-              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar exportação</>
+              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar relatório</>
             )}
           </Button>
 
-          {jobStatus === "completed" && pdfUrl && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pdfDownloading}
-              onClick={() => void downloadFile(pdfUrl, "controle-obras-fidc.pdf", setPdfDownloading)}
-              className="h-9 gap-2"
-            >
-              {pdfDownloading
-                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
-                : <><FileDown className="h-4 w-4" aria-hidden />Download PDF</>}
+          {uiStatus === "completed" && pptxUrl && (
+            <Button type="button" variant="outline" onClick={() => void downloadPptx()} className="h-9 gap-2">
+              <Presentation className="h-4 w-4" aria-hidden />Download PPTX
             </Button>
           )}
 
-          {jobStatus === "completed" && pptxUrl && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pptxDownloading}
-              onClick={() => void downloadFile(pptxUrl, "controle-obras-fidc.pptx", setPptxDownloading)}
-              className="h-9 gap-2"
-            >
-              {pptxDownloading
-                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
-                : <><Presentation className="h-4 w-4" aria-hidden />Download PPTX</>}
-            </Button>
-          )}
-
-          {jobStatus === "completed" && (
+          {uiStatus === "completed" && (
             <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-4 w-4" aria-hidden />Concluído
             </span>
           )}
         </div>
 
-        {/* Progress steps */}
         {isRunning && (
           <div className="mt-4 space-y-1">
-            {(["presigning", "uploading", "processing", "rendering"] as JobStatus[]).map((step) => {
-              const steps = ["presigning", "uploading", "processing", "rendering"];
-              const done = steps.indexOf(step) < steps.indexOf(jobStatus as string);
-              const active = step === jobStatus;
+            {(["presigning", "uploading", "running"] as UiStatus[]).map((step) => {
+              const steps: UiStatus[] = ["presigning", "uploading", "running"];
+              const done = steps.indexOf(step) < steps.indexOf(uiStatus);
+              const active = step === uiStatus;
               return (
                 <div
                   key={step}
@@ -836,7 +434,7 @@ export default function RelatorioTeste() {
                     : active
                       ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
                       : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-current opacity-30" aria-hidden />}
-                  {JOB_STATUS_LABEL[step]}
+                  {STATUS_LABEL[step]}
                 </div>
               );
             })}
@@ -844,135 +442,33 @@ export default function RelatorioTeste() {
         )}
 
         {errorMsg && (
-          <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-            {errorMsg}
-          </p>
+          <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{errorMsg}</p>
         )}
 
         {!BASE_URL && (
           <p className="mt-3 text-xs text-amber-600 dark:text-amber-500" role="status">
-            Configure <code className="rounded bg-muted px-1 py-0.5">VITE_REPORT_API_URL</code> com a URL do API Gateway.
+            Configure <code className="rounded bg-muted px-1 py-0.5">VITE_AGENT_SERVICES_URL</code> com a URL do serviço agent-services.
           </p>
         )}
 
-        {BASE_URL && !canRun && !isRunning && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {!fundReady
-              ? "Aguarde o fundo estar disponível e selecionado."
-              : !fluxoFile
-                ? "Selecione o arquivo de Fluxo Financeiro."
-                : unidadesFiles.length === 0
-                  ? "Adicione ao menos um arquivo de Unidades/Vendas SPE."
-                  : ""}
-          </p>
+        {jobId && (
+          <p className="mt-3 text-xs text-muted-foreground">job_id: <code className="rounded bg-muted px-1 py-0.5">{jobId}</code></p>
         )}
       </section>
 
-      {/* ── Histórico ──────────────────────────────────────────────────── */}
-      {BASE_URL && fundReady && (
-        <section
-          aria-label="Histórico de controles"
-          className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
-        >
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 text-xs"
-              disabled={loadingHistory}
-              onClick={() => void loadHistory(selectedFund)}
-            >
-              {loadingHistory
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                : <History className="h-3.5 w-3.5" aria-hidden />}
-              Atualizar
-            </Button>
-          </div>
-
-          {historyError && (
-            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">{historyError}</p>
-          )}
-
-          {!loadingHistory && !historyError && runs.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum controle salvo para este fundo.</p>
-          )}
-
-          {runs.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Fundo</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Status</th>
-                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {runs.map((run) => (
-                    <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">{run.fundName}</td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
-                      <td className="py-2.5 pr-4">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                          run.status === "completed"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                        )}>
-                          {run.status === "completed" ? "Concluído" : run.status}
-                        </span>
-                      </td>
-                      <td className="py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1.5 text-xs"
-                            onClick={() => void loadRunArtifacts(run)}
-                          >
-                            <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                            Ver gráficos
-                          </Button>
-                          {run.pptxKey && (
-                            <span className="text-xs text-muted-foreground">
-                              <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* ── Chart preview ──────────────────────────────────────────────── */}
-      {configData && (
+      {/* Pré-visualização */}
+      {figures && (
         <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
           <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
-          {(Object.keys(CHART_TITLES) as Array<keyof typeof CHART_TITLES>).map((key) => {
-            const fig = configData[key];
+          {Object.keys(CHART_TITLES).map((key) => {
+            const fig = figures[key];
             if (!fig) return null;
             return (
-              <div
-                key={key}
-                className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
-              >
+              <div key={key} className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6">
                 <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
                 <div className="mt-1 h-px w-full bg-border/60" />
                 <div className="mt-4">
-                  <Suspense
-                    fallback={
-                      <div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />
-                    }
-                  >
+                  <Suspense fallback={<div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />}>
                     <Plot
                       data={fig.data}
                       layout={{ ...fig.layout, autosize: true }}
