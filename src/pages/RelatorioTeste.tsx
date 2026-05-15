@@ -560,7 +560,7 @@ export default function RelatorioTeste() {
           {/* Fluxo Financeiro */}
           <SingleFilePicker
             label="Fluxo Financeiro *"
-            description="Arquivo CSV de fluxo financeiro"
+            description="BASE_FLUXO.csv"
             accept={SPREADSHEET_ACCEPT}
             file={fluxoFile}
             icon={FileText}
@@ -618,7 +618,7 @@ export default function RelatorioTeste() {
               </div>
               <p className="text-center text-sm text-muted-foreground">
                 Arraste ou clique para adicionar arquivos SPE
-                <span className="mt-0.5 block text-xs">CSV, XLSX ou XLS · vários de uma vez</span>
+                <span className="mt-0.5 block text-xs">BASE_VENDAS.csv · .xlsx · .xls · vários de uma vez</span>
               </p>
             </div>
 
