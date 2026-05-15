@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { ChatProvider } from "./contexts/ChatContext";
+import { ReportJobProvider } from "./contexts/ReportJobContext";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import Home from "./pages/Home";
 // import Pipeline from "./pages/Pipeline"; // hidden for now — re-enable with /pipeline routes below
@@ -23,6 +24,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <TooltipProvider>
         <ChatProvider>
+          <ReportJobProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -87,6 +89,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </ReportJobProvider>
         </ChatProvider>
       </TooltipProvider>
     </ThemeProvider>

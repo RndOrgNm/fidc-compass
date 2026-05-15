@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useReportJob } from "@/contexts/ReportJobContext";
 import {
-  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, Upload,
+  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2,
   CheckCircle2, Presentation, FileText,
 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
@@ -28,7 +29,6 @@ const PPTX_ACCEPT =
 const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 const PRESIGN_URL = `${BASE_URL}/presign`;
 const WORKER_URL = `${BASE_URL}/report`;
-const ARTIFACTS_URL = `${BASE_URL}/artifacts`;
 const REPORT_RUNS_URL = `${BASE_URL}/report-runs`;
 
 const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
@@ -72,13 +72,6 @@ type ConfigPayload = {
   inadimplencia: PlotlyFig;
   vendas_estoque: PlotlyFig;
   premio: PlotlyFig | null;
-};
-
-type ArtifactPayload = {
-  jobId: string;
-  configUrl: string;
-  pdfUrl: string;
-  pptxUrl?: string;
 };
 
 type ReportRun = {
@@ -216,28 +209,6 @@ function SingleFilePicker({
   );
 }
 
-// ── Active-job persistence ────────────────────────────────────────────────────
-// Saves the jobId to localStorage so polling survives page navigation.
-// Cleared on completion, error, or manual reset.
-const JOB_STORAGE_KEY = "report_active_job";
-
-function saveActiveJob(jobId: string) {
-  try { localStorage.setItem(JOB_STORAGE_KEY, JSON.stringify({ jobId, startedAt: Date.now() })); } catch { /* ignore */ }
-}
-function clearActiveJob() {
-  try { localStorage.removeItem(JOB_STORAGE_KEY); } catch { /* ignore */ }
-}
-function loadActiveJob(): string | null {
-  try {
-    const raw = localStorage.getItem(JOB_STORAGE_KEY);
-    if (!raw) return null;
-    const { jobId, startedAt } = JSON.parse(raw) as { jobId?: string; startedAt?: number };
-    // Discard entries older than 30 min (Lambda max is 15 min).
-    if (!jobId || Date.now() - (startedAt ?? 0) > 30 * 60 * 1000) { clearActiveJob(); return null; }
-    return jobId;
-  } catch { return null; }
-}
-
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RelatorioTeste() {
@@ -257,12 +228,14 @@ export default function RelatorioTeste() {
   const [unidadesFiles, setUnidadesFiles] = useState<File[]>([]);
   const [unidadesRejectNote, setUnidadesRejectNote] = useState<string | null>(null);
 
-  // Job state — lazy-init from localStorage so a resumed job shows the spinner immediately.
-  const [jobStatus, setJobStatus] = useState<JobStatus>(() => loadActiveJob() ? "rendering" : "idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [configData, setConfigData] = useState<ConfigPayload | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [pptxUrl, setPptxUrl] = useState<string | null>(null);
+  // Job state lives in ReportJobContext so polling survives page navigation.
+  const {
+    jobStatus, setJobStatus, errorMsg, setErrorMsg,
+    configData: rawConfigData, pdfUrl, pptxUrl,
+    startPolling, setLoadedArtifacts, clearJob,
+  } = useReportJob();
+  // Cast to the locally-typed ConfigPayload (PlotlyFig fields) for rendering.
+  const configData = rawConfigData as ConfigPayload | null;
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [pptxDownloading, setPptxDownloading] = useState(false);
 
@@ -320,38 +293,6 @@ export default function RelatorioTeste() {
     if (fundReady && BASE_URL) void loadHistory(selectedFund);
   }, [fundReady, selectedFund, loadHistory]);
 
-  // ── Resume in-progress job after page navigation ──────────────────────────
-  // The Lambda keeps running on the server; we just need to restart polling.
-  useEffect(() => {
-    const savedJobId = loadActiveJob();
-    if (!savedJobId) return;
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const artifacts = await _pollArtifacts(savedJobId);
-        if (cancelled) return;
-        const configRes = await fetch(artifacts.configUrl);
-        const configText = await configRes.text();
-        if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
-        if (cancelled) return;
-        setConfigData(parseJsonText<ConfigPayload>(configText, "config.json", configRes.status));
-        setPdfUrl(artifacts.pdfUrl);
-        if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
-        setJobStatus("completed");
-        clearActiveJob();
-      } catch (err) {
-        if (cancelled) return;
-        setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
-        setJobStatus("error");
-        clearActiveJob();
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Unidades multi-file management ───────────────────────────────────────
 
   const addUnidadesFiles = useCallback((list: FileList | File[]) => {
@@ -384,109 +325,20 @@ export default function RelatorioTeste() {
   }, []);
 
   const clearAll = () => {
-    clearActiveJob();
+    clearJob();
     setTemplateFile(null);
     setFluxoFile(null);
     setUnidadesFiles([]);
     setUnidadesRejectNote(null);
-    setErrorMsg(null);
-    setJobStatus("idle");
-    setConfigData(null);
-    setPdfUrl(null);
-    setPptxUrl(null);
   };
 
   // ── Job flow ──────────────────────────────────────────────────────────────
 
-  const _delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-  /** Matches Lambda worker max timeout (900 s default); 2 s × 450 ≈ 15 min */
-  const ARTIFACT_POLL_MAX_ATTEMPTS = 450;
-  const ARTIFACT_POLL_INTERVAL_MS = 2000;
-
-  const _pollArtifacts = async (jobId: string): Promise<ArtifactPayload> => {
-    for (let i = 0; i < ARTIFACT_POLL_MAX_ATTEMPTS; i++) {
-      await _delay(ARTIFACT_POLL_INTERVAL_MS);
-      const res = await fetch(ARTIFACTS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobId }),
-      });
-      const raw = await res.text();
-
-      if (res.status === 404) throw new Error("Job não encontrado no servidor.");
-
-      // Older artifact Lambda: 409 while queued/processing (shows as error in DevTools)
-      if (res.status === 409) {
-        const b = tryParseJsonRecord(raw) as {
-          error?: string;
-          status?: string;
-          detail?: string;
-        };
-        if (b.status === "failed") {
-          throw new Error(b.detail ?? b.error ?? "O processamento falhou no servidor.");
-        }
-        continue;
-      }
-
-      if (res.status === 500) {
-        const b = tryParseJsonRecord(raw) as Record<string, string>;
-        throw new Error(b.error ?? "Erro interno ao verificar o processamento.");
-      }
-
-      if (res.status !== 200) {
-        const trimmed = raw.trimStart();
-        const html = /^<!doctype/i.test(trimmed) || /^<html/i.test(trimmed);
-        const head = trimmed.slice(0, 80);
-        throw new Error(
-          html
-            ? `Artefatos: o servidor devolveu HTML (HTTP ${res.status}), possível falha no API Gateway ou URL incorreta.`
-            : `Resposta inesperada ao verificar artefatos (${res.status}).${head ? ` Corpo: ${head}…` : ""}`,
-        );
-      }
-
-      const data = parseJsonText<{
-        ready?: boolean;
-        jobId?: string;
-        status?: string;
-        detail?: string;
-        configUrl?: string;
-        pdfUrl?: string;
-        pptxUrl?: string;
-      }>(raw, "Artefatos", res.status);
-
-      // Current Lambda: HTTP 200 + ready:false until manifest.status === "completed"
-      if (data.ready === false) {
-        if (data.status === "failed") {
-          throw new Error(data.detail ?? "O processamento falhou no servidor.");
-        }
-        continue;
-      }
-
-      if (data.configUrl && data.pdfUrl && data.jobId) {
-        return {
-          jobId: data.jobId,
-          configUrl: data.configUrl,
-          pdfUrl: data.pdfUrl,
-          pptxUrl: data.pptxUrl,
-        };
-      }
-      throw new Error("Resposta inválida ao verificar artefatos.");
-    }
-    throw new Error(
-      "Timeout: o processamento não foi concluído a tempo (espere até ~15 min no servidor). " +
-        "Se os dados são grandes ou há modelo PPTX, tente novamente ou aumente o timeout do Lambda.",
-    );
-  };
-
   const runJob = async () => {
     if (!fluxoFile || unidadesFiles.length === 0 || !fundReady || !BASE_URL) return;
 
+    clearJob();
     setJobStatus("presigning");
-    setErrorMsg(null);
-    setConfigData(null);
-    setPdfUrl(null);
-    setPptxUrl(null);
 
     try {
       // Build ordered list of files with roles
