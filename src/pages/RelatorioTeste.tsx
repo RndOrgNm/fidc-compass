@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
 import { useReportJob } from "@/contexts/ReportJobContext";
 import {
-  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2,
+  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, X,
   CheckCircle2, Presentation, FileText,
 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
@@ -412,28 +412,13 @@ export default function RelatorioTeste() {
         throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }
 
-      // 4. Poll for artifacts — persist jobId so polling survives navigation.
-      setJobStatus("rendering");
-      saveActiveJob(jobId);
-      const artifacts = await _pollArtifacts(jobId);
-
-      // 5. Fetch config.json (presigned S3 URL — errors are often XML, not JSON)
-      const configRes = await fetch(artifacts.configUrl);
-      const configText = await configRes.text();
-      if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
-      setConfigData(parseJsonText<ConfigPayload>(configText, "config.json", configRes.status));
-      setPdfUrl(artifacts.pdfUrl);
-      if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
-      setJobStatus("completed");
-      clearActiveJob();
-
-      // Refresh history
+      // 4. Hand off to context — polling survives page navigation.
+      startPolling(jobId);
       void loadHistory(selectedFund);
 
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
       setJobStatus("error");
-      clearActiveJob();
     }
   };
 
@@ -455,10 +440,11 @@ export default function RelatorioTeste() {
       const configRes = await fetch(artifact.configUrl);
       const cfgHistText = await configRes.text();
       if (!configRes.ok) throw new Error("Falha ao carregar dados dos gráficos.");
-      setConfigData(parseJsonText<ConfigPayload>(cfgHistText, "config.json", configRes.status));
-      setPdfUrl(artifact.pdfUrl);
-      setPptxUrl(artifact.pptxUrl ?? null);
-      setJobStatus("completed");
+      setLoadedArtifacts(
+        parseJsonText<ConfigPayload>(cfgHistText, "config.json", configRes.status),
+        artifact.pdfUrl,
+        artifact.pptxUrl,
+      );
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar controle.");
     }
@@ -690,6 +676,18 @@ export default function RelatorioTeste() {
               <><BarChart2 className="h-4 w-4" aria-hidden />Gerar exportação</>
             )}
           </Button>
+
+          {isRunning && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={clearJob}
+            >
+              <X className="h-4 w-4" aria-hidden />
+              Cancelar
+            </Button>
+          )}
 
           {jobStatus === "completed" && pdfUrl && (
             <Button
