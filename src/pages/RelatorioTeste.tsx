@@ -560,7 +560,7 @@ export default function RelatorioTeste() {
           {/* Fluxo Financeiro */}
           <SingleFilePicker
             label="Fluxo Financeiro *"
-            description="BASE_FLUXO.csv"
+            description="BASE_FLUXO (.csv, .xlsx, .xls)"
             accept={SPREADSHEET_ACCEPT}
             file={fluxoFile}
             icon={FileText}
