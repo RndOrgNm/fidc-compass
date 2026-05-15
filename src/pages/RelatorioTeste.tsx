@@ -114,7 +114,9 @@ function formatBytes(n: number): string {
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("pt-BR", {
+    // If the backend omits a timezone suffix the string is ambiguous; force UTC.
+    const utc = /Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z";
+    return new Date(utc).toLocaleString("pt-BR", {
       day: "2-digit", month: "2-digit", year: "numeric",
       hour: "2-digit", minute: "2-digit",
       timeZone: "America/Sao_Paulo",
