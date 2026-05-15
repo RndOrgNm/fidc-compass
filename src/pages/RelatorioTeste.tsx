@@ -216,6 +216,28 @@ function SingleFilePicker({
   );
 }
 
+// ── Active-job persistence ────────────────────────────────────────────────────
+// Saves the jobId to localStorage so polling survives page navigation.
+// Cleared on completion, error, or manual reset.
+const JOB_STORAGE_KEY = "report_active_job";
+
+function saveActiveJob(jobId: string) {
+  try { localStorage.setItem(JOB_STORAGE_KEY, JSON.stringify({ jobId, startedAt: Date.now() })); } catch { /* ignore */ }
+}
+function clearActiveJob() {
+  try { localStorage.removeItem(JOB_STORAGE_KEY); } catch { /* ignore */ }
+}
+function loadActiveJob(): string | null {
+  try {
+    const raw = localStorage.getItem(JOB_STORAGE_KEY);
+    if (!raw) return null;
+    const { jobId, startedAt } = JSON.parse(raw) as { jobId?: string; startedAt?: number };
+    // Discard entries older than 30 min (Lambda max is 15 min).
+    if (!jobId || Date.now() - (startedAt ?? 0) > 30 * 60 * 1000) { clearActiveJob(); return null; }
+    return jobId;
+  } catch { return null; }
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RelatorioTeste() {
@@ -235,8 +257,8 @@ export default function RelatorioTeste() {
   const [unidadesFiles, setUnidadesFiles] = useState<File[]>([]);
   const [unidadesRejectNote, setUnidadesRejectNote] = useState<string | null>(null);
 
-  // Job state
-  const [jobStatus, setJobStatus] = useState<JobStatus>("idle");
+  // Job state — lazy-init from localStorage so a resumed job shows the spinner immediately.
+  const [jobStatus, setJobStatus] = useState<JobStatus>(() => loadActiveJob() ? "rendering" : "idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [configData, setConfigData] = useState<ConfigPayload | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -298,6 +320,38 @@ export default function RelatorioTeste() {
     if (fundReady && BASE_URL) void loadHistory(selectedFund);
   }, [fundReady, selectedFund, loadHistory]);
 
+  // ── Resume in-progress job after page navigation ──────────────────────────
+  // The Lambda keeps running on the server; we just need to restart polling.
+  useEffect(() => {
+    const savedJobId = loadActiveJob();
+    if (!savedJobId) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const artifacts = await _pollArtifacts(savedJobId);
+        if (cancelled) return;
+        const configRes = await fetch(artifacts.configUrl);
+        const configText = await configRes.text();
+        if (!configRes.ok) throw new Error("Falha ao carregar os dados dos gráficos.");
+        if (cancelled) return;
+        setConfigData(parseJsonText<ConfigPayload>(configText, "config.json", configRes.status));
+        setPdfUrl(artifacts.pdfUrl);
+        if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
+        setJobStatus("completed");
+        clearActiveJob();
+      } catch (err) {
+        if (cancelled) return;
+        setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
+        setJobStatus("error");
+        clearActiveJob();
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Unidades multi-file management ───────────────────────────────────────
 
   const addUnidadesFiles = useCallback((list: FileList | File[]) => {
@@ -330,6 +384,7 @@ export default function RelatorioTeste() {
   }, []);
 
   const clearAll = () => {
+    clearActiveJob();
     setTemplateFile(null);
     setFluxoFile(null);
     setUnidadesFiles([]);
@@ -505,8 +560,9 @@ export default function RelatorioTeste() {
         throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }
 
-      // 4. Poll for artifacts
+      // 4. Poll for artifacts — persist jobId so polling survives navigation.
       setJobStatus("rendering");
+      saveActiveJob(jobId);
       const artifacts = await _pollArtifacts(jobId);
 
       // 5. Fetch config.json (presigned S3 URL — errors are often XML, not JSON)
@@ -517,6 +573,7 @@ export default function RelatorioTeste() {
       setPdfUrl(artifacts.pdfUrl);
       if (artifacts.pptxUrl) setPptxUrl(artifacts.pptxUrl);
       setJobStatus("completed");
+      clearActiveJob();
 
       // Refresh history
       void loadHistory(selectedFund);
@@ -524,6 +581,7 @@ export default function RelatorioTeste() {
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
       setJobStatus("error");
+      clearActiveJob();
     }
   };
 
