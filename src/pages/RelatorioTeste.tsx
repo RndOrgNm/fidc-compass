@@ -23,6 +23,9 @@ const SPREADSHEET_ACCEPT =
   ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+const PPTX_ACCEPT =
+  ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
 
 const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 const PRESIGN_URL = `${BASE_URL}/presign`;
@@ -224,6 +227,7 @@ export default function RelatorioTeste() {
   const [namesError, setNamesError] = useState<string | null>(null);
 
   // File inputs
+  const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [fluxoFile, setFluxoFile] = useState<File | null>(null);
   const [premioFile, setPremioFile] = useState<File | null>(null);
   const [baseOutrosFile, setBaseOutrosFile] = useState<File | null>(null);
@@ -328,6 +332,7 @@ export default function RelatorioTeste() {
 
   const clearAll = () => {
     clearJob();
+    setTemplateFile(null);
     setFluxoFile(null);
     setPremioFile(null);
     setBaseOutrosFile(null);
@@ -345,8 +350,9 @@ export default function RelatorioTeste() {
 
     try {
       // Build ordered list of files with roles
-      type FileWithRole = { file: File; role: "fluxo" | "premio" | "base_outros" | "unidades" };
+      type FileWithRole = { file: File; role: "template" | "fluxo" | "premio" | "base_outros" | "unidades" };
       const fileList: FileWithRole[] = [];
+      if (templateFile) fileList.push({ file: templateFile, role: "template" });
       fileList.push({ file: fluxoFile, role: "fluxo" });
       if (premioFile) fileList.push({ file: premioFile, role: "premio" });
       if (baseOutrosFile) fileList.push({ file: baseOutrosFile, role: "base_outros" });
@@ -390,6 +396,7 @@ export default function RelatorioTeste() {
       );
 
       // Separate keys by role
+      const templateKey = uploads.find((u) => u.role === "template")?.key ?? null;
       const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
       const premioKey = uploads.find((u) => u.role === "premio")?.key ?? null;
       const baseOutrosKey = uploads.find((u) => u.role === "base_outros")?.key ?? null;
@@ -404,6 +411,7 @@ export default function RelatorioTeste() {
         unidadesKeys,
         fiiFundName: selectedFund.trim(),
       };
+      if (templateKey) workerBody.templateKey = templateKey;
       if (premioKey) workerBody.premioKey = premioKey;
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
 
@@ -540,7 +548,7 @@ export default function RelatorioTeste() {
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
-          {(fluxoFile || premioFile || baseOutrosFile || unidadesFiles.length > 0) && (
+          {(templateFile || fluxoFile || premioFile || baseOutrosFile || unidadesFiles.length > 0) && (
             <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll} disabled={isRunning}>
               Limpar tudo
             </Button>
@@ -548,6 +556,18 @@ export default function RelatorioTeste() {
         </div>
 
         <div className="space-y-5">
+          {/* Modelo PPTX */}
+          <SingleFilePicker
+            label="Modelo PPTX (opcional)"
+            description="Template PowerPoint para geração do PPTX"
+            accept={PPTX_ACCEPT}
+            file={templateFile}
+            icon={Presentation}
+            onFile={setTemplateFile}
+            onClear={() => setTemplateFile(null)}
+            disabled={isRunning}
+          />
+
           {/* Fluxo Financeiro */}
           <SingleFilePicker
             label="Fluxo Financeiro *"
