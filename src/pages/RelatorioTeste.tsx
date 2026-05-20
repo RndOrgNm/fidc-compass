@@ -225,9 +225,10 @@ export default function RelatorioTeste() {
   const [loadingFunds, setLoadingFunds] = useState(true);
   const [namesError, setNamesError] = useState<string | null>(null);
 
-  // File inputs (three separate)
+  // File inputs
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [fluxoFile, setFluxoFile] = useState<File | null>(null);
+  const [baseOutrosFile, setBaseOutrosFile] = useState<File | null>(null);
   const [unidadesFiles, setUnidadesFiles] = useState<File[]>([]);
   const [unidadesRejectNote, setUnidadesRejectNote] = useState<string | null>(null);
 
@@ -331,6 +332,7 @@ export default function RelatorioTeste() {
     clearJob();
     setTemplateFile(null);
     setFluxoFile(null);
+    setBaseOutrosFile(null);
     setUnidadesFiles([]);
     setUnidadesRejectNote(null);
   };
@@ -345,10 +347,11 @@ export default function RelatorioTeste() {
 
     try {
       // Build ordered list of files with roles
-      type FileWithRole = { file: File; role: "template" | "fluxo" | "unidades" };
+      type FileWithRole = { file: File; role: "template" | "fluxo" | "base_outros" | "unidades" };
       const fileList: FileWithRole[] = [];
       if (templateFile) fileList.push({ file: templateFile, role: "template" });
       fileList.push({ file: fluxoFile, role: "fluxo" });
+      if (baseOutrosFile) fileList.push({ file: baseOutrosFile, role: "base_outros" });
       unidadesFiles.forEach((f) => fileList.push({ file: f, role: "unidades" }));
 
       // 1. Request presigned PUT URLs
@@ -391,6 +394,7 @@ export default function RelatorioTeste() {
       // Separate keys by role
       const templateKey = uploads.find((u) => u.role === "template")?.key ?? null;
       const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
+      const baseOutrosKey = uploads.find((u) => u.role === "base_outros")?.key ?? null;
       const unidadesKeys = uploads.filter((u) => u.role === "unidades").map((u) => u.key);
 
       // 3. Trigger the worker
@@ -403,6 +407,7 @@ export default function RelatorioTeste() {
         fiiFundName: selectedFund.trim(),
       };
       if (templateKey) workerBody.templateKey = templateKey;
+      if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
 
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
@@ -537,7 +542,7 @@ export default function RelatorioTeste() {
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
-          {(templateFile || fluxoFile || unidadesFiles.length > 0) && (
+          {(templateFile || fluxoFile || baseOutrosFile || unidadesFiles.length > 0) && (
             <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll} disabled={isRunning}>
               Limpar tudo
             </Button>
@@ -566,6 +571,18 @@ export default function RelatorioTeste() {
             icon={FileText}
             onFile={setFluxoFile}
             onClear={() => setFluxoFile(null)}
+            disabled={isRunning}
+          />
+
+          {/* Base Outros — Quadro Geral + DRE */}
+          <SingleFilePicker
+            label="Base Outros (opcional)"
+            description="BASE_OUTROS — Quadro Geral + DRE (.xlsx, .xls)"
+            accept={SPREADSHEET_ACCEPT}
+            file={baseOutrosFile}
+            icon={FileSpreadsheet}
+            onFile={setBaseOutrosFile}
+            onClear={() => setBaseOutrosFile(null)}
             disabled={isRunning}
           />
 
