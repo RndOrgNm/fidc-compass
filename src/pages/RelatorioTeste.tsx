@@ -250,6 +250,7 @@ export default function RelatorioTeste() {
 
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
+  const [totalUnidades, setTotalUnidades] = useState<string>("");
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
@@ -437,6 +438,8 @@ export default function RelatorioTeste() {
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
       if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
+      const totalUnidadesTrimmed = totalUnidades.trim();
+      if (totalUnidadesTrimmed) workerBody.totalUnidades = totalUnidadesTrimmed;
 
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
@@ -555,24 +558,41 @@ export default function RelatorioTeste() {
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Parâmetros do Fundo</h2>
 
-        {/* Prêmio */}
-        <div className="mb-6 max-w-xs space-y-1.5">
-          <Label htmlFor="premio-input" className="text-xs text-muted-foreground">
-            Prêmio (% a.a.)
-          </Label>
-          <div className="relative">
+        {/* Prêmio + Total de Unidades */}
+        <div className="mb-6 flex flex-wrap gap-4">
+          <div className="w-40 space-y-1.5">
+            <Label htmlFor="premio-input" className="text-xs text-muted-foreground">
+              Prêmio (% a.a.)
+            </Label>
+            <div className="relative">
+              <Input
+                id="premio-input"
+                type="text"
+                inputMode="decimal"
+                placeholder="ex: 13,00"
+                value={premio}
+                onChange={(e) => setPremio(e.target.value)}
+                className="h-9 pr-8 text-sm"
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                %
+              </span>
+            </div>
+          </div>
+
+          <div className="w-44 space-y-1.5">
+            <Label htmlFor="total-unidades-input" className="text-xs text-muted-foreground">
+              Total de Unidades
+            </Label>
             <Input
-              id="premio-input"
+              id="total-unidades-input"
               type="text"
-              inputMode="decimal"
-              placeholder="ex: 13,00"
-              value={premio}
-              onChange={(e) => setPremio(e.target.value)}
-              className="h-9 pr-8 text-sm"
+              inputMode="numeric"
+              placeholder="ex: 120"
+              value={totalUnidades}
+              onChange={(e) => setTotalUnidades(e.target.value)}
+              className="h-9 text-sm"
             />
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
-              %
-            </span>
           </div>
         </div>
 
