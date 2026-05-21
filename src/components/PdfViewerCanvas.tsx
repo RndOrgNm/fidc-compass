@@ -105,8 +105,8 @@ export function PdfViewerCanvas({
   }
 
   return (
-    <div className={`overflow-auto flex justify-center bg-white ${className}`}>
-      <canvas ref={canvasRef} className="block" />
+    <div className={`overflow-y-auto flex justify-center bg-white ${className}`}>
+      <canvas ref={canvasRef} className="block max-w-full h-auto" />
     </div>
   );
 }
