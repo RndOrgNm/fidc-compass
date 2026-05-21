@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { extractFundNamesFromPlotlyPayload } from "@/components/graficos/PlotlyFundFilterFigure";
 import { AppLayout } from "@/components/layout";
+import { loadIpca, type IpcaRow } from "@/lib/ibge";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 const Plot = lazy(() => import("react-plotly.js"));
@@ -246,6 +248,23 @@ export default function RelatorioTeste() {
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [pptxDownloading, setPptxDownloading] = useState(false);
 
+  // Parâmetros do Fundo
+  const [premio, setPremio] = useState<string>("");
+  const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
+  const [loadingIpca, setLoadingIpca] = useState(true);
+  const [ipcaError, setIpcaError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingIpca(true);
+    setIpcaError(null);
+    loadIpca()
+      .then((rows) => { if (!cancelled) setIpcaRows(rows); })
+      .catch((e: Error) => { if (!cancelled) setIpcaError(e.message); })
+      .finally(() => { if (!cancelled) setLoadingIpca(false); });
+    return () => { cancelled = true; };
+  }, []);
+
   // History
   const [runs, setRuns] = useState<ReportRun[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -415,6 +434,8 @@ export default function RelatorioTeste() {
       if (templateKey) workerBody.templateKey = templateKey;
       if (premioKey) workerBody.premioKey = premioKey;
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
+      const premioTrimmed = premio.trim().replace(",", ".");
+      if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
 
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
@@ -522,6 +543,106 @@ export default function RelatorioTeste() {
           Não foi possível carregar a lista de fundos ({namesError}).
         </p>
       )}
+
+      {/* ── Parâmetros do Fundo ────────────────────────────────────────── */}
+      <section
+        aria-label="Parâmetros do fundo"
+        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+      >
+        <h2 className="mb-4 text-sm font-semibold text-foreground">Parâmetros do Fundo</h2>
+
+        {/* Prêmio */}
+        <div className="mb-6 max-w-xs space-y-1.5">
+          <Label htmlFor="premio-input" className="text-xs text-muted-foreground">
+            Prêmio (% a.a.)
+          </Label>
+          <div className="relative">
+            <Input
+              id="premio-input"
+              type="text"
+              inputMode="decimal"
+              placeholder="ex: 13,00"
+              value={premio}
+              onChange={(e) => setPremio(e.target.value)}
+              className="h-9 pr-8 text-sm"
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+              %
+            </span>
+          </div>
+        </div>
+
+        {/* IPCA table */}
+        <div>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            IPCA — Número-índice e variação mensal (IBGE)
+          </p>
+          {loadingIpca && (
+            <p className="text-sm text-muted-foreground" role="status">Carregando IPCA…</p>
+          )}
+          {ipcaError && (
+            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
+              Não foi possível carregar o IPCA: {ipcaError}
+            </p>
+          )}
+          {!loadingIpca && !ipcaError && ipcaRows.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[28rem] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-4 text-left">Ano</th>
+                    <th className="py-2 pr-4 text-left">Mês</th>
+                    <th className="py-2 pr-6 text-right">
+                      Número Índice
+                      <span className="block font-normal normal-case tracking-normal">(Dez 1993 = 100)</span>
+                    </th>
+                    <th className="py-2 text-right">
+                      No mês
+                      <span className="block font-normal normal-case tracking-normal">(%)</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/30">
+                  {ipcaRows.map((row, idx) => {
+                    const showAno = idx === 0 || ipcaRows[idx - 1].ano !== row.ano;
+                    return (
+                      <tr key={row.period} className="hover:bg-muted/30">
+                        <td className="py-2 pr-4 font-medium text-foreground">
+                          {showAno ? row.ano : ""}
+                        </td>
+                        <td className="py-2 pr-4 text-foreground">{row.mes}</td>
+                        <td className="py-2 pr-6 text-right tabular-nums text-foreground">
+                          {isNaN(row.numeroIndice)
+                            ? "—"
+                            : row.numeroIndice.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                        </td>
+                        <td className={cn(
+                          "py-2 text-right tabular-nums",
+                          isNaN(row.variacaoMes)
+                            ? "text-muted-foreground"
+                            : row.variacaoMes < 0
+                              ? "text-red-400"
+                              : "text-foreground",
+                        )}>
+                          {isNaN(row.variacaoMes)
+                            ? "—"
+                            : row.variacaoMes.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Entrada ────────────────────────────────────────────────────── */}
       <section
