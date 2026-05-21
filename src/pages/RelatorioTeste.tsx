@@ -780,9 +780,9 @@ export default function RelatorioTeste() {
             {!fundReady
               ? "Aguarde o fundo estar disponível e selecionado."
               : !hasFluxo
-                ? "Adicione o arquivo de Fluxo Financeiro e marque-o como \"Fluxo Financeiro\"."
+                ? "Adicione o arquivo de Fluxo Financeiro (BASE_FLUXO)."
                 : !hasUnidades
-                  ? "Adicione ao menos um arquivo marcado como \"Unidades / SPE\"."
+                  ? "Adicione ao menos um arquivo de Unidades / Vendas SPE (BASE_VENDAS)."
                   : ""}
           </p>
         )}
