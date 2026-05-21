@@ -1,0 +1,165 @@
+{
+  "rows": [
+    {
+      "period": "202406",
+      "ano": 2024,
+      "mes": "JUN",
+      "numeroIndice": 6941.51,
+      "variacaoMes": 0.21
+    },
+    {
+      "period": "202407",
+      "ano": 2024,
+      "mes": "JUL",
+      "numeroIndice": 6967.89,
+      "variacaoMes": 0.38
+    },
+    {
+      "period": "202408",
+      "ano": 2024,
+      "mes": "AGO",
+      "numeroIndice": 6966.5,
+      "variacaoMes": -0.02
+    },
+    {
+      "period": "202409",
+      "ano": 2024,
+      "mes": "SET",
+      "numeroIndice": 6997.15,
+      "variacaoMes": 0.44
+    },
+    {
+      "period": "202410",
+      "ano": 2024,
+      "mes": "OUT",
+      "numeroIndice": 7036.33,
+      "variacaoMes": 0.56
+    },
+    {
+      "period": "202411",
+      "ano": 2024,
+      "mes": "NOV",
+      "numeroIndice": 7063.77,
+      "variacaoMes": 0.39
+    },
+    {
+      "period": "202412",
+      "ano": 2024,
+      "mes": "DEZ",
+      "numeroIndice": 7100.5,
+      "variacaoMes": 0.52
+    },
+    {
+      "period": "202501",
+      "ano": 2025,
+      "mes": "JAN",
+      "numeroIndice": 7111.86,
+      "variacaoMes": 0.16
+    },
+    {
+      "period": "202502",
+      "ano": 2025,
+      "mes": "FEV",
+      "numeroIndice": 7205.03,
+      "variacaoMes": 1.31
+    },
+    {
+      "period": "202503",
+      "ano": 2025,
+      "mes": "MAR",
+      "numeroIndice": 7245.38,
+      "variacaoMes": 0.56
+    },
+    {
+      "period": "202504",
+      "ano": 2025,
+      "mes": "ABR",
+      "numeroIndice": 7276.54,
+      "variacaoMes": 0.43
+    },
+    {
+      "period": "202505",
+      "ano": 2025,
+      "mes": "MAI",
+      "numeroIndice": 7295.46,
+      "variacaoMes": 0.26
+    },
+    {
+      "period": "202506",
+      "ano": 2025,
+      "mes": "JUN",
+      "numeroIndice": 7312.97,
+      "variacaoMes": 0.24
+    },
+    {
+      "period": "202507",
+      "ano": 2025,
+      "mes": "JUL",
+      "numeroIndice": 7331.98,
+      "variacaoMes": 0.26
+    },
+    {
+      "period": "202508",
+      "ano": 2025,
+      "mes": "AGO",
+      "numeroIndice": 7323.91,
+      "variacaoMes": -0.11
+    },
+    {
+      "period": "202509",
+      "ano": 2025,
+      "mes": "SET",
+      "numeroIndice": 7359.06,
+      "variacaoMes": 0.48
+    },
+    {
+      "period": "202510",
+      "ano": 2025,
+      "mes": "OUT",
+      "numeroIndice": 7365.68,
+      "variacaoMes": 0.09
+    },
+    {
+      "period": "202511",
+      "ano": 2025,
+      "mes": "NOV",
+      "numeroIndice": 7378.94,
+      "variacaoMes": 0.18
+    },
+    {
+      "period": "202512",
+      "ano": 2025,
+      "mes": "DEZ",
+      "numeroIndice": 7403.29,
+      "variacaoMes": 0.33
+    },
+    {
+      "period": "202601",
+      "ano": 2026,
+      "mes": "JAN",
+      "numeroIndice": 7427.72,
+      "variacaoMes": 0.33
+    },
+    {
+      "period": "202602",
+      "ano": 2026,
+      "mes": "FEV",
+      "numeroIndice": 7479.71,
+      "variacaoMes": 0.7
+    },
+    {
+      "period": "202603",
+      "ano": 2026,
+      "mes": "MAR",
+      "numeroIndice": 7545.53,
+      "variacaoMes": 0.88
+    },
+    {
+      "period": "202604",
+      "ano": 2026,
+      "mes": "ABR",
+      "numeroIndice": 7596.09,
+      "variacaoMes": 0.67
+    }
+  ]
+}
