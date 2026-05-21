@@ -253,6 +253,7 @@ export default function RelatorioTeste() {
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
+  const [ipcaExpanded, setIpcaExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -534,9 +535,12 @@ export default function RelatorioTeste() {
     </Select>
   );
 
+  const currentYear = new Date().getFullYear();
+  const visibleIpcaRows = ipcaExpanded ? ipcaRows : ipcaRows.filter((r) => r.ano === currentYear);
+
   return (
     <AppLayout headerRight={fundSelector}>
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="space-y-10">
 
       {namesError && (
         <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
@@ -547,7 +551,7 @@ export default function RelatorioTeste() {
       {/* ── Parâmetros do Fundo ────────────────────────────────────────── */}
       <section
         aria-label="Parâmetros do fundo"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+        className="min-w-0"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Parâmetros do Fundo</h2>
 
@@ -603,8 +607,8 @@ export default function RelatorioTeste() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/30">
-                  {ipcaRows.map((row, idx) => {
-                    const showAno = idx === 0 || ipcaRows[idx - 1].ano !== row.ano;
+                  {visibleIpcaRows.map((row, idx) => {
+                    const showAno = idx === 0 || visibleIpcaRows[idx - 1].ano !== row.ano;
                     return (
                       <tr key={row.period} className="hover:bg-muted/30">
                         <td className="py-2 pr-4 font-medium text-foreground">
@@ -612,7 +616,7 @@ export default function RelatorioTeste() {
                         </td>
                         <td className="py-2 pr-4 text-foreground">{row.mes}</td>
                         <td className="py-2 pr-6 text-right tabular-nums text-foreground">
-                          {isNaN(row.numeroIndice)
+                          {row.numeroIndice == null || isNaN(row.numeroIndice)
                             ? "—"
                             : row.numeroIndice.toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
@@ -621,13 +625,13 @@ export default function RelatorioTeste() {
                         </td>
                         <td className={cn(
                           "py-2 text-right tabular-nums",
-                          isNaN(row.variacaoMes)
+                          row.variacaoMes == null || isNaN(row.variacaoMes)
                             ? "text-muted-foreground"
                             : row.variacaoMes < 0
                               ? "text-red-400"
                               : "text-foreground",
                         )}>
-                          {isNaN(row.variacaoMes)
+                          {row.variacaoMes == null || isNaN(row.variacaoMes)
                             ? "—"
                             : row.variacaoMes.toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
@@ -639,6 +643,17 @@ export default function RelatorioTeste() {
                   })}
                 </tbody>
               </table>
+              {ipcaRows.some((r) => r.ano !== currentYear) && (
+                <button
+                  type="button"
+                  onClick={() => setIpcaExpanded((v) => !v)}
+                  className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {ipcaExpanded
+                    ? "Mostrar apenas 2026"
+                    : `Ver histórico completo (${ipcaRows.length} meses)`}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -647,7 +662,7 @@ export default function RelatorioTeste() {
       {/* ── Entrada ────────────────────────────────────────────────────── */}
       <section
         aria-label="Upload de arquivos"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+        className="min-w-0"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
@@ -812,7 +827,7 @@ export default function RelatorioTeste() {
       {/* ── Ações ──────────────────────────────────────────────────────── */}
       <section
         aria-label="Ações do controle de obras"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+        className="min-w-0"
       >
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
 
@@ -933,7 +948,7 @@ export default function RelatorioTeste() {
       {BASE_URL && fundReady && (
         <section
           aria-label="Histórico de controles"
-          className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+          className="min-w-0"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
@@ -1024,7 +1039,7 @@ export default function RelatorioTeste() {
             return (
               <div
                 key={key}
-                className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+                className="min-w-0"
               >
                 <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
                 <div className="mt-1 h-px w-full bg-border/60" />
