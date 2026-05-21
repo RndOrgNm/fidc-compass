@@ -2,7 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from 
 import { useReportJob } from "@/contexts/ReportJobContext";
 import {
   FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, X,
-  CheckCircle2, Presentation, FileText,
+  CheckCircle2, Presentation,
 } from "lucide-react";
 import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
@@ -25,9 +25,6 @@ const Plot = lazy(() => import("react-plotly.js"));
 const SPREADSHEET_ACCEPT =
   ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-
-const PPTX_ACCEPT =
-  ".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation";
 
 
 const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
@@ -130,98 +127,31 @@ function formatDate(iso: string | null): string {
   }
 }
 
-// ── Single-file picker component ──────────────────────────────────────────────
+// ── File role helpers ──────────────────────────────────────────────────────────
 
-function SingleFilePicker({
-  label,
-  description,
-  accept,
-  file,
-  icon: Icon,
-  onFile,
-  onClear,
-  disabled,
-}: {
-  label: string;
-  description: string;
-  accept: string;
-  file: File | null;
-  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  onFile: (f: File) => void;
-  onClear: () => void;
-  disabled?: boolean;
-}) {
-  const id = useId();
-  const ref = useRef<HTMLInputElement>(null);
+type FileRole = "fluxo" | "premio" | "base_outros" | "unidades";
 
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
-        {label}
-      </Label>
-      <input
-        ref={ref}
-        id={id}
-        type="file"
-        accept={accept}
-        className="sr-only"
-        disabled={disabled}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) onFile(f);
-          e.target.value = "";
-        }}
-      />
-      {file ? (
-        <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5 text-sm">
-          <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-foreground">{file.name}</p>
-            <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-            onClick={onClear}
-            disabled={disabled}
-            aria-label={`Remover ${file.name}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={cn(
-            "flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-4 text-left transition-colors",
-            "hover:border-primary/50 hover:bg-muted/30",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            disabled && "pointer-events-none opacity-50",
-          )}
-          disabled={disabled}
-          onClick={() => ref.current?.click()}
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
-            <Icon className="h-4 w-4 text-primary" aria-hidden />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{description}</p>
-            <p className="text-xs text-muted-foreground">Clique para selecionar</p>
-          </div>
-        </button>
-      )}
-    </div>
-  );
+const FILE_ROLE_LABELS: Record<FileRole, string> = {
+  fluxo: "Fluxo Financeiro",
+  premio: "Prêmio",
+  base_outros: "Quadro Geral & DRE",
+  unidades: "Unidades / SPE",
+};
+
+function detectRole(filename: string): FileRole {
+  const n = filename.toLowerCase();
+  if (n.includes("fluxo")) return "fluxo";
+  if (n.includes("premio") || n.includes("prêmio")) return "premio";
+  if (n.includes("outros") || n.includes("dre") || n.includes("quadro")) return "base_outros";
+  return "unidades";
 }
 
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RelatorioTeste() {
   const fundSelectId = useId();
-  const unidadesInputId = useId();
-  const unidadesRef = useRef<HTMLInputElement>(null);
+  const filesInputId = useId();
+  const filesRef = useRef<HTMLInputElement>(null);
 
   // Fundo selection
   const [fundNames, setFundNames] = useState<string[]>([]);
@@ -229,13 +159,9 @@ export default function RelatorioTeste() {
   const [loadingFunds, setLoadingFunds] = useState(true);
   const [namesError, setNamesError] = useState<string | null>(null);
 
-  // File inputs
-  const [templateFile, setTemplateFile] = useState<File | null>(null);
-  const [fluxoFile, setFluxoFile] = useState<File | null>(null);
-  const [premioFile, setPremioFile] = useState<File | null>(null);
-  const [baseOutrosFile, setBaseOutrosFile] = useState<File | null>(null);
-  const [unidadesFiles, setUnidadesFiles] = useState<File[]>([]);
-  const [unidadesRejectNote, setUnidadesRejectNote] = useState<string | null>(null);
+  // Unified file list
+  const [allFiles, setAllFiles] = useState<Array<{ file: File; role: FileRole }>>([]);
+  const [fileRejectNote, setFileRejectNote] = useState<string | null>(null);
 
   // Job state lives in ReportJobContext so polling survives page navigation.
   const {
@@ -320,9 +246,9 @@ export default function RelatorioTeste() {
     if (fundReady && BASE_URL) void loadHistory(selectedFund);
   }, [fundReady, selectedFund, loadHistory]);
 
-  // ── Unidades multi-file management ───────────────────────────────────────
+  // ── File management ───────────────────────────────────────────────────────
 
-  const addUnidadesFiles = useCallback((list: FileList | File[]) => {
+  const addFiles = useCallback((list: FileList | File[]) => {
     const incoming = Array.from(list);
     const valid: File[] = [];
     let rejected = 0;
@@ -336,48 +262,43 @@ export default function RelatorioTeste() {
       if (ok) valid.push(f);
       else rejected += 1;
     }
-    setUnidadesRejectNote(
+    setFileRejectNote(
       rejected > 0 ? `${rejected} arquivo(s) ignorado(s) — use CSV ou Excel (.xlsx / .xls).` : null,
     );
     if (!valid.length) return;
-    setUnidadesFiles((prev) => {
-      const seen = new Set(prev.map((p) => `${p.name}-${p.size}`));
+    setAllFiles((prev) => {
+      const seen = new Set(prev.map((p) => `${p.file.name}-${p.file.size}`));
       const merged = [...prev];
       for (const f of valid) {
         const key = `${f.name}-${f.size}`;
-        if (!seen.has(key)) { seen.add(key); merged.push(f); }
+        if (!seen.has(key)) { seen.add(key); merged.push({ file: f, role: detectRole(f.name) }); }
       }
       return merged;
     });
   }, []);
 
+  const updateFileRole = (index: number, role: FileRole) => {
+    setAllFiles((prev) => prev.map((item, i) => i === index ? { ...item, role } : item));
+  };
+
   const clearAll = () => {
     clearJob();
-    setTemplateFile(null);
-    setFluxoFile(null);
-    setPremioFile(null);
-    setBaseOutrosFile(null);
-    setUnidadesFiles([]);
-    setUnidadesRejectNote(null);
+    setAllFiles([]);
+    setFileRejectNote(null);
   };
 
   // ── Job flow ──────────────────────────────────────────────────────────────
 
   const runJob = async () => {
-    if (!fluxoFile || unidadesFiles.length === 0 || !fundReady || !BASE_URL) return;
+    const hasFluxo = allFiles.some((f) => f.role === "fluxo");
+    const hasUnidades = allFiles.some((f) => f.role === "unidades");
+    if (!hasFluxo || !hasUnidades || !fundReady || !BASE_URL) return;
 
     clearJob();
     setJobStatus("presigning");
 
     try {
-      // Build ordered list of files with roles
-      type FileWithRole = { file: File; role: "template" | "fluxo" | "premio" | "base_outros" | "unidades" };
-      const fileList: FileWithRole[] = [];
-      if (templateFile) fileList.push({ file: templateFile, role: "template" });
-      fileList.push({ file: fluxoFile, role: "fluxo" });
-      if (premioFile) fileList.push({ file: premioFile, role: "premio" });
-      if (baseOutrosFile) fileList.push({ file: baseOutrosFile, role: "base_outros" });
-      unidadesFiles.forEach((f) => fileList.push({ file: f, role: "unidades" }));
+      const fileList = allFiles;
 
       // 1. Request presigned PUT URLs
       const presignRes = await fetch(PRESIGN_URL, {
@@ -417,7 +338,6 @@ export default function RelatorioTeste() {
       );
 
       // Separate keys by role
-      const templateKey = uploads.find((u) => u.role === "template")?.key ?? null;
       const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
       const premioKey = uploads.find((u) => u.role === "premio")?.key ?? null;
       const baseOutrosKey = uploads.find((u) => u.role === "base_outros")?.key ?? null;
@@ -432,7 +352,6 @@ export default function RelatorioTeste() {
         unidadesKeys,
         fiiFundName: selectedFund.trim(),
       };
-      if (templateKey) workerBody.templateKey = templateKey;
       if (premioKey) workerBody.premioKey = premioKey;
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
@@ -518,7 +437,9 @@ export default function RelatorioTeste() {
   };
 
   const isRunning = jobStatus !== "idle" && jobStatus !== "completed" && jobStatus !== "error";
-  const canRun = !!fluxoFile && unidadesFiles.length > 0 && fundReady && !!BASE_URL && !isRunning;
+  const hasFluxo = allFiles.some((f) => f.role === "fluxo");
+  const hasUnidades = allFiles.some((f) => f.role === "unidades");
+  const canRun = hasFluxo && hasUnidades && fundReady && !!BASE_URL && !isRunning;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -666,162 +587,112 @@ export default function RelatorioTeste() {
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
-          {(templateFile || fluxoFile || premioFile || baseOutrosFile || unidadesFiles.length > 0) && (
+          {allFiles.length > 0 && (
             <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll} disabled={isRunning}>
               Limpar tudo
             </Button>
           )}
         </div>
 
-        <div className="space-y-5">
-          {/* Modelo PPTX */}
-          <SingleFilePicker
-            label="Modelo PPTX (opcional)"
-            description="Template PowerPoint para geração do PPTX"
-            accept={PPTX_ACCEPT}
-            file={templateFile}
-            icon={Presentation}
-            onFile={setTemplateFile}
-            onClear={() => setTemplateFile(null)}
-            disabled={isRunning}
-          />
-
-          {/* Fluxo Financeiro */}
-          <SingleFilePicker
-            label="Fluxo Financeiro *"
-            description="BASE_FLUXO (.csv, .xlsx, .xls)"
-            accept={SPREADSHEET_ACCEPT}
-            file={fluxoFile}
-            icon={FileText}
-            onFile={setFluxoFile}
-            onClear={() => setFluxoFile(null)}
-            disabled={isRunning}
-          />
-
-          {/* Premio */}
-          <div className="space-y-1.5">
-            <SingleFilePicker
-              label="Prêmio (opcional)"
-              description="BASE_PREMIO — Cálculo Prêmio (.csv, .xlsx, .xls)"
-              accept={SPREADSHEET_ACCEPT}
-              file={premioFile}
-              icon={FileSpreadsheet}
-              onFile={setPremioFile}
-              onClear={() => setPremioFile(null)}
-              disabled={isRunning}
-            />
-            <p className="text-xs text-muted-foreground pl-1">
-              Gera o slide <strong>5 — Prêmio</strong>. Se não enviado, o slide é omitido.
-            </p>
-          </div>
-
-          {/* Quadro Geral + DRE */}
-          <div className="space-y-1.5">
-            <SingleFilePicker
-              label="Quadro Geral &amp; DRE (opcional)"
-              description="BASE_OUTROS — Excel com abas Quadro Geral + DRE (.xlsx, .xls)"
-              accept={SPREADSHEET_ACCEPT}
-              file={baseOutrosFile}
-              icon={FileSpreadsheet}
-              onFile={setBaseOutrosFile}
-              onClear={() => setBaseOutrosFile(null)}
-              disabled={isRunning}
-            />
-            <p className="text-xs text-muted-foreground pl-1">
-              Gera os slides <strong>6.1, 6.2… — Quadro Geral por SPE</strong> e o slide <strong>8 — DRE</strong>.
-              O arquivo deve conter os dados já preenchidos com os números corretos para cada SPE.
-              Se não enviado, esses slides são omitidos.
-            </p>
-          </div>
-
-          {/* Unidades / Vendas SPE */}
-          <div className="space-y-2">
-            <Label htmlFor={unidadesInputId} className="text-xs font-medium text-muted-foreground">
-              Unidades / Vendas SPE * (vários arquivos)
-            </Label>
-            <input
-              ref={unidadesRef}
-              id={unidadesInputId}
-              type="file"
-              accept={SPREADSHEET_ACCEPT}
-              multiple
-              className="sr-only"
-              disabled={isRunning}
-              aria-label="Selecionar arquivos de unidades"
-              onChange={(e) => {
-                if (e.target.files?.length) addUnidadesFiles(e.target.files);
-                e.target.value = "";
-              }}
-            />
-
-            <div
-              role="button"
-              tabIndex={isRunning ? -1 : 0}
-              aria-label="Abrir seletor de arquivos SPE ou arrastar aqui"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  unidadesRef.current?.click();
-                }
-              }}
-              onClick={() => !isRunning && unidadesRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!isRunning && e.dataTransfer.files?.length) addUnidadesFiles(e.dataTransfer.files);
-              }}
-              className={cn(
-                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 transition-colors",
-                "hover:border-primary/50 hover:bg-muted/30",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                isRunning && "pointer-events-none opacity-50",
-              )}
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-                <FileSpreadsheet className="h-4 w-4 text-primary" aria-hidden />
-              </div>
-              <p className="text-center text-sm text-muted-foreground">
-                Arraste ou clique para adicionar arquivos SPE
-                <span className="mt-0.5 block text-xs">BASE_VENDAS.csv · .xlsx · .xls · vários de uma vez</span>
-              </p>
-            </div>
-
-            {unidadesRejectNote && (
-              <p className="text-sm text-amber-600 dark:text-amber-500" role="status">
-                {unidadesRejectNote}
-              </p>
-            )}
-
-            {unidadesFiles.length > 0 && (
-              <ul className="divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
-                {unidadesFiles.map((file, index) => (
-                  <li
-                    key={`${file.name}-${file.size}-${index}`}
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg"
-                  >
-                    <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-foreground">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => setUnidadesFiles((prev) => prev.filter((_, i) => i !== index))}
-                      disabled={isRunning}
-                      aria-label={`Remover ${file.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        {/* Guide */}
+        <div className="mb-4 space-y-1 text-xs text-muted-foreground">
+          <p><span className="font-medium text-foreground">Fluxo Financeiro</span> (obrigatório) — BASE_FLUXO (.csv, .xlsx)</p>
+          <p><span className="font-medium text-foreground">Prêmio</span> (opcional) — BASE_PREMIO (.csv, .xlsx). Gera o slide 5.</p>
+          <p><span className="font-medium text-foreground">Quadro Geral &amp; DRE</span> (opcional) — BASE_OUTROS (.xlsx). Gera slides 6.x e 8.</p>
+          <p><span className="font-medium text-foreground">Unidades / Vendas SPE</span> (obrigatório, vários) — BASE_VENDAS (.csv, .xlsx).</p>
         </div>
+
+        <input
+          ref={filesRef}
+          id={filesInputId}
+          type="file"
+          accept={SPREADSHEET_ACCEPT}
+          multiple
+          className="sr-only"
+          disabled={isRunning}
+          aria-label="Selecionar arquivos"
+          onChange={(e) => {
+            if (e.target.files?.length) addFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+
+        <div
+          role="button"
+          tabIndex={isRunning ? -1 : 0}
+          aria-label="Abrir seletor de arquivos ou arrastar aqui"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              filesRef.current?.click();
+            }
+          }}
+          onClick={() => !isRunning && filesRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!isRunning && e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+          }}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 transition-colors",
+            "hover:border-primary/50 hover:bg-muted/30",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            isRunning && "pointer-events-none opacity-50",
+          )}
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
+            <FileSpreadsheet className="h-4 w-4 text-primary" aria-hidden />
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            Arraste ou clique para adicionar arquivos
+            <span className="mt-0.5 block text-xs">.csv · .xlsx · .xls · vários de uma vez</span>
+          </p>
+        </div>
+
+        {fileRejectNote && (
+          <p className="mt-2 text-sm text-amber-600 dark:text-amber-500" role="status">
+            {fileRejectNote}
+          </p>
+        )}
+
+        {allFiles.length > 0 && (
+          <ul className="mt-3 divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
+            {allFiles.map((item, index) => (
+              <li
+                key={`${item.file.name}-${item.file.size}-${index}`}
+                className="flex items-center gap-3 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg"
+              >
+                <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">{item.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatBytes(item.file.size)}</p>
+                </div>
+                <select
+                  value={item.role}
+                  disabled={isRunning}
+                  onChange={(e) => updateFileRole(index, e.target.value as FileRole)}
+                  className="h-7 rounded border border-border/60 bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                >
+                  {(Object.entries(FILE_ROLE_LABELS) as [FileRole, string][]).map(([role, label]) => (
+                    <option key={role} value={role}>{label}</option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => setAllFiles((prev) => prev.filter((_, i) => i !== index))}
+                  disabled={isRunning}
+                  aria-label={`Remover ${item.file.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* ── Ações ──────────────────────────────────────────────────────── */}
@@ -935,10 +806,10 @@ export default function RelatorioTeste() {
           <p className="mt-3 text-xs text-muted-foreground">
             {!fundReady
               ? "Aguarde o fundo estar disponível e selecionado."
-              : !fluxoFile
-                ? "Selecione o arquivo de Fluxo Financeiro."
-                : unidadesFiles.length === 0
-                  ? "Adicione ao menos um arquivo de Unidades/Vendas SPE."
+              : !hasFluxo
+                ? "Adicione o arquivo de Fluxo Financeiro e marque-o como \"Fluxo Financeiro\"."
+                : !hasUnidades
+                  ? "Adicione ao menos um arquivo marcado como \"Unidades / SPE\"."
                   : ""}
           </p>
         )}
