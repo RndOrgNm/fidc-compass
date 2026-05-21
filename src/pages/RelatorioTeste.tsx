@@ -821,23 +821,25 @@ export default function RelatorioTeste() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-4 flex items-center justify-center min-h-[600px]">
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center min-h-[560px]">
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3" style={{ height: "80vh" }}>
+            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-auto">
               {pdfLoading && (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-                  <span className="text-sm">Carregando PDF…</span>
+                <div className="flex h-full items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+                    <span className="text-sm">Carregando PDF…</span>
+                  </div>
                 </div>
               )}
               {pdfFetchError && !pdfLoading && (
-                <p className="text-sm text-destructive p-4">{pdfFetchError}</p>
+                <p className="p-4 text-sm text-destructive">{pdfFetchError}</p>
               )}
               {!pdfLoading && !pdfFetchError && (
                 <PdfViewerCanvas
                   pdfData={pdfBinaryData}
                   currentPage={pdfCurrentPage}
                   onTotalPages={setPdfTotalPages}
-                  className="w-full min-h-[560px]"
+                  className="w-full"
                 />
               )}
             </div>
