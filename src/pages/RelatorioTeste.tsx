@@ -841,7 +841,7 @@ export default function RelatorioTeste() {
             {isRunning ? (
               <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{JOB_STATUS_LABEL[jobStatus]}</>
             ) : (
-              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar exportação</>
+              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar Relatório</>
             )}
           </Button>
 
@@ -944,6 +944,41 @@ export default function RelatorioTeste() {
         )}
       </section>
 
+      {/* ── Chart preview ──────────────────────────────────────────────── */}
+      {configData && (
+        <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
+          {(Object.keys(CHART_TITLES) as Array<keyof typeof CHART_TITLES>).map((key) => {
+            const fig = configData[key];
+            if (!fig) return null;
+            return (
+              <div
+                key={key}
+                className="min-w-0"
+              >
+                <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
+                <div className="mt-1 h-px w-full bg-border/60" />
+                <div className="mt-4">
+                  <Suspense
+                    fallback={
+                      <div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />
+                    }
+                  >
+                    <Plot
+                      data={fig.data}
+                      layout={{ ...fig.layout, autosize: true }}
+                      style={{ width: "100%", minHeight: 400 }}
+                      useResizeHandler
+                      config={{ responsive: true, displayModeBar: true }}
+                    />
+                  </Suspense>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       {/* ── Histórico ──────────────────────────────────────────────────── */}
       {BASE_URL && fundReady && (
         <section
@@ -1026,41 +1061,6 @@ export default function RelatorioTeste() {
               </table>
             </div>
           )}
-        </section>
-      )}
-
-      {/* ── Chart preview ──────────────────────────────────────────────── */}
-      {configData && (
-        <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
-          <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
-          {(Object.keys(CHART_TITLES) as Array<keyof typeof CHART_TITLES>).map((key) => {
-            const fig = configData[key];
-            if (!fig) return null;
-            return (
-              <div
-                key={key}
-                className="min-w-0"
-              >
-                <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
-                <div className="mt-1 h-px w-full bg-border/60" />
-                <div className="mt-4">
-                  <Suspense
-                    fallback={
-                      <div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />
-                    }
-                  >
-                    <Plot
-                      data={fig.data}
-                      layout={{ ...fig.layout, autosize: true }}
-                      style={{ width: "100%", minHeight: 400 }}
-                      useResizeHandler
-                      config={{ responsive: true, displayModeBar: true }}
-                    />
-                  </Suspense>
-                </div>
-              </div>
-            );
-          })}
         </section>
       )}
     </div>
