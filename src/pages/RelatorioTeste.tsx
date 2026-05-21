@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { extractFundNamesFromPlotlyPayload } from "@/components/graficos/PlotlyFundFilterFigure";
+import { AppLayout } from "@/components/layout";
 import { cn } from "@/lib/utils";
 
 const Plot = lazy(() => import("react-plotly.js"));
@@ -499,47 +500,28 @@ export default function RelatorioTeste() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  const fundSelector = (
+    <Select value={selectedFund} onValueChange={setSelectedFund} disabled={loadingFunds}>
+      <SelectTrigger id={fundSelectId} className="h-8 w-60 text-sm">
+        <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
+      </SelectTrigger>
+      <SelectContent>
+        {fundNames.map((name) => (
+          <SelectItem key={name} value={name}>{name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
+    <AppLayout headerRight={fundSelector}>
     <div className="mx-auto max-w-3xl space-y-8">
 
-      {/* ── Fundo ──────────────────────────────────────────────────────── */}
-      <section
-        aria-label="Fundo do controle"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Fundo</h2>
-
-        {!namesError && fundNames.length > 0 && (
-          <div className="space-y-1.5">
-            <Label htmlFor={fundSelectId} className="text-xs text-muted-foreground">
-              Controle para
-            </Label>
-            <Select value={selectedFund} onValueChange={setSelectedFund} disabled={loadingFunds}>
-              <SelectTrigger id={fundSelectId} className="h-9 w-full max-w-md text-sm">
-                <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
-              </SelectTrigger>
-              <SelectContent>
-                {fundNames.map((name) => (
-                  <SelectItem key={name} value={name}>{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        {loadingFunds && (
-          <p className="text-sm text-muted-foreground" role="status">Carregando lista de fundos…</p>
-        )}
-        {namesError && (
-          <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
-            Não foi possível carregar a lista de fundos ({namesError}).
-          </p>
-        )}
-        {!loadingFunds && !namesError && fundNames.length === 0 && (
-          <p className="text-sm text-muted-foreground" role="status">
-            Nenhum fundo encontrado. Gere o export de gráficos ou atualize os dados.
-          </p>
-        )}
-      </section>
+      {namesError && (
+        <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
+          Não foi possível carregar a lista de fundos ({namesError}).
+        </p>
+      )}
 
       {/* ── Entrada ────────────────────────────────────────────────────── */}
       <section
@@ -946,5 +928,6 @@ export default function RelatorioTeste() {
         </section>
       )}
     </div>
+    </AppLayout>
   );
 }

@@ -70,7 +70,7 @@ const App = () => (
                 path="/graficos"
                 element={
                   <RequireAuth>
-                    <AppLayout><Graficos /></AppLayout>
+                    <Graficos />
                   </RequireAuth>
                 }
               />
@@ -78,7 +78,7 @@ const App = () => (
                 path="/controle-de-obras"
                 element={
                   <RequireAuth>
-                    <AppLayout><RelatorioTeste /></AppLayout>
+                    <RelatorioTeste />
                   </RequireAuth>
                 }
               />

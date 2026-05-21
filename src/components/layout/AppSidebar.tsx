@@ -22,7 +22,7 @@ const menuItems = [
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Chatbot", url: "/agent", icon: Bot },
   { title: "Gráficos", url: "/graficos", icon: LineChart },
-  { title: "Controle de Obras", url: "/controle-de-obras", icon: FileText },
+  { title: "Controle de Ativos", url: "/controle-de-obras", icon: FileText },
 ];
 
 export function AppSidebar() {
