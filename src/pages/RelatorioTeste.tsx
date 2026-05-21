@@ -1,11 +1,11 @@
-import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
-import { useReportJob } from "@/contexts/ReportJobContext";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useReportJob, type ConfigPayload } from "@/contexts/ReportJobContext";
 import {
   FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, X,
-  CheckCircle2, Presentation,
+  CheckCircle2, Presentation, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
+import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,8 +19,6 @@ import { AppLayout } from "@/components/layout";
 import { loadIpca, type IpcaRow } from "@/lib/ibge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-const Plot = lazy(() => import("react-plotly.js"));
 
 const SPREADSHEET_ACCEPT =
   ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
@@ -64,17 +62,6 @@ function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type PlotlyFig = { data: Data[]; layout: Partial<Layout>; [key: string]: unknown };
-
-type ConfigPayload = {
-  spe_order: string[];
-  historico_financeiro: PlotlyFig;
-  historico_vendas: PlotlyFig;
-  inadimplencia: PlotlyFig;
-  vendas_estoque: PlotlyFig;
-  premio: PlotlyFig | null;
-};
-
 type ReportRun = {
   id: string;
   fundName: string;
@@ -96,14 +83,6 @@ const JOB_STATUS_LABEL: Record<JobStatus, string> = {
   rendering: "Gerando relatório…",
   completed: "Controle concluído!",
   error: "",
-};
-
-const CHART_TITLES: Record<keyof Omit<ConfigPayload, "spe_order">, string> = {
-  historico_financeiro: "1. Histórico Financeiro",
-  historico_vendas: "2. Histórico Vendas",
-  inadimplencia: "3. Relação de Inadimplência",
-  vendas_estoque: "4. Vendas e Estoque",
-  premio: "5. Prêmio",
 };
 
 function formatBytes(n: number): string {
@@ -166,13 +145,18 @@ export default function RelatorioTeste() {
   // Job state lives in ReportJobContext so polling survives page navigation.
   const {
     jobStatus, setJobStatus, errorMsg, setErrorMsg,
-    configData: rawConfigData, pdfUrl, pptxUrl,
+    pdfUrl, pptxUrl,
     startPolling, setLoadedArtifacts, clearJob,
   } = useReportJob();
-  // Cast to the locally-typed ConfigPayload (PlotlyFig fields) for rendering.
-  const configData = rawConfigData as ConfigPayload | null;
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [pptxDownloading, setPptxDownloading] = useState(false);
+
+  // PDF viewer state
+  const [pdfBinaryData, setPdfBinaryData] = useState<ArrayBuffer | null>(null);
+  const [pdfCurrentPage, setPdfCurrentPage] = useState(1);
+  const [pdfTotalPages, setPdfTotalPages] = useState(1);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfFetchError, setPdfFetchError] = useState<string | null>(null);
 
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
@@ -191,6 +175,32 @@ export default function RelatorioTeste() {
       .finally(() => { if (!cancelled) setLoadingIpca(false); });
     return () => { cancelled = true; };
   }, []);
+
+  // Fetch PDF binary whenever a new pdfUrl becomes available
+  useEffect(() => {
+    if (!pdfUrl) {
+      setPdfBinaryData(null);
+      setPdfCurrentPage(1);
+      return;
+    }
+    let cancelled = false;
+    setPdfLoading(true);
+    setPdfFetchError(null);
+    fetch(pdfUrl)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Falha ao carregar PDF (${r.status})`);
+        return r.arrayBuffer();
+      })
+      .then((buf) => {
+        if (!cancelled) {
+          setPdfBinaryData(buf);
+          setPdfCurrentPage(1);
+        }
+      })
+      .catch((e: Error) => { if (!cancelled) setPdfFetchError(e.message); })
+      .finally(() => { if (!cancelled) setPdfLoading(false); });
+    return () => { cancelled = true; };
+  }, [pdfUrl]);
 
   // History
   const [runs, setRuns] = useState<ReportRun[]>([]);
@@ -277,14 +287,12 @@ export default function RelatorioTeste() {
     });
   }, []);
 
-  const updateFileRole = (index: number, role: FileRole) => {
-    setAllFiles((prev) => prev.map((item, i) => i === index ? { ...item, role } : item));
-  };
-
   const clearAll = () => {
     clearJob();
     setAllFiles([]);
     setFileRejectNote(null);
+    setPdfBinaryData(null);
+    setPdfCurrentPage(1);
   };
 
   // ── Job flow ──────────────────────────────────────────────────────────────
@@ -668,16 +676,9 @@ export default function RelatorioTeste() {
                   <p className="truncate font-medium text-foreground">{item.file.name}</p>
                   <p className="text-xs text-muted-foreground">{formatBytes(item.file.size)}</p>
                 </div>
-                <select
-                  value={item.role}
-                  disabled={isRunning}
-                  onChange={(e) => updateFileRole(index, e.target.value as FileRole)}
-                  className="h-7 rounded border border-border/60 bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                >
-                  {(Object.entries(FILE_ROLE_LABELS) as [FileRole, string][]).map(([role, label]) => (
-                    <option key={role} value={role}>{label}</option>
-                  ))}
-                </select>
+                <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {FILE_ROLE_LABELS[item.role]}
+                </span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -725,34 +726,6 @@ export default function RelatorioTeste() {
             >
               <X className="h-4 w-4" aria-hidden />
               Cancelar
-            </Button>
-          )}
-
-          {jobStatus === "completed" && pdfUrl && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pdfDownloading}
-              onClick={() => void downloadFile(pdfUrl, "controle-obras-fidc.pdf", setPdfDownloading)}
-              className="h-9 gap-2"
-            >
-              {pdfDownloading
-                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
-                : <><FileDown className="h-4 w-4" aria-hidden />Download PDF</>}
-            </Button>
-          )}
-
-          {jobStatus === "completed" && pptxUrl && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={pptxDownloading}
-              onClick={() => void downloadFile(pptxUrl, "controle-obras-fidc.pptx", setPptxDownloading)}
-              className="h-9 gap-2"
-            >
-              {pptxDownloading
-                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
-                : <><Presentation className="h-4 w-4" aria-hidden />Download PPTX</>}
             </Button>
           )}
 
@@ -815,38 +788,90 @@ export default function RelatorioTeste() {
         )}
       </section>
 
-      {/* ── Chart preview ──────────────────────────────────────────────── */}
-      {configData && (
-        <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
-          <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
-          {(Object.keys(CHART_TITLES) as Array<keyof typeof CHART_TITLES>).map((key) => {
-            const fig = configData[key];
-            if (!fig) return null;
-            return (
-              <div
-                key={key}
-                className="min-w-0"
+      {/* ── Pré-Visualização ───────────────────────────────────────────── */}
+      {pdfUrl && (
+        <section aria-label="Pré-visualização do relatório" className="min-w-0 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-foreground">Pré-Visualização</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pdfDownloading}
+                onClick={() => void downloadFile(pdfUrl, "relatorio-fidc.pdf", setPdfDownloading)}
+                className="h-9 gap-2"
               >
-                <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
-                <div className="mt-1 h-px w-full bg-border/60" />
-                <div className="mt-4">
-                  <Suspense
-                    fallback={
-                      <div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />
-                    }
-                  >
-                    <Plot
-                      data={fig.data}
-                      layout={{ ...fig.layout, autosize: true }}
-                      style={{ width: "100%", minHeight: 400 }}
-                      useResizeHandler
-                      config={{ responsive: true, displayModeBar: true }}
-                    />
-                  </Suspense>
+                {pdfDownloading
+                  ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
+                  : <><FileDown className="h-4 w-4" aria-hidden />Download PDF</>}
+              </Button>
+              {pptxUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pptxDownloading}
+                  onClick={() => void downloadFile(pptxUrl, "relatorio-fidc.pptx", setPptxDownloading)}
+                  className="h-9 gap-2"
+                >
+                  {pptxDownloading
+                    ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
+                    : <><Presentation className="h-4 w-4" aria-hidden />Download PPTX</>}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-4 flex items-center justify-center min-h-[600px]">
+            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center min-h-[560px]">
+              {pdfLoading && (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+                  <span className="text-sm">Carregando PDF…</span>
                 </div>
-              </div>
-            );
-          })}
+              )}
+              {pdfFetchError && !pdfLoading && (
+                <p className="text-sm text-destructive p-4">{pdfFetchError}</p>
+              )}
+              {!pdfLoading && !pdfFetchError && (
+                <PdfViewerCanvas
+                  pdfData={pdfBinaryData}
+                  currentPage={pdfCurrentPage}
+                  onTotalPages={setPdfTotalPages}
+                  className="w-full min-h-[560px]"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Página {pdfCurrentPage} de {pdfTotalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pdfCurrentPage === 1}
+                onClick={() => setPdfCurrentPage((p) => p - 1)}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pdfCurrentPage === pdfTotalPages}
+                onClick={() => setPdfCurrentPage((p) => Math.min(p + 1, pdfTotalPages))}
+                className="gap-1"
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
+          </div>
         </section>
       )}
 
