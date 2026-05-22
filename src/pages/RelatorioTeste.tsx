@@ -926,7 +926,6 @@ export default function RelatorioTeste() {
                   <tr className="border-b border-border/60">
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Status</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
@@ -937,17 +936,6 @@ export default function RelatorioTeste() {
                         {`${reportFileBase(run.fundName, run.createdAt)} v${run.version}`}
                       </td>
                       <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
-                      <td className="py-2.5 pr-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          run.status === "completed"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : run.status === "failed"
-                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                        }`}>
-                          {run.status}
-                        </span>
-                      </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-1.5">
                           <Button
