@@ -74,14 +74,36 @@ type ReportRun = {
   versao?: string;
 };
 
-/** Returns "fevereiro/2026", "fevereiro/2026 v2", etc. based on position in the loaded list. */
+/** Returns the calendar-month key (e.g. "2026-3") from an ISO timestamp. */
+function monthKey(iso: string | null): string {
+  if (!iso) return "";
+  try {
+    const utc = /Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z";
+    const d = new Date(utc);
+    return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
+  } catch { return ""; }
+}
+
+/**
+ * Version label based on the run's position within its calendar month.
+ * Runs from the same month are sorted oldest-first; the oldest is v1, next v2, etc.
+ * Display: "[versao] v[n]" when user provided a label, or just "v[n]".
+ */
 function getVersionLabel(run: ReportRun, allRuns: ReportRun[]): string {
-  const v = run.versao?.trim();
-  if (!v) return formatDate(run.createdAt);
-  const same = allRuns.filter((r) => r.versao?.trim() === v);
-  // Runs are newest-first; oldest gets v1 (no suffix), next gets v2, etc.
-  const posFromOldest = same.length - 1 - same.findIndex((r) => r.id === run.id);
-  return posFromOldest === 0 ? v : `${v} v${posFromOldest + 1}`;
+  const key = monthKey(run.createdAt);
+  if (!key) return run.versao?.trim() || "—";
+
+  const sameMonth = [...allRuns]
+    .filter((r) => monthKey(r.createdAt) === key)
+    .sort((a, b) => {
+      const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
+      const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
+      return ta - tb;
+    });
+
+  const pos = sameMonth.findIndex((r) => r.id === run.id) + 1;
+  const label = run.versao?.trim() ?? "";
+  return label ? `${label} v${pos}` : `v${pos}`;
 }
 
 type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
@@ -720,15 +742,6 @@ export default function RelatorioTeste() {
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Input
-            type="text"
-            placeholder="ex: fevereiro/2026"
-            value={versao}
-            onChange={(e) => setVersao(e.target.value)}
-            disabled={isRunning}
-            className="h-9 w-44 text-sm"
-            aria-label="Versão do relatório"
-          />
           <Button
             type="button"
             disabled={!canRun}
@@ -741,6 +754,15 @@ export default function RelatorioTeste() {
               <><BarChart2 className="h-4 w-4" aria-hidden />Gerar Relatório</>
             )}
           </Button>
+          <Input
+            type="text"
+            placeholder="ex: fevereiro/2026"
+            value={versao}
+            onChange={(e) => setVersao(e.target.value)}
+            disabled={isRunning}
+            className="h-9 w-44 text-sm"
+            aria-label="Versão do relatório"
+          />
 
           {isRunning && (
             <Button
@@ -800,17 +822,6 @@ export default function RelatorioTeste() {
           </p>
         )}
 
-        {BASE_URL && !canRun && !isRunning && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {!fundReady
-              ? "Aguarde o fundo estar disponível e selecionado."
-              : !hasFluxo
-                ? "Adicione o arquivo de Fluxo Financeiro (BASE_FLUXO)."
-                : !hasUnidades
-                  ? "Adicione ao menos um arquivo de Unidades / Vendas SPE (BASE_VENDAS)."
-                  : ""}
-          </p>
-        )}
       </section>
 
       {/* ── Pré-Visualização ───────────────────────────────────────────── */}
