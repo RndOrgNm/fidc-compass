@@ -283,7 +283,12 @@ export default function RelatorioTeste() {
         const b = tryParseJsonRecord(histText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      const all = parseJsonText<ReportRun[]>(histText, "Histórico", res.status);
+      const all = parseJsonText<ReportRun[]>(histText, "Histórico", res.status)
+        .sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
+          return tb - ta; // newest first
+        });
       setHasMoreRuns(all.length > limit);
       setRuns(all.slice(0, limit));
     } catch (err) {
