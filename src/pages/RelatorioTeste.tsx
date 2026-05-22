@@ -109,11 +109,10 @@ function formatDate(iso: string | null): string {
 
 // ── File role helpers ──────────────────────────────────────────────────────────
 
-type FileRole = "fluxo" | "premio" | "base_outros" | "unidades";
+type FileRole = "fluxo" | "base_outros" | "unidades";
 
 const FILE_ROLE_LABELS: Record<FileRole, string> = {
   fluxo: "Fluxo Financeiro",
-  premio: "Prêmio",
   base_outros: "Quadro Geral & DRE",
   unidades: "Unidades / SPE",
 };
@@ -121,7 +120,6 @@ const FILE_ROLE_LABELS: Record<FileRole, string> = {
 function detectRole(filename: string): FileRole {
   const n = filename.toLowerCase();
   if (n.includes("fluxo")) return "fluxo";
-  if (n.includes("premio") || n.includes("prêmio")) return "premio";
   if (n.includes("outros") || n.includes("dre") || n.includes("quadro")) return "base_outros";
   return "unidades";
 }
@@ -348,7 +346,6 @@ export default function RelatorioTeste() {
 
       // Separate keys by role
       const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
-      const premioKey = uploads.find((u) => u.role === "premio")?.key ?? null;
       const baseOutrosKey = uploads.find((u) => u.role === "base_outros")?.key ?? null;
       const unidadesKeys = uploads.filter((u) => u.role === "unidades").map((u) => u.key);
 
@@ -361,7 +358,6 @@ export default function RelatorioTeste() {
         unidadesKeys,
         fiiFundName: selectedFund.trim(),
       };
-      if (premioKey) workerBody.premioKey = premioKey;
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
       if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
@@ -600,7 +596,6 @@ export default function RelatorioTeste() {
         {/* Guide */}
         <div className="mb-4 space-y-1 text-xs text-muted-foreground">
           <p><span className="font-medium text-foreground">Fluxo Financeiro</span> (obrigatório) — BASE_FLUXO (.csv, .xlsx)</p>
-          <p><span className="font-medium text-foreground">Prêmio</span> (opcional) — BASE_PREMIO (.csv, .xlsx). Gera o slide 5.</p>
           <p><span className="font-medium text-foreground">Quadro Geral &amp; DRE</span> (opcional) — BASE_OUTROS (.xlsx). Gera slides 6.x e 8.</p>
           <p><span className="font-medium text-foreground">Unidades / Vendas SPE</span> (obrigatório, vários) — BASE_VENDAS (.csv, .xlsx).</p>
         </div>
