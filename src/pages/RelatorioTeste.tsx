@@ -71,7 +71,18 @@ type ReportRun = {
   pptxKey?: string;
   status: string;
   createdAt: string | null;
+  versao?: string;
 };
+
+/** Returns "fevereiro/2026", "fevereiro/2026 v2", etc. based on position in the loaded list. */
+function getVersionLabel(run: ReportRun, allRuns: ReportRun[]): string {
+  const v = run.versao?.trim();
+  if (!v) return formatDate(run.createdAt);
+  const same = allRuns.filter((r) => r.versao?.trim() === v);
+  // Runs are newest-first; oldest gets v1 (no suffix), next gets v2, etc.
+  const posFromOldest = same.length - 1 - same.findIndex((r) => r.id === run.id);
+  return posFromOldest === 0 ? v : `${v} v${posFromOldest + 1}`;
+}
 
 type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
 
@@ -158,6 +169,9 @@ export default function RelatorioTeste() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfFetchError, setPdfFetchError] = useState<string | null>(null);
 
+  // Versão do relatório (e.g. "fevereiro/2026")
+  const [versao, setVersao] = useState<string>("");
+
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
@@ -204,6 +218,8 @@ export default function RelatorioTeste() {
 
   // History
   const [runs, setRuns] = useState<ReportRun[]>([]);
+  const [runsLimit, setRunsLimit] = useState(5);
+  const [hasMoreRuns, setHasMoreRuns] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
@@ -233,18 +249,21 @@ export default function RelatorioTeste() {
   const fundReady =
     !loadingFunds && !namesError && fundNames.length > 0 && selectedFund.trim().length >= 2;
 
-  const loadHistory = useCallback(async (fund: string) => {
+  const loadHistory = useCallback(async (fund: string, limit: number) => {
     if (!BASE_URL || !fund) return;
     setLoadingHistory(true);
     setHistoryError(null);
     try {
-      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
+      // Fetch one extra to detect whether more runs exist
+      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=${limit + 1}`);
       const histText = await res.text();
       if (!res.ok) {
         const b = tryParseJsonRecord(histText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      setRuns(parseJsonText<ReportRun[]>(histText, "Histórico", res.status));
+      const all = parseJsonText<ReportRun[]>(histText, "Histórico", res.status);
+      setHasMoreRuns(all.length > limit);
+      setRuns(all.slice(0, limit));
     } catch (err) {
       setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
     } finally {
@@ -253,8 +272,8 @@ export default function RelatorioTeste() {
   }, []);
 
   useEffect(() => {
-    if (fundReady && BASE_URL) void loadHistory(selectedFund);
-  }, [fundReady, selectedFund, loadHistory]);
+    if (fundReady && BASE_URL) void loadHistory(selectedFund, runsLimit);
+  }, [fundReady, selectedFund, loadHistory, runsLimit]);
 
   // ── File management ───────────────────────────────────────────────────────
 
@@ -364,6 +383,8 @@ export default function RelatorioTeste() {
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
       if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
+      const versaoTrimmed = versao.trim();
+      if (versaoTrimmed) workerBody.versao = versaoTrimmed;
 
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
@@ -378,7 +399,7 @@ export default function RelatorioTeste() {
 
       // 4. Hand off to context — polling survives page navigation.
       startPolling(jobId);
-      void loadHistory(selectedFund);
+      void loadHistory(selectedFund, runsLimit);
 
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
@@ -520,11 +541,10 @@ export default function RelatorioTeste() {
           )}
           {!loadingIpca && !ipcaError && ipcaRows.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[28rem] border-collapse text-sm">
+              <table className="w-full min-w-[24rem] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-border/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-4 text-left">Ano</th>
-                    <th className="py-2 pr-4 text-left">Mês</th>
+                    <th className="py-2 pr-4 text-left">Período</th>
                     <th className="py-2 pr-6 text-right">
                       Número Índice
                       <span className="block font-normal normal-case tracking-normal">(Dez 1993 = 100)</span>
@@ -536,14 +556,11 @@ export default function RelatorioTeste() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/30">
-                  {visibleIpcaRows.map((row, idx) => {
-                    const showAno = idx === 0 || visibleIpcaRows[idx - 1].ano !== row.ano;
-                    return (
+                  {visibleIpcaRows.map((row) => (
                       <tr key={row.period} className="hover:bg-muted/30">
                         <td className="py-2 pr-4 font-medium text-foreground">
-                          {showAno ? row.ano : ""}
+                          {row.mes}/{row.ano}
                         </td>
-                        <td className="py-2 pr-4 text-foreground">{row.mes}</td>
                         <td className="py-2 pr-6 text-right tabular-nums text-foreground">
                           {row.numeroIndice == null || isNaN(row.numeroIndice)
                             ? "—"
@@ -568,8 +585,7 @@ export default function RelatorioTeste() {
                               })}
                         </td>
                       </tr>
-                    );
-                  })}
+                  ))}
                 </tbody>
               </table>
               {ipcaRows.some((r) => r.ano !== currentYear) && (
@@ -704,6 +720,15 @@ export default function RelatorioTeste() {
         <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Input
+            type="text"
+            placeholder="ex: fevereiro/2026"
+            value={versao}
+            onChange={(e) => setVersao(e.target.value)}
+            disabled={isRunning}
+            className="h-9 w-44 text-sm"
+            aria-label="Versão do relatório"
+          />
           <Button
             type="button"
             disabled={!canRun}
@@ -891,7 +916,7 @@ export default function RelatorioTeste() {
               size="sm"
               className="h-7 gap-1.5 text-xs"
               disabled={loadingHistory}
-              onClick={() => void loadHistory(selectedFund)}
+              onClick={() => void loadHistory(selectedFund, runsLimit)}
             >
               {loadingHistory
                 ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -913,27 +938,18 @@ export default function RelatorioTeste() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Fundo</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Status</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {runs.map((run) => (
                     <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">{run.fundName}</td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
-                      <td className="py-2.5 pr-4">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                          run.status === "completed"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                        )}>
-                          {run.status === "completed" ? "Concluído" : run.status}
-                        </span>
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {getVersionLabel(run, runs)}
                       </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-1.5">
                           <Button
@@ -944,7 +960,7 @@ export default function RelatorioTeste() {
                             onClick={() => void loadRunArtifacts(run)}
                           >
                             <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                            Ver gráficos
+                            Ver relatório
                           </Button>
                           {run.pptxKey && (
                             <span className="text-xs text-muted-foreground">
@@ -957,6 +973,16 @@ export default function RelatorioTeste() {
                   ))}
                 </tbody>
               </table>
+              {hasMoreRuns && (
+                <button
+                  type="button"
+                  disabled={loadingHistory}
+                  onClick={() => setRunsLimit((n) => n + 7)}
+                  className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {loadingHistory ? "Carregando…" : "Carregar mais 7"}
+                </button>
+              )}
             </div>
           )}
         </section>
