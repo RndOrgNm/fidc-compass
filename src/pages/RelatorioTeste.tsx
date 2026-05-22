@@ -71,40 +71,8 @@ type ReportRun = {
   pptxKey?: string;
   status: string;
   createdAt: string | null;
-  versao?: string;
 };
 
-/** Returns the calendar-month key (e.g. "2026-3") from an ISO timestamp. */
-function monthKey(iso: string | null): string {
-  if (!iso) return "";
-  try {
-    const utc = /Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z";
-    const d = new Date(utc);
-    return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
-  } catch { return ""; }
-}
-
-/**
- * Version label based on the run's position within its calendar month.
- * Runs from the same month are sorted oldest-first; the oldest is v1, next v2, etc.
- * Display: "[versao] v[n]" when user provided a label, or just "v[n]".
- */
-function getVersionLabel(run: ReportRun, allRuns: ReportRun[]): string {
-  const key = monthKey(run.createdAt);
-  if (!key) return run.versao?.trim() || "—";
-
-  const sameMonth = [...allRuns]
-    .filter((r) => monthKey(r.createdAt) === key)
-    .sort((a, b) => {
-      const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
-      const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
-      return ta - tb;
-    });
-
-  const pos = sameMonth.findIndex((r) => r.id === run.id) + 1;
-  const label = run.versao?.trim() ?? "";
-  return label ? `${label} v${pos}` : `v${pos}`;
-}
 
 type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
 
@@ -191,9 +159,6 @@ export default function RelatorioTeste() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfFetchError, setPdfFetchError] = useState<string | null>(null);
 
-  // Versão do relatório (e.g. "fevereiro/2026")
-  const [versao, setVersao] = useState<string>("");
-
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
@@ -240,8 +205,6 @@ export default function RelatorioTeste() {
 
   // History
   const [runs, setRuns] = useState<ReportRun[]>([]);
-  const [runsLimit, setRunsLimit] = useState(5);
-  const [hasMoreRuns, setHasMoreRuns] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
@@ -271,26 +234,18 @@ export default function RelatorioTeste() {
   const fundReady =
     !loadingFunds && !namesError && fundNames.length > 0 && selectedFund.trim().length >= 2;
 
-  const loadHistory = useCallback(async (fund: string, limit: number) => {
+  const loadHistory = useCallback(async (fund: string) => {
     if (!BASE_URL || !fund) return;
     setLoadingHistory(true);
     setHistoryError(null);
     try {
-      // Fetch one extra to detect whether more runs exist
-      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=${limit + 1}`);
+      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
       const histText = await res.text();
       if (!res.ok) {
         const b = tryParseJsonRecord(histText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      const all = parseJsonText<ReportRun[]>(histText, "Histórico", res.status)
-        .sort((a, b) => {
-          const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
-          const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
-          return tb - ta; // newest first
-        });
-      setHasMoreRuns(all.length > limit);
-      setRuns(all.slice(0, limit));
+      setRuns(parseJsonText<ReportRun[]>(histText, "Histórico", res.status));
     } catch (err) {
       setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
     } finally {
@@ -299,8 +254,8 @@ export default function RelatorioTeste() {
   }, []);
 
   useEffect(() => {
-    if (fundReady && BASE_URL) void loadHistory(selectedFund, runsLimit);
-  }, [fundReady, selectedFund, loadHistory, runsLimit]);
+    if (fundReady && BASE_URL) void loadHistory(selectedFund);
+  }, [fundReady, selectedFund, loadHistory]);
 
   // ── File management ───────────────────────────────────────────────────────
 
@@ -410,9 +365,6 @@ export default function RelatorioTeste() {
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
       if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
-      const versaoTrimmed = versao.trim();
-      if (versaoTrimmed) workerBody.versao = versaoTrimmed;
-
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -426,7 +378,7 @@ export default function RelatorioTeste() {
 
       // 4. Hand off to context — polling survives page navigation.
       startPolling(jobId);
-      void loadHistory(selectedFund, runsLimit);
+      void loadHistory(selectedFund);
 
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
@@ -759,16 +711,6 @@ export default function RelatorioTeste() {
               <><BarChart2 className="h-4 w-4" aria-hidden />Gerar Relatório</>
             )}
           </Button>
-          <Input
-            type="text"
-            placeholder="ex: fevereiro/2026"
-            value={versao}
-            onChange={(e) => setVersao(e.target.value)}
-            disabled={isRunning}
-            className="h-9 w-44 text-sm"
-            aria-label="Versão do relatório"
-          />
-
           {isRunning && (
             <Button
               type="button"
@@ -932,7 +874,7 @@ export default function RelatorioTeste() {
               size="sm"
               className="h-7 gap-1.5 text-xs"
               disabled={loadingHistory}
-              onClick={() => void loadHistory(selectedFund, runsLimit)}
+              onClick={() => void loadHistory(selectedFund)}
             >
               {loadingHistory
                 ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -954,18 +896,28 @@ export default function RelatorioTeste() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Fundo</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Status</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {runs.map((run) => (
                     <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">
-                        {getVersionLabel(run, runs)}
-                      </td>
+                      <td className="py-2.5 pr-4 font-medium text-foreground">{run.configKey.split("/")[1] ?? run.configKey}</td>
                       <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
+                      <td className="py-2.5 pr-4">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          run.status === "completed"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : run.status === "failed"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        }`}>
+                          {run.status}
+                        </span>
+                      </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-1.5">
                           <Button
@@ -976,7 +928,7 @@ export default function RelatorioTeste() {
                             onClick={() => void loadRunArtifacts(run)}
                           >
                             <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                            Ver relatório
+                            Ver gráficos
                           </Button>
                           {run.pptxKey && (
                             <span className="text-xs text-muted-foreground">
@@ -989,16 +941,6 @@ export default function RelatorioTeste() {
                   ))}
                 </tbody>
               </table>
-              {hasMoreRuns && (
-                <button
-                  type="button"
-                  disabled={loadingHistory}
-                  onClick={() => setRunsLimit((n) => n + 7)}
-                  className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                >
-                  {loadingHistory ? "Carregando…" : "Carregar mais 7"}
-                </button>
-              )}
             </div>
           )}
         </section>
