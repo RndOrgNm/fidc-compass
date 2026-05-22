@@ -70,6 +70,7 @@ type ReportRun = {
   pdfKey: string;
   pptxKey?: string;
   status: string;
+  version: number;
   createdAt: string | null;
 };
 
@@ -105,6 +106,28 @@ function formatDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+const PT_MONTHS = [
+  "JAN", "FEV", "MAR", "ABR", "MAI", "JUN",
+  "JUL", "AGO", "SET", "OUT", "NOV", "DEZ",
+];
+
+/**
+ * Base report filename: `Relatório {fundo} - {MES} {Dia}`.
+ * MES/Dia come from the run's creation date (São Paulo timezone); when no
+ * date is given (a freshly generated report) the current date is used.
+ */
+function reportFileBase(fundName: string, iso: string | null): string {
+  const utc = iso
+    ? (/Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z")
+    : new Date().toISOString();
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo", month: "numeric", day: "numeric",
+  }).formatToParts(new Date(utc));
+  const month = Number(parts.find((p) => p.type === "month")?.value ?? "1");
+  const dia = Number(parts.find((p) => p.type === "day")?.value ?? "1");
+  return `Relatório ${fundName} - ${PT_MONTHS[month - 1]} ${dia}`;
 }
 
 // ── File role helpers ──────────────────────────────────────────────────────────
@@ -149,6 +172,10 @@ export default function RelatorioTeste() {
   } = useReportJob();
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [pptxDownloading, setPptxDownloading] = useState(false);
+
+  // Fund + date of the report currently in the preview — drives download filenames.
+  const [currentReport, setCurrentReport] =
+    useState<{ fundName: string; createdAt: string | null } | null>(null);
 
   // PDF viewer state
   const [pdfBinaryData, setPdfBinaryData] = useState<ArrayBuffer | null>(null);
@@ -373,6 +400,7 @@ export default function RelatorioTeste() {
       }
 
       // 4. Hand off to context — polling survives page navigation.
+      setCurrentReport({ fundName: selectedFund.trim(), createdAt: new Date().toISOString() });
       startPolling(jobId);
       void loadHistory(selectedFund);
 
@@ -405,6 +433,7 @@ export default function RelatorioTeste() {
         artifact.pdfUrl,
         artifact.pptxUrl,
       );
+      setCurrentReport({ fundName: run.fundName, createdAt: run.createdAt });
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar controle.");
     }
@@ -441,6 +470,10 @@ export default function RelatorioTeste() {
   };
 
   const isRunning = jobStatus !== "idle" && jobStatus !== "completed" && jobStatus !== "error";
+  const reportBaseName = reportFileBase(
+    currentReport?.fundName ?? selectedFund.trim(),
+    currentReport?.createdAt ?? null,
+  );
   const hasFluxo = allFiles.some((f) => f.role === "fluxo");
   const hasUnidades = allFiles.some((f) => f.role === "unidades");
   const canRun = hasFluxo && hasUnidades && fundReady && !!BASE_URL && !isRunning;
@@ -776,7 +809,7 @@ export default function RelatorioTeste() {
                 type="button"
                 variant="outline"
                 disabled={pdfDownloading}
-                onClick={() => void downloadFile(pdfUrl, "relatorio-fidc.pdf", setPdfDownloading)}
+                onClick={() => void downloadFile(pdfUrl, `${reportBaseName}.pdf`, setPdfDownloading)}
                 className="h-9 gap-2"
               >
                 {pdfDownloading
@@ -788,7 +821,7 @@ export default function RelatorioTeste() {
                   type="button"
                   variant="outline"
                   disabled={pptxDownloading}
-                  onClick={() => void downloadFile(pptxUrl, "relatorio-fidc.pptx", setPptxDownloading)}
+                  onClick={() => void downloadFile(pptxUrl, `${reportBaseName}.pptx`, setPptxDownloading)}
                   className="h-9 gap-2"
                 >
                   {pptxDownloading
@@ -891,7 +924,7 @@ export default function RelatorioTeste() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Fundo</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Status</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
@@ -900,7 +933,9 @@ export default function RelatorioTeste() {
                 <tbody className="divide-y divide-border/40">
                   {runs.map((run) => (
                     <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">{run.configKey.split("/")[1] ?? run.configKey}</td>
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {`${reportFileBase(run.fundName, run.createdAt)} v${run.version}`}
+                      </td>
                       <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
                       <td className="py-2.5 pr-4">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
