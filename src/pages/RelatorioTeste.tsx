@@ -946,7 +946,7 @@ export default function RelatorioTeste() {
                             onClick={() => void loadRunArtifacts(run)}
                           >
                             <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                            Ver gráficos
+                            Ver Relatório
                           </Button>
                           {run.pptxKey && (
                             <span className="text-xs text-muted-foreground">
