@@ -190,6 +190,7 @@ export default function RelatorioTeste() {
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
   const [ipcaExpanded, setIpcaExpanded] = useState(false);
+  const [ipcaVisible, setIpcaVisible] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -534,78 +535,88 @@ export default function RelatorioTeste() {
           </div>
         </div>
 
-        {/* IPCA table */}
+        {/* IPCA table — hidden by default, shown on demand */}
         <div>
-          <p className="mb-2 text-xs font-medium text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => setIpcaVisible((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", ipcaVisible && "rotate-90")} aria-hidden />
             IPCA — Número-índice e variação mensal (IBGE)
-          </p>
-          {loadingIpca && (
-            <p className="text-sm text-muted-foreground" role="status">Carregando IPCA…</p>
-          )}
-          {ipcaError && (
-            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
-              Não foi possível carregar o IPCA: {ipcaError}
-            </p>
-          )}
-          {!loadingIpca && !ipcaError && ipcaRows.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[24rem] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-border/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-4 text-left">Período</th>
-                    <th className="py-2 pr-6 text-right">
-                      Número Índice
-                      <span className="block font-normal normal-case tracking-normal">(Dez 1993 = 100)</span>
-                    </th>
-                    <th className="py-2 text-right">
-                      No mês
-                      <span className="block font-normal normal-case tracking-normal">(%)</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30">
-                  {visibleIpcaRows.map((row) => (
-                      <tr key={row.period} className="hover:bg-muted/30">
-                        <td className="py-2 pr-4 font-medium text-foreground">
-                          {row.mes}/{row.ano}
-                        </td>
-                        <td className="py-2 pr-6 text-right tabular-nums text-foreground">
-                          {row.numeroIndice == null || isNaN(row.numeroIndice)
-                            ? "—"
-                            : row.numeroIndice.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                        </td>
-                        <td className={cn(
-                          "py-2 text-right tabular-nums",
-                          row.variacaoMes == null || isNaN(row.variacaoMes)
-                            ? "text-muted-foreground"
-                            : row.variacaoMes < 0
-                              ? "text-red-400"
-                              : "text-foreground",
-                        )}>
-                          {row.variacaoMes == null || isNaN(row.variacaoMes)
-                            ? "—"
-                            : row.variacaoMes.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                        </td>
+          </button>
+
+          {ipcaVisible && (
+            <div className="mt-3">
+              {loadingIpca && (
+                <p className="text-sm text-muted-foreground" role="status">Carregando IPCA…</p>
+              )}
+              {ipcaError && (
+                <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
+                  Não foi possível carregar o IPCA: {ipcaError}
+                </p>
+              )}
+              {!loadingIpca && !ipcaError && ipcaRows.length > 0 && (
+                <div className="w-fit">
+                  <table className="border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-8 text-left">Período</th>
+                        <th className="py-2 pr-8 text-right">
+                          Número Índice
+                          <span className="block font-normal normal-case tracking-normal">(Dez 1993 = 100)</span>
+                        </th>
+                        <th className="py-2 text-right">
+                          No mês
+                          <span className="block font-normal normal-case tracking-normal">(%)</span>
+                        </th>
                       </tr>
-                  ))}
-                </tbody>
-              </table>
-              {ipcaRows.some((r) => r.ano !== currentYear) && (
-                <button
-                  type="button"
-                  onClick={() => setIpcaExpanded((v) => !v)}
-                  className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {ipcaExpanded
-                    ? "Mostrar apenas 2026"
-                    : `Ver histórico completo (${ipcaRows.length} meses)`}
-                </button>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {visibleIpcaRows.map((row) => (
+                        <tr key={row.period} className="hover:bg-muted/30">
+                          <td className="py-2 pr-8 font-medium text-foreground">
+                            {row.mes}/{row.ano}
+                          </td>
+                          <td className="py-2 pr-8 text-right tabular-nums text-foreground">
+                            {row.numeroIndice == null || isNaN(row.numeroIndice)
+                              ? "—"
+                              : row.numeroIndice.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                          </td>
+                          <td className={cn(
+                            "py-2 text-right tabular-nums",
+                            row.variacaoMes == null || isNaN(row.variacaoMes)
+                              ? "text-muted-foreground"
+                              : row.variacaoMes < 0
+                                ? "text-red-400"
+                                : "text-foreground",
+                          )}>
+                            {row.variacaoMes == null || isNaN(row.variacaoMes)
+                              ? "—"
+                              : row.variacaoMes.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {ipcaRows.some((r) => r.ano !== currentYear) && (
+                    <button
+                      type="button"
+                      onClick={() => setIpcaExpanded((v) => !v)}
+                      className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {ipcaExpanded
+                        ? "Mostrar apenas 2026"
+                        : `Ver histórico completo (${ipcaRows.length} meses)`}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
