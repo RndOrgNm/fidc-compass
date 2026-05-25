@@ -623,10 +623,13 @@ export default function RelatorioTeste() {
         </div>
       </section>
 
-      {/* ── Entrada ────────────────────────────────────────────────────── */}
+      {/* ── Entrada + Histórico side by side ──────────────────────────── */}
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+
+      {/* Entrada */}
       <section
         aria-label="Upload de arquivos"
-        className="min-w-0"
+        className="min-w-0 flex-1"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
@@ -728,16 +731,8 @@ export default function RelatorioTeste() {
             ))}
           </ul>
         )}
-      </section>
 
-      {/* ── Ações ──────────────────────────────────────────────────────── */}
-      <section
-        aria-label="Ações do controle de obras"
-        className="min-w-0"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
-
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <Button
             type="button"
             disabled={!canRun}
@@ -809,6 +804,84 @@ export default function RelatorioTeste() {
         )}
 
       </section>
+
+      {/* Histórico recente */}
+      {BASE_URL && fundReady && (
+        <section
+          aria-label="Histórico de controles"
+          className="min-w-0 lg:w-80 lg:shrink-0"
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              disabled={loadingHistory}
+              onClick={() => void loadHistory(selectedFund)}
+            >
+              {loadingHistory
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                : <History className="h-3.5 w-3.5" aria-hidden />}
+              Atualizar
+            </Button>
+          </div>
+
+          {historyError && (
+            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">{historyError}</p>
+          )}
+
+          {!loadingHistory && !historyError && runs.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum controle salvo para este fundo.</p>
+          )}
+
+          {runs.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60">
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
+                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {runs.map((run) => (
+                    <tr key={run.id} className="group">
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {`${reportFileBase(run.fundName, run.createdAt)} v${run.version}`}
+                      </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
+                      <td className="py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1.5 text-xs"
+                            onClick={() => void loadRunArtifacts(run)}
+                          >
+                            <BarChart2 className="h-3.5 w-3.5" aria-hidden />
+                            Ver Relatório
+                          </Button>
+                          {run.pptxKey && (
+                            <span className="text-xs text-muted-foreground">
+                              <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      </div>{/* end side-by-side row */}
 
       {/* ── Pré-Visualização ───────────────────────────────────────────── */}
       {pdfUrl && (
@@ -899,81 +972,6 @@ export default function RelatorioTeste() {
         </section>
       )}
 
-      {/* ── Histórico ──────────────────────────────────────────────────── */}
-      {BASE_URL && fundReady && (
-        <section
-          aria-label="Histórico de controles"
-          className="min-w-0"
-        >
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 text-xs"
-              disabled={loadingHistory}
-              onClick={() => void loadHistory(selectedFund)}
-            >
-              {loadingHistory
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                : <History className="h-3.5 w-3.5" aria-hidden />}
-              Atualizar
-            </Button>
-          </div>
-
-          {historyError && (
-            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">{historyError}</p>
-          )}
-
-          {!loadingHistory && !historyError && runs.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum controle salvo para este fundo.</p>
-          )}
-
-          {runs.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data</th>
-                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {runs.map((run) => (
-                    <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">
-                        {`${reportFileBase(run.fundName, run.createdAt)} v${run.version}`}
-                      </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
-                      <td className="py-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1.5 text-xs"
-                            onClick={() => void loadRunArtifacts(run)}
-                          >
-                            <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                            Ver Relatório
-                          </Button>
-                          {run.pptxKey && (
-                            <span className="text-xs text-muted-foreground">
-                              <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
     </div>
     </AppLayout>
   );
