@@ -702,7 +702,7 @@ export default function RelatorioTeste() {
         )}
 
         {allFiles.length > 0 && (
-          <ul className="mt-2 divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
+          <ul className="mt-2 w-fit divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
             {allFiles.map((item, index) => (
               <li
                 key={`${item.file.name}-${item.file.size}-${index}`}
