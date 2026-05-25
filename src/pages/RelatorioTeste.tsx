@@ -809,7 +809,7 @@ export default function RelatorioTeste() {
       {BASE_URL && fundReady && (
         <section
           aria-label="Histórico de controles"
-          className="min-w-0 lg:w-80 lg:shrink-0"
+          className="min-w-0 lg:flex-1"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
