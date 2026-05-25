@@ -680,7 +680,7 @@ export default function RelatorioTeste() {
             if (!isRunning && e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
           }}
           className={cn(
-            "flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-3 transition-colors",
+            "flex w-fit cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-3 transition-colors",
             "hover:border-primary/50 hover:bg-muted/30",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             isRunning && "pointer-events-none opacity-50",
