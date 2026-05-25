@@ -680,18 +680,18 @@ export default function RelatorioTeste() {
             if (!isRunning && e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
           }}
           className={cn(
-            "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 transition-colors",
+            "flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-3 transition-colors",
             "hover:border-primary/50 hover:bg-muted/30",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             isRunning && "pointer-events-none opacity-50",
           )}
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
-            <FileSpreadsheet className="h-4 w-4 text-primary" aria-hidden />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-primary" aria-hidden />
           </div>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Arraste ou clique para adicionar arquivos
-            <span className="mt-0.5 block text-xs">.csv · .xlsx · .xls · vários de uma vez</span>
+            <span className="ml-1.5 text-xs opacity-70">.csv · .xlsx · .xls</span>
           </p>
         </div>
 
@@ -702,11 +702,11 @@ export default function RelatorioTeste() {
         )}
 
         {allFiles.length > 0 && (
-          <ul className="mt-3 divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
+          <ul className="mt-2 divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
             {allFiles.map((item, index) => (
               <li
                 key={`${item.file.name}-${item.file.size}-${index}`}
-                className="flex items-center gap-3 px-3 py-2.5 text-sm first:rounded-t-lg last:rounded-b-lg"
+                className="flex items-center gap-2 px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg"
               >
                 <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
                 <div className="min-w-0 flex-1">
