@@ -273,7 +273,13 @@ export default function RelatorioTeste() {
         const b = tryParseJsonRecord(histText) as Record<string, string>;
         throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      setRuns(parseJsonText<ReportRun[]>(histText, "Histórico", res.status));
+      const rows = parseJsonText<ReportRun[]>(histText, "Histórico", res.status);
+      rows.sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
+        return tb - ta;
+      });
+      setRuns(rows);
     } catch (err) {
       setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
     } finally {
@@ -863,24 +869,20 @@ export default function RelatorioTeste() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border/60">
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Versão</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Ref.</th>
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data de Criação</th>
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Ref.</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
                   {runs.map((run) => (
                     <tr key={run.id} className="group">
-                      <td className="py-2.5 pr-4 font-medium text-foreground">
-                        {`${reportFileBase(run.fundName, run.createdAt)} v${run.version}`}
-                      </td>
+                      <td className="py-2.5 pr-4 font-medium text-foreground">{formatDate(run.createdAt)}</td>
                       <td className="py-2.5 pr-4 text-muted-foreground">
                         {run.referenceDate
                           ? new Date(run.referenceDate + "-01").toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
                           : "—"}
                       </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(run.createdAt)}</td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-1.5">
                           <Button
