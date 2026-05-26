@@ -186,6 +186,7 @@ export default function RelatorioTeste() {
 
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
+  const [mesReferencia, setMesReferencia] = useState<string>("");
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
@@ -738,7 +739,22 @@ export default function RelatorioTeste() {
           </ul>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        {/* Mês de referência */}
+        <div className="mt-4 flex items-center gap-2">
+          <Label htmlFor="mes-referencia-input" className="text-xs text-muted-foreground whitespace-nowrap">
+            Mês de Referência
+          </Label>
+          <Input
+            id="mes-referencia-input"
+            type="month"
+            value={mesReferencia}
+            onChange={(e) => setMesReferencia(e.target.value)}
+            disabled={isRunning}
+            className="h-8 w-40 text-sm"
+          />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
             type="button"
             disabled={!canRun}
