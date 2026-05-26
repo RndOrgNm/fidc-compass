@@ -72,7 +72,6 @@ type ReportRun = {
   status: string;
   version: number;
   createdAt: string | null;
-  referenceDate?: string | null;
 };
 
 
@@ -187,7 +186,6 @@ export default function RelatorioTeste() {
 
   // Parâmetros do Fundo
   const [premio, setPremio] = useState<string>("");
-  const [dataReferencia, setDataReferencia] = useState<string>("");
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
@@ -655,21 +653,6 @@ export default function RelatorioTeste() {
           <p><span className="font-medium text-foreground">Unidades / Vendas SPE</span> (obrigatório, vários) — BASE_VENDAS (.csv, .xlsx).</p>
         </div>
 
-        {/* Data de Referência */}
-        <div className="mb-4 flex items-center gap-2">
-          <Label htmlFor="data-referencia-input" className="text-xs text-muted-foreground whitespace-nowrap">
-            Data de Referência
-          </Label>
-          <Input
-            id="data-referencia-input"
-            type="month"
-            value={dataReferencia}
-            onChange={(e) => setDataReferencia(e.target.value)}
-            disabled={isRunning}
-            className="h-8 w-40 text-sm"
-          />
-        </div>
-
         <input
           ref={filesRef}
           id={filesInputId}
@@ -870,7 +853,6 @@ export default function RelatorioTeste() {
                 <thead>
                   <tr className="border-b border-border/60">
                     <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data de Criação</th>
-                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Ref.</th>
                     <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
@@ -878,11 +860,6 @@ export default function RelatorioTeste() {
                   {runs.map((run) => (
                     <tr key={run.id} className="group">
                       <td className="py-2.5 pr-4 font-medium text-foreground">{formatDate(run.createdAt)}</td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
-                        {run.referenceDate
-                          ? new Date(run.referenceDate + "-01").toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
-                          : "—"}
-                      </td>
                       <td className="py-2.5">
                         <div className="flex items-center gap-1.5">
                           <Button

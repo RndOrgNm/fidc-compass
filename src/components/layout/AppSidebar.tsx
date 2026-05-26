@@ -22,7 +22,7 @@ const menuItems = [
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Chatbot", url: "/agent", icon: Bot },
   { title: "Gráficos", url: "/graficos", icon: LineChart },
-  { title: "Controle de Ativos", url: "/controle-de-obras", icon: FileText },
+  { title: "Controle de Ativos", url: "/controle-de-ativos", icon: FileText },
 ];
 
 export function AppSidebar() {
@@ -82,7 +82,7 @@ export function AppSidebar() {
                   // item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/graficos" ? location.pathname.startsWith("/graficos") :
-                  item.url === "/controle-de-obras" ? location.pathname.startsWith("/controle-de-obras") :
+                  item.url === "/controle-de-ativos" ? location.pathname.startsWith("/controle-de-ativos") :
                   location.pathname === item.url;
                 // Special handling for Chatbot to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {

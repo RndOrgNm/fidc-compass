@@ -75,14 +75,15 @@ const App = () => (
                 }
               />
               <Route
-                path="/controle-de-obras"
+                path="/controle-de-ativos"
                 element={
                   <RequireAuth>
                     <RelatorioTeste />
                   </RequireAuth>
                 }
               />
-              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-obras" replace />} />
+              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-ativos" replace />} />
+              <Route path="/controle-de-obras" element={<Navigate to="/controle-de-ativos" replace />} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
