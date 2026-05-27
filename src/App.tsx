@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout";
 import { ChatProvider } from "./contexts/ChatContext";
+import { ReportJobProvider } from "./contexts/ReportJobContext";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import Home from "./pages/Home";
 // import Pipeline from "./pages/Pipeline"; // hidden for now — re-enable with /pipeline routes below
@@ -23,6 +24,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <TooltipProvider>
         <ChatProvider>
+          <ReportJobProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -68,25 +70,27 @@ const App = () => (
                 path="/graficos"
                 element={
                   <RequireAuth>
-                    <AppLayout><Graficos /></AppLayout>
+                    <Graficos />
                   </RequireAuth>
                 }
               />
               <Route
-                path="/controle-de-obras"
+                path="/controle-de-ativos"
                 element={
                   <RequireAuth>
-                    <AppLayout><RelatorioTeste /></AppLayout>
+                    <RelatorioTeste />
                   </RequireAuth>
                 }
               />
-              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-obras" replace />} />
+              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-ativos" replace />} />
+              <Route path="/controle-de-obras" element={<Navigate to="/controle-de-ativos" replace />} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </ReportJobProvider>
         </ChatProvider>
       </TooltipProvider>
     </ThemeProvider>

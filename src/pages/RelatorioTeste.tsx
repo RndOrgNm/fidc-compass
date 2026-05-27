@@ -1,10 +1,11 @@
-import { Suspense, lazy, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useReportJob, type ConfigPayload } from "@/contexts/ReportJobContext";
 import {
-  FileSpreadsheet, BarChart2, Loader2, Trash2,
-  CheckCircle2, Presentation,
+  FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, X,
+  CheckCircle2, Presentation, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import type { Data, Layout } from "plotly.js";
 import { Button } from "@/components/ui/button";
+import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,20 +14,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { extractFundNamesFromPlotlyPayload } from "@/components/graficos/PlotlyFundFilterFigure";
+import { AppLayout } from "@/components/layout";
+import { loadIpca, type IpcaRow } from "@/lib/ibge";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const Plot = lazy(() => import("react-plotly.js"));
-
-const EXCEL_ACCEPT =
-  ".xlsx,.xls,application/vnd.ms-excel," +
+const SPREADSHEET_ACCEPT =
+  ".csv,.xlsx,.xls,text/csv,application/vnd.ms-excel," +
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-const BASE_URL = (import.meta.env.VITE_AGENT_SERVICES_URL as string | undefined)?.replace(/\/$/, "") ?? "";
-const PRESIGN_URL = `${BASE_URL}/fund-report/presign`;
-const BUILD_URL = `${BASE_URL}/fund-report/build`;
-const JOB_URL = (id: string) => `${BASE_URL}/fund-report/jobs/${encodeURIComponent(id)}`;
-const FUNDS_URL = `${BASE_URL}/fund-report/funds`;
 
+const BASE_URL = (import.meta.env.VITE_REPORT_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const PRESIGN_URL = `${BASE_URL}/presign`;
+const WORKER_URL = `${BASE_URL}/report`;
+const REPORT_RUNS_URL = `${BASE_URL}/report-runs`;
+
+const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
+
+/** HTML/XML error pages make `response.json()` throw "Unexpected token '<'". */
 function tryParseJsonRecord(text: string): Record<string, unknown> {
   try {
     const v = JSON.parse(text) as unknown;
@@ -43,7 +49,7 @@ function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
       /^<!doctype/i.test(t) || /^<html/i.test(t) || /^<\?xml/i.test(t);
     throw new Error(
       nonJson
-        ? `${label}: o servidor devolveu ${/^<\?xml/i.test(t) ? "XML" : "HTML"} em vez de JSON (HTTP ${httpStatus}). Confira VITE_AGENT_SERVICES_URL.`
+        ? `${label}: o servidor devolveu ${/^<\?xml/i.test(t) ? "XML" : "HTML"} em vez de JSON (HTTP ${httpStatus}). Confira VITE_REPORT_API_URL e se o endpoint/API Gateway está correto.`
         : `${label}: resposta não é JSON (HTTP ${httpStatus}).`,
     );
   }
@@ -56,39 +62,29 @@ function parseJsonText<T>(text: string, label: string, httpStatus: number): T {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type PlotlyFig = { data: Data[]; layout: Partial<Layout>; [key: string]: unknown };
-
-type FundInfo = { fund_id: string; display_name: string };
-
-type JobStatusPayload = {
-  job_id: string;
-  fund_id: string;
-  fund_name: string;
-  status: "pending" | "running" | "completed" | "failed";
-  figures: Record<string, PlotlyFig>;
-  tables: Record<string, string[][]>;
-  pptx_url: string | null;
-  error: string | null;
-  sources: unknown[];
+type ReportRun = {
+  id: string;
+  fundName: string;
+  jobId: string;
+  configKey: string;
+  pdfKey: string;
+  pptxKey?: string;
+  status: string;
+  version: number;
+  createdAt: string | null;
 };
 
-type UiStatus = "idle" | "presigning" | "uploading" | "running" | "completed" | "error";
 
-const STATUS_LABEL: Record<UiStatus, string> = {
+type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
+
+const JOB_STATUS_LABEL: Record<JobStatus, string> = {
   idle: "",
   presigning: "Preparando upload…",
-  uploading: "Enviando arquivo…",
-  running: "Agente gerando os gráficos…",
-  completed: "Concluído!",
+  uploading: "Enviando arquivos para o servidor…",
+  processing: "Processando dados e gráficos…",
+  rendering: "Gerando relatório…",
+  completed: "Controle concluído!",
   error: "",
-};
-
-const CHART_TITLES: Record<string, string> = {
-  historico_financeiro: "1. Histórico Financeiro",
-  historico_vendas: "2. Histórico Vendas",
-  inadimplencia: "3. Relação de Inadimplência",
-  vendas_estoque: "4. Vendas e Estoque",
-  premio: "5. Prêmio",
 };
 
 function formatBytes(n: number): string {
@@ -97,330 +93,706 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  try {
+    // If the backend omits a timezone suffix the string is ambiguous; force UTC.
+    const utc = /Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z";
+    return new Date(utc).toLocaleString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+const PT_MONTHS = [
+  "JAN", "FEV", "MAR", "ABR", "MAI", "JUN",
+  "JUL", "AGO", "SET", "OUT", "NOV", "DEZ",
+];
+
+/**
+ * Base report filename: `Relatório {fundo} - {MES} {Dia}`.
+ * MES/Dia come from the run's creation date (São Paulo timezone); when no
+ * date is given (a freshly generated report) the current date is used.
+ */
+function reportFileBase(fundName: string, iso: string | null): string {
+  const utc = iso
+    ? (/Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z")
+    : new Date().toISOString();
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo", month: "numeric", day: "numeric",
+  }).formatToParts(new Date(utc));
+  const month = Number(parts.find((p) => p.type === "month")?.value ?? "1");
+  const dia = Number(parts.find((p) => p.type === "day")?.value ?? "1");
+  return `Relatório ${fundName} - ${PT_MONTHS[month - 1]} ${dia}`;
+}
+
+// ── File role helpers ──────────────────────────────────────────────────────────
+
+type FileRole = "fluxo" | "base_outros" | "unidades";
+
+const FILE_ROLE_LABELS: Record<FileRole, string> = {
+  fluxo: "Fluxo Financeiro",
+  base_outros: "Quadro Geral & DRE",
+  unidades: "Unidades / SPE",
+};
+
+function detectRole(filename: string): FileRole {
+  const n = filename.toLowerCase();
+  if (n.includes("fluxo")) return "fluxo";
+  if (n.includes("outros") || n.includes("dre") || n.includes("quadro")) return "base_outros";
+  return "unidades";
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function RelatorioTeste() {
   const fundSelectId = useId();
-  const fileInputId = useId();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const filesInputId = useId();
+  const filesRef = useRef<HTMLInputElement>(null);
 
-  // Funds
-  const [funds, setFunds] = useState<FundInfo[]>([]);
-  const [selectedFundId, setSelectedFundId] = useState("");
+  // Fundo selection
+  const [fundNames, setFundNames] = useState<string[]>([]);
+  const [selectedFund, setSelectedFund] = useState("");
   const [loadingFunds, setLoadingFunds] = useState(true);
-  const [fundsError, setFundsError] = useState<string | null>(null);
+  const [namesError, setNamesError] = useState<string | null>(null);
 
-  // Single Excel file
-  const [excelFile, setExcelFile] = useState<File | null>(null);
+  // Unified file list
+  const [allFiles, setAllFiles] = useState<Array<{ file: File; role: FileRole }>>([]);
+  const [fileRejectNote, setFileRejectNote] = useState<string | null>(null);
 
-  // Job state
-  const [uiStatus, setUiStatus] = useState<UiStatus>("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [figures, setFigures] = useState<Record<string, PlotlyFig> | null>(null);
-  const [pptxUrl, setPptxUrl] = useState<string | null>(null);
+  // Job state lives in ReportJobContext so polling survives page navigation.
+  const {
+    jobStatus, setJobStatus, errorMsg, setErrorMsg,
+    pdfUrl, pptxUrl,
+    startPolling, setLoadedArtifacts, clearJob,
+  } = useReportJob();
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [pptxDownloading, setPptxDownloading] = useState(false);
 
-  // ── Load funds list ─────────────────────────────────────────────────────
+  // Fund + date of the report currently in the preview — drives download filenames.
+  const [currentReport, setCurrentReport] =
+    useState<{ fundName: string; createdAt: string | null } | null>(null);
+
+  // PDF viewer state
+  const [pdfBinaryData, setPdfBinaryData] = useState<ArrayBuffer | null>(null);
+  const [pdfCurrentPage, setPdfCurrentPage] = useState(1);
+  const [pdfTotalPages, setPdfTotalPages] = useState(1);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfFetchError, setPdfFetchError] = useState<string | null>(null);
+
+  // Parâmetros do Fundo
+  const [premio, setPremio] = useState<string>("");
+  const [mesReferencia, setMesReferencia] = useState<string>("");
+  const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
+  const [loadingIpca, setLoadingIpca] = useState(true);
+  const [ipcaError, setIpcaError] = useState<string | null>(null);
+  const [ipcaExpanded, setIpcaExpanded] = useState(false);
+  const [ipcaVisible, setIpcaVisible] = useState(false);
+
   useEffect(() => {
-    if (!BASE_URL) { setLoadingFunds(false); return; }
     let cancelled = false;
-    setFundsError(null);
+    setLoadingIpca(true);
+    setIpcaError(null);
+    loadIpca()
+      .then((rows) => { if (!cancelled) setIpcaRows(rows); })
+      .catch((e: Error) => { if (!cancelled) setIpcaError(e.message); })
+      .finally(() => { if (!cancelled) setLoadingIpca(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch PDF binary whenever a new pdfUrl becomes available
+  useEffect(() => {
+    if (!pdfUrl) {
+      setPdfBinaryData(null);
+      setPdfCurrentPage(1);
+      return;
+    }
+    let cancelled = false;
+    setPdfLoading(true);
+    setPdfFetchError(null);
+    fetch(pdfUrl)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Falha ao carregar PDF (${r.status})`);
+        return r.arrayBuffer();
+      })
+      .then((buf) => {
+        if (!cancelled) {
+          setPdfBinaryData(buf);
+          setPdfCurrentPage(1);
+        }
+      })
+      .catch((e: Error) => { if (!cancelled) setPdfFetchError(e.message); })
+      .finally(() => { if (!cancelled) setPdfLoading(false); });
+    return () => { cancelled = true; };
+  }, [pdfUrl]);
+
+  // History
+  const [runs, setRuns] = useState<ReportRun[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  // Load fund names from PL evolution JSON
+  useEffect(() => {
+    let cancelled = false;
+    setNamesError(null);
     setLoadingFunds(true);
-    fetch(FUNDS_URL)
+    fetch(PL_EVOLUTION_URL)
       .then(async (r) => {
+        if (!r.ok) throw new Error(r.statusText);
         const text = await r.text();
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return parseJsonText<FundInfo[]>(text, "Lista de fundos", r.status);
+        return parseJsonText<unknown>(text, "Lista de fundos (plotly)", r.status);
       })
-      .then((list) => {
+      .then((payload) => {
         if (cancelled) return;
-        setFunds(list);
-        if (list.length > 0) setSelectedFundId(list[0].fund_id);
+        const names = extractFundNamesFromPlotlyPayload(payload);
+        setFundNames(names);
+        if (names.length > 0) setSelectedFund(names[0]);
       })
-      .catch((e: Error) => { if (!cancelled) setFundsError(e.message); })
+      .catch((e: Error) => { if (!cancelled) setNamesError(e.message); })
       .finally(() => { if (!cancelled) setLoadingFunds(false); });
     return () => { cancelled = true; };
   }, []);
 
-  const clearAll = useCallback(() => {
-    setExcelFile(null);
-    setErrorMsg(null);
-    setUiStatus("idle");
-    setJobId(null);
-    setFigures(null);
-    setPptxUrl(null);
-  }, []);
+  // Load history when fund is ready
+  const fundReady =
+    !loadingFunds && !namesError && fundNames.length > 0 && selectedFund.trim().length >= 2;
 
-  // ── Job flow ────────────────────────────────────────────────────────────
-
-  const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-  const POLL_INTERVAL_MS = 2000;
-  const POLL_MAX_ATTEMPTS = 450; // ~15 min
-
-  const pollJob = useCallback(async (id: string): Promise<JobStatusPayload> => {
-    for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
-      await delay(POLL_INTERVAL_MS);
-      const res = await fetch(JOB_URL(id));
-      const text = await res.text();
-      if (res.status === 404) throw new Error("Job não encontrado.");
+  const loadHistory = useCallback(async (fund: string) => {
+    if (!BASE_URL || !fund) return;
+    setLoadingHistory(true);
+    setHistoryError(null);
+    try {
+      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
+      const histText = await res.text();
       if (!res.ok) {
-        const b = tryParseJsonRecord(text) as Record<string, string>;
-        throw new Error(b.detail ?? b.error ?? `Erro ao consultar job (${res.status}).`);
+        const b = tryParseJsonRecord(histText) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao carregar histórico (${res.status})`);
       }
-      const payload = parseJsonText<JobStatusPayload>(text, "Job status", res.status);
-      if (payload.status === "completed") return payload;
-      if (payload.status === "failed") {
-        throw new Error(payload.error ?? "O processamento falhou no servidor.");
-      }
+      const rows = parseJsonText<ReportRun[]>(histText, "Histórico", res.status);
+      rows.sort((a, b) => {
+        const ta = a.createdAt ? new Date(a.createdAt.endsWith("Z") ? a.createdAt : a.createdAt + "Z").getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt.endsWith("Z") ? b.createdAt : b.createdAt + "Z").getTime() : 0;
+        return tb - ta;
+      });
+      setRuns(rows);
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
+    } finally {
+      setLoadingHistory(false);
     }
-    throw new Error("Timeout: o processamento demorou demais.");
   }, []);
+
+  useEffect(() => {
+    if (fundReady && BASE_URL) void loadHistory(selectedFund);
+  }, [fundReady, selectedFund, loadHistory]);
+
+  // ── File management ───────────────────────────────────────────────────────
+
+  const addFiles = useCallback((list: FileList | File[]) => {
+    const incoming = Array.from(list);
+    const valid: File[] = [];
+    let rejected = 0;
+    for (const f of incoming) {
+      const lower = f.name.toLowerCase();
+      const ok =
+        lower.endsWith(".csv") || lower.endsWith(".xlsx") || lower.endsWith(".xls") ||
+        f.type === "text/csv" ||
+        f.type === "application/vnd.ms-excel" ||
+        f.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      if (ok) valid.push(f);
+      else rejected += 1;
+    }
+    setFileRejectNote(
+      rejected > 0 ? `${rejected} arquivo(s) ignorado(s) — use CSV ou Excel (.xlsx / .xls).` : null,
+    );
+    if (!valid.length) return;
+    setAllFiles((prev) => {
+      const seen = new Set(prev.map((p) => `${p.file.name}-${p.file.size}`));
+      const merged = [...prev];
+      for (const f of valid) {
+        const key = `${f.name}-${f.size}`;
+        if (!seen.has(key)) { seen.add(key); merged.push({ file: f, role: detectRole(f.name) }); }
+      }
+      return merged;
+    });
+  }, []);
+
+  const clearAll = () => {
+    clearJob();
+    setAllFiles([]);
+    setFileRejectNote(null);
+    setPdfBinaryData(null);
+    setPdfCurrentPage(1);
+  };
+
+  // ── Job flow ──────────────────────────────────────────────────────────────
 
   const runJob = async () => {
-    if (!excelFile || !selectedFundId || !BASE_URL) return;
+    const hasFluxo = allFiles.some((f) => f.role === "fluxo");
+    const hasUnidades = allFiles.some((f) => f.role === "unidades");
+    if (!hasFluxo || !hasUnidades || !fundReady || !BASE_URL) return;
 
-    setUiStatus("presigning");
-    setErrorMsg(null);
-    setFigures(null);
-    setPptxUrl(null);
+    clearJob();
+    setJobStatus("presigning");
 
     try {
-      // 1. Presign
-      const contentType =
-        excelFile.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-      const psRes = await fetch(PRESIGN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: excelFile.name, content_type: contentType }),
-      });
-      const psText = await psRes.text();
-      if (!psRes.ok) {
-        const b = tryParseJsonRecord(psText) as Record<string, string>;
-        throw new Error(b.detail ?? b.error ?? `Presign falhou (${psRes.status}).`);
-      }
-      const ps = parseJsonText<{ job_id: string; s3_key: string; upload_url: string }>(
-        psText, "Presign", psRes.status,
-      );
-      setJobId(ps.job_id);
+      const fileList = allFiles;
 
-      // 2. Upload to S3
-      setUiStatus("uploading");
-      const upRes = await fetch(ps.upload_url, {
-        method: "PUT",
-        headers: { "Content-Type": contentType },
-        body: excelFile,
-      });
-      if (!upRes.ok) throw new Error(`Upload falhou (HTTP ${upRes.status}).`);
-
-      // 3. Kick off the build
-      setUiStatus("running");
-      const fundDisplay = funds.find((f) => f.fund_id === selectedFundId)?.display_name ?? selectedFundId;
-      const buildRes = await fetch(BUILD_URL, {
+      // 1. Request presigned PUT URLs
+      const presignRes = await fetch(PRESIGN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fund_id: selectedFundId,
-          job_id: ps.job_id,
-          fund_name: fundDisplay,
-          s3_key: ps.s3_key,
+          files: fileList.map(({ file, role }) => ({
+            name: file.name,
+            contentType: file.type || "application/octet-stream",
+            role,
+          })),
         }),
       });
-      const buildText = await buildRes.text();
-      if (!buildRes.ok) {
-        const b = tryParseJsonRecord(buildText) as Record<string, string>;
-        throw new Error(b.detail ?? b.error ?? `Erro ao iniciar processamento (${buildRes.status}).`);
+      const presignText = await presignRes.text();
+      if (!presignRes.ok) {
+        const b = tryParseJsonRecord(presignText) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao preparar upload (${presignRes.status})`);
+      }
+      const { jobId, bucket, uploads } = parseJsonText<{
+        jobId: string;
+        bucket: string;
+        uploads: Array<{ key: string; role: string; url: string; headers: Record<string, string> }>;
+      }>(presignText, "Presign", presignRes.status);
+
+      // 2. Upload files directly to S3
+      setJobStatus("uploading");
+      await Promise.all(
+        uploads.map((upload, i) =>
+          fetch(upload.url, {
+            method: "PUT",
+            headers: upload.headers,
+            body: fileList[i].file,
+          }).then((r) => {
+            if (!r.ok) throw new Error(`Upload de '${fileList[i].file.name}' falhou (HTTP ${r.status})`);
+          }),
+        ),
+      );
+
+      // Separate keys by role
+      const fluxoKey = uploads.find((u) => u.role === "fluxo")?.key ?? null;
+      const baseOutrosKey = uploads.find((u) => u.role === "base_outros")?.key ?? null;
+      const unidadesKeys = uploads.filter((u) => u.role === "unidades").map((u) => u.key);
+
+      // 3. Trigger the worker
+      setJobStatus("processing");
+      const workerBody: Record<string, unknown> = {
+        bucket,
+        jobId,
+        fluxoKey,
+        unidadesKeys,
+        fiiFundName: selectedFund.trim(),
+      };
+      if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
+      const premioTrimmed = premio.trim().replace(",", ".");
+      if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
+      const workerRes = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(workerBody),
+      });
+      const workerText = await workerRes.text();
+      if (workerRes.status !== 202 && workerRes.status !== 200) {
+        const b = tryParseJsonRecord(workerText) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao iniciar processamento (${workerRes.status})`);
       }
 
-      // 4. Poll
-      const final = await pollJob(ps.job_id);
-      setFigures(final.figures);
-      setPptxUrl(final.pptx_url);
-      setUiStatus("completed");
+      // 4. Hand off to context — polling survives page navigation.
+      setCurrentReport({ fundName: selectedFund.trim(), createdAt: new Date().toISOString() });
+      startPolling(jobId);
+      void loadHistory(selectedFund);
+
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erro desconhecido.");
-      setUiStatus("error");
+      setJobStatus("error");
     }
   };
 
-  const downloadPptx = async () => {
-    if (!pptxUrl) return;
+  const loadRunArtifacts = async (run: ReportRun) => {
+    if (!BASE_URL) return;
     setErrorMsg(null);
     try {
-      const res = await fetch(pptxUrl);
-      if (!res.ok) throw new Error(`Download falhou (HTTP ${res.status}).`);
+      const res = await fetch(`${REPORT_RUNS_URL}/${run.id}/presign`);
+      const presignRunText = await res.text();
+      if (!res.ok) {
+        const b = tryParseJsonRecord(presignRunText) as Record<string, string>;
+        throw new Error(b.error ?? `Erro ao obter URLs (${res.status})`);
+      }
+      const artifact = parseJsonText<{ configUrl: string; pdfUrl: string; pptxUrl?: string }>(
+        presignRunText,
+        "URLs do relatório",
+        res.status,
+      );
+      const configRes = await fetch(artifact.configUrl);
+      const cfgHistText = await configRes.text();
+      if (!configRes.ok) throw new Error("Falha ao carregar dados dos gráficos.");
+      setLoadedArtifacts(
+        parseJsonText<ConfigPayload>(cfgHistText, "config.json", configRes.status),
+        artifact.pdfUrl,
+        artifact.pptxUrl,
+      );
+      setCurrentReport({ fundName: run.fundName, createdAt: run.createdAt });
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao carregar controle.");
+    }
+  };
+
+  const downloadFile = async (
+    url: string,
+    filename: string,
+    setLoading: (b: boolean) => void,
+  ) => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Download falhou (HTTP ${res.status})`);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
       try {
         const a = document.createElement("a");
-        a.href = url;
-        a.download = `controle-obras-${selectedFundId}.pptx`;
+        a.href = objectUrl;
+        a.download = filename;
         a.rel = "noopener";
         document.body.appendChild(a);
         a.click();
         a.remove();
       } finally {
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(objectUrl);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Falha ao baixar o arquivo.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const isRunning = uiStatus !== "idle" && uiStatus !== "completed" && uiStatus !== "error";
-  const canRun = !!excelFile && !!selectedFundId && !!BASE_URL && !isRunning;
+  const isRunning = jobStatus !== "idle" && jobStatus !== "completed" && jobStatus !== "error";
+  const reportBaseName = reportFileBase(
+    currentReport?.fundName ?? selectedFund.trim(),
+    currentReport?.createdAt ?? null,
+  );
+  const hasFluxo = allFiles.some((f) => f.role === "fluxo");
+  const hasUnidades = allFiles.some((f) => f.role === "unidades");
+  const canRun = hasFluxo && hasUnidades && fundReady && !!BASE_URL && !isRunning;
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  const fundSelector = (
+    <Select value={selectedFund} onValueChange={setSelectedFund} disabled={loadingFunds}>
+      <SelectTrigger id={fundSelectId} className="h-8 w-60 text-sm">
+        <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
+      </SelectTrigger>
+      <SelectContent>
+        {fundNames.map((name) => (
+          <SelectItem key={name} value={name}>{name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const currentYear = new Date().getFullYear();
+  const visibleIpcaRows = ipcaExpanded ? ipcaRows : ipcaRows.filter((r) => r.ano === currentYear);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <AppLayout headerRight={fundSelector}>
+    <div className="space-y-10">
 
-      {/* Fundo */}
+      {namesError && (
+        <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
+          Não foi possível carregar a lista de fundos ({namesError}).
+        </p>
+      )}
+
+      {/* ── Parâmetros do Fundo ────────────────────────────────────────── */}
       <section
-        aria-label="Fundo do controle"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+        aria-label="Parâmetros do fundo"
+        className="min-w-0"
       >
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Fundo</h2>
+        <h2 className="mb-4 text-sm font-semibold text-foreground">Parâmetros do Fundo</h2>
 
-        {!fundsError && funds.length > 0 && (
-          <div className="space-y-1.5">
-            <Label htmlFor={fundSelectId} className="text-xs text-muted-foreground">Controle para</Label>
-            <Select value={selectedFundId} onValueChange={setSelectedFundId} disabled={loadingFunds}>
-              <SelectTrigger id={fundSelectId} className="h-9 w-full max-w-md text-sm">
-                <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
-              </SelectTrigger>
-              <SelectContent>
-                {funds.map((f) => (
-                  <SelectItem key={f.fund_id} value={f.fund_id}>{f.display_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Prêmio */}
+        <div className="mb-6 max-w-xs space-y-1.5">
+          <Label htmlFor="premio-input" className="text-xs text-muted-foreground">
+            Prêmio (% a.a.)
+          </Label>
+          <div className="relative">
+            <Input
+              id="premio-input"
+              type="text"
+              inputMode="decimal"
+              placeholder="ex: 13,00"
+              value={premio}
+              onChange={(e) => setPremio(e.target.value)}
+              className="h-9 pr-8 text-sm"
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+              %
+            </span>
           </div>
-        )}
-        {loadingFunds && (
-          <p className="text-sm text-muted-foreground" role="status">Carregando lista de fundos…</p>
-        )}
-        {fundsError && (
-          <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
-            Não foi possível carregar a lista de fundos ({fundsError}).
-          </p>
-        )}
-        {!loadingFunds && !fundsError && funds.length === 0 && (
-          <p className="text-sm text-muted-foreground" role="status">
-            Nenhum fundo encontrado. Adicione um arquivo de instruções em{" "}
-            <code>agent-services/src/fund_report/instructions/&lt;fund_id&gt;.md</code>.
-          </p>
-        )}
+        </div>
+
+        {/* IPCA table — hidden by default, shown on demand */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setIpcaVisible((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", ipcaVisible && "rotate-90")} aria-hidden />
+            IPCA — Número-índice e variação mensal (IBGE)
+          </button>
+
+          {ipcaVisible && (
+            <div className="mt-3">
+              {loadingIpca && (
+                <p className="text-sm text-muted-foreground" role="status">Carregando IPCA…</p>
+              )}
+              {ipcaError && (
+                <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">
+                  Não foi possível carregar o IPCA: {ipcaError}
+                </p>
+              )}
+              {!loadingIpca && !ipcaError && ipcaRows.length > 0 && (
+                <div className="w-fit">
+                  <table className="border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-8 text-left">Período</th>
+                        <th className="py-2 pr-8 text-right">
+                          Número Índice
+                          <span className="block font-normal normal-case tracking-normal">(Dez 1993 = 100)</span>
+                        </th>
+                        <th className="py-2 text-right">
+                          No mês
+                          <span className="block font-normal normal-case tracking-normal">(%)</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {visibleIpcaRows.map((row) => (
+                        <tr key={row.period} className="hover:bg-muted/30">
+                          <td className="py-2 pr-8 font-medium text-foreground">
+                            {row.mes}/{row.ano}
+                          </td>
+                          <td className="py-2 pr-8 text-right tabular-nums text-foreground">
+                            {row.numeroIndice == null || isNaN(row.numeroIndice)
+                              ? "—"
+                              : row.numeroIndice.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                          </td>
+                          <td className={cn(
+                            "py-2 text-right tabular-nums",
+                            row.variacaoMes == null || isNaN(row.variacaoMes)
+                              ? "text-muted-foreground"
+                              : row.variacaoMes < 0
+                                ? "text-red-400"
+                                : "text-foreground",
+                          )}>
+                            {row.variacaoMes == null || isNaN(row.variacaoMes)
+                              ? "—"
+                              : row.variacaoMes.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {ipcaRows.some((r) => r.ano !== currentYear) && (
+                    <button
+                      type="button"
+                      onClick={() => setIpcaExpanded((v) => !v)}
+                      className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {ipcaExpanded
+                        ? "Mostrar apenas 2026"
+                        : `Ver histórico completo (${ipcaRows.length} meses)`}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </section>
+
+      {/* ── Entrada + Histórico side by side ──────────────────────────── */}
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
 
       {/* Entrada */}
       <section
-        aria-label="Upload de arquivo"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
+        aria-label="Upload de arquivos"
+        className="min-w-0 flex-1"
       >
-        <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="mb-4 flex items-center gap-3">
           <h2 className="text-sm font-semibold text-foreground">Entrada</h2>
-          {excelFile && (
-            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={clearAll} disabled={isRunning}>
-              Limpar
+          {allFiles.length > 0 && (
+            <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={clearAll} disabled={isRunning}>
+              Limpar tudo
             </Button>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={fileInputId} className="text-xs font-medium text-muted-foreground">
-            Planilha do fundo * <span className="font-normal">(Excel com abas SPE + Fluxo Financeiro)</span>
-          </Label>
-          <input
-            ref={fileRef}
-            id={fileInputId}
-            type="file"
-            accept={EXCEL_ACCEPT}
-            className="sr-only"
-            disabled={isRunning}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) setExcelFile(f);
-              e.target.value = "";
-            }}
-          />
-
-          {excelFile ? (
-            <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/50 px-3 py-2.5 text-sm">
-              <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-foreground">{excelFile.name}</p>
-                <p className="text-xs text-muted-foreground">{formatBytes(excelFile.size)}</p>
-              </div>
-              <Button
-                type="button" variant="ghost" size="icon"
-                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                onClick={() => setExcelFile(null)}
-                disabled={isRunning}
-                aria-label={`Remover ${excelFile.name}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className={cn(
-                "flex w-full cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-6 text-left transition-colors",
-                "hover:border-primary/50 hover:bg-muted/30",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                isRunning && "pointer-events-none opacity-50",
-              )}
-              disabled={isRunning}
-              onClick={() => fileRef.current?.click()}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                <FileSpreadsheet className="h-4 w-4 text-primary" aria-hidden />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Clique para selecionar o arquivo Excel</p>
-                <p className="text-xs text-muted-foreground">XLSX ou XLS · uma aba por SPE + aba Fluxo Financeiro</p>
-              </div>
-            </button>
-          )}
+        {/* Guide */}
+        <div className="mb-4 space-y-1 text-xs text-muted-foreground">
+          <p><span className="font-medium text-foreground">Fluxo Financeiro</span> (obrigatório) — BASE_FLUXO (.csv, .xlsx)</p>
+          <p><span className="font-medium text-foreground">Quadro Geral &amp; DRE</span> (opcional) — BASE_OUTROS (.xlsx). Gera slides 6.x e 8.</p>
+          <p><span className="font-medium text-foreground">Unidades / Vendas SPE</span> (obrigatório, vários) — BASE_VENDAS (.csv, .xlsx).</p>
         </div>
-      </section>
 
-      {/* Ações */}
-      <section
-        aria-label="Ações do controle"
-        className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-foreground">Ações</h2>
+        <input
+          ref={filesRef}
+          id={filesInputId}
+          type="file"
+          accept={SPREADSHEET_ACCEPT}
+          multiple
+          className="sr-only"
+          disabled={isRunning}
+          aria-label="Selecionar arquivos"
+          onChange={(e) => {
+            if (e.target.files?.length) addFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" disabled={!canRun} onClick={() => void runJob()} className="h-9 gap-2">
+        <div
+          role="button"
+          tabIndex={isRunning ? -1 : 0}
+          aria-label="Abrir seletor de arquivos ou arrastar aqui"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              filesRef.current?.click();
+            }
+          }}
+          onClick={() => !isRunning && filesRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!isRunning && e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+          }}
+          className={cn(
+            "flex w-fit cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border/80 bg-muted/20 px-4 py-3 transition-colors",
+            "hover:border-primary/50 hover:bg-muted/30",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            isRunning && "pointer-events-none opacity-50",
+          )}
+        >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-primary" aria-hidden />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Arraste ou clique para adicionar arquivos
+            <span className="ml-1.5 text-xs opacity-70">.csv · .xlsx · .xls</span>
+          </p>
+        </div>
+
+        {fileRejectNote && (
+          <p className="mt-2 text-sm text-amber-600 dark:text-amber-500" role="status">
+            {fileRejectNote}
+          </p>
+        )}
+
+        {allFiles.length > 0 && (
+          <ul className="mt-2 w-fit divide-y divide-border/60 rounded-lg border border-border/60 bg-background/50">
+            {allFiles.map((item, index) => (
+              <li
+                key={`${item.file.name}-${item.file.size}-${index}`}
+                className="flex items-center gap-2 px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg"
+              >
+                <FileSpreadsheet className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-foreground">{item.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatBytes(item.file.size)}</p>
+                </div>
+                <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {FILE_ROLE_LABELS[item.role]}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => setAllFiles((prev) => prev.filter((_, i) => i !== index))}
+                  disabled={isRunning}
+                  aria-label={`Remover ${item.file.name}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Mês de referência */}
+        <div className="mt-4 flex items-center gap-2">
+          <Label htmlFor="mes-referencia-input" className="text-xs text-muted-foreground whitespace-nowrap">
+            Mês de Referência
+          </Label>
+          <Input
+            id="mes-referencia-input"
+            type="month"
+            value={mesReferencia}
+            onChange={(e) => setMesReferencia(e.target.value)}
+            disabled={isRunning}
+            className="h-8 w-40 text-sm"
+          />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            disabled={!canRun}
+            onClick={() => void runJob()}
+            className="h-9 gap-2"
+          >
             {isRunning ? (
-              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{STATUS_LABEL[uiStatus]}</>
+              <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{JOB_STATUS_LABEL[jobStatus]}</>
             ) : (
-              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar relatório</>
+              <><BarChart2 className="h-4 w-4" aria-hidden />Gerar Relatório</>
             )}
           </Button>
-
-          {uiStatus === "completed" && pptxUrl && (
-            <Button type="button" variant="outline" onClick={() => void downloadPptx()} className="h-9 gap-2">
-              <Presentation className="h-4 w-4" aria-hidden />Download PPTX
+          {isRunning && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={clearJob}
+            >
+              <X className="h-4 w-4" aria-hidden />
+              Cancelar
             </Button>
           )}
 
-          {uiStatus === "completed" && (
+          {jobStatus === "completed" && (
             <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
               <CheckCircle2 className="h-4 w-4" aria-hidden />Concluído
             </span>
           )}
         </div>
 
+        {/* Progress steps */}
         {isRunning && (
           <div className="mt-4 space-y-1">
-            {(["presigning", "uploading", "running"] as UiStatus[]).map((step) => {
-              const steps: UiStatus[] = ["presigning", "uploading", "running"];
-              const done = steps.indexOf(step) < steps.indexOf(uiStatus);
-              const active = step === uiStatus;
+            {(["presigning", "uploading", "processing", "rendering"] as JobStatus[]).map((step) => {
+              const steps = ["presigning", "uploading", "processing", "rendering"];
+              const done = steps.indexOf(step) < steps.indexOf(jobStatus as string);
+              const active = step === jobStatus;
               return (
                 <div
                   key={step}
@@ -434,7 +806,7 @@ export default function RelatorioTeste() {
                     : active
                       ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
                       : <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-current opacity-30" aria-hidden />}
-                  {STATUS_LABEL[step]}
+                  {JOB_STATUS_LABEL[step]}
                 </div>
               );
             })}
@@ -442,47 +814,188 @@ export default function RelatorioTeste() {
         )}
 
         {errorMsg && (
-          <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">{errorMsg}</p>
+          <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            {errorMsg}
+          </p>
         )}
 
         {!BASE_URL && (
           <p className="mt-3 text-xs text-amber-600 dark:text-amber-500" role="status">
-            Configure <code className="rounded bg-muted px-1 py-0.5">VITE_AGENT_SERVICES_URL</code> com a URL do serviço agent-services.
+            Configure <code className="rounded bg-muted px-1 py-0.5">VITE_REPORT_API_URL</code> com a URL do API Gateway.
           </p>
         )}
 
-        {jobId && (
-          <p className="mt-3 text-xs text-muted-foreground">job_id: <code className="rounded bg-muted px-1 py-0.5">{jobId}</code></p>
-        )}
       </section>
 
-      {/* Pré-visualização */}
-      {figures && (
-        <section aria-label="Pré-visualização dos gráficos" className="space-y-6">
-          <h2 className="text-lg font-semibold text-foreground">Pré-visualização</h2>
-          {Object.keys(CHART_TITLES).map((key) => {
-            const fig = figures[key];
-            if (!fig) return null;
-            return (
-              <div key={key} className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-5 shadow-sm sm:px-5 sm:py-6">
-                <h3 className="mb-1 text-sm font-semibold text-foreground">{CHART_TITLES[key]}</h3>
-                <div className="mt-1 h-px w-full bg-border/60" />
-                <div className="mt-4">
-                  <Suspense fallback={<div className="animate-pulse rounded-md bg-muted" style={{ height: 400 }} aria-hidden />}>
-                    <Plot
-                      data={fig.data}
-                      layout={{ ...fig.layout, autosize: true }}
-                      style={{ width: "100%", minHeight: 400 }}
-                      useResizeHandler
-                      config={{ responsive: true, displayModeBar: true }}
-                    />
-                  </Suspense>
-                </div>
-              </div>
-            );
-          })}
+      {/* Vertical divider — visible only on large screens */}
+      {BASE_URL && fundReady && (
+        <div className="hidden lg:block w-px self-stretch bg-border/50" aria-hidden />
+      )}
+
+      {/* Histórico recente */}
+      {BASE_URL && fundReady && (
+        <section
+          aria-label="Histórico de controles"
+          className="min-w-0 lg:flex-1"
+        >
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-foreground">Histórico recente</h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              disabled={loadingHistory}
+              onClick={() => void loadHistory(selectedFund)}
+            >
+              {loadingHistory
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                : <History className="h-3.5 w-3.5" aria-hidden />}
+              Atualizar
+            </Button>
+          </div>
+
+          {historyError && (
+            <p className="text-sm text-amber-600 dark:text-amber-500" role="alert">{historyError}</p>
+          )}
+
+          {!loadingHistory && !historyError && runs.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum controle salvo para este fundo.</p>
+          )}
+
+          {runs.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60">
+                    <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data de Criação</th>
+                    <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {runs.map((run) => (
+                    <tr key={run.id} className="group">
+                      <td className="py-2.5 pr-4 font-medium text-foreground">{formatDate(run.createdAt)}</td>
+                      <td className="py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1.5 text-xs"
+                            onClick={() => void loadRunArtifacts(run)}
+                          >
+                            <BarChart2 className="h-3.5 w-3.5" aria-hidden />
+                            Ver Relatório
+                          </Button>
+                          {run.pptxKey && (
+                            <span className="text-xs text-muted-foreground">
+                              <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
+
+      </div>{/* end side-by-side row */}
+
+      {/* ── Pré-Visualização ───────────────────────────────────────────── */}
+      {pdfUrl && (
+        <section aria-label="Pré-visualização do relatório" className="min-w-0 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-lg font-semibold text-foreground">Pré-Visualização</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pdfDownloading}
+                onClick={() => void downloadFile(pdfUrl, `${reportBaseName}.pdf`, setPdfDownloading)}
+                className="h-9 gap-2"
+              >
+                {pdfDownloading
+                  ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
+                  : <><FileDown className="h-4 w-4" aria-hidden />Download PDF</>}
+              </Button>
+              {pptxUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pptxDownloading}
+                  onClick={() => void downloadFile(pptxUrl, `${reportBaseName}.pptx`, setPptxDownloading)}
+                  className="h-9 gap-2"
+                >
+                  {pptxDownloading
+                    ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />Baixando…</>
+                    : <><Presentation className="h-4 w-4" aria-hidden />Download PPTX</>}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3" style={{ height: "80vh" }}>
+            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-auto">
+              {pdfLoading && (
+                <div className="flex h-full items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+                    <span className="text-sm">Carregando PDF…</span>
+                  </div>
+                </div>
+              )}
+              {pdfFetchError && !pdfLoading && (
+                <p className="p-4 text-sm text-destructive">{pdfFetchError}</p>
+              )}
+              {!pdfLoading && !pdfFetchError && (
+                <PdfViewerCanvas
+                  pdfData={pdfBinaryData}
+                  currentPage={pdfCurrentPage}
+                  onTotalPages={setPdfTotalPages}
+                  className="w-full"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Página {pdfCurrentPage} de {pdfTotalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pdfCurrentPage === 1}
+                onClick={() => setPdfCurrentPage((p) => p - 1)}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                Anterior
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pdfCurrentPage === pdfTotalPages}
+                onClick={() => setPdfCurrentPage((p) => Math.min(p + 1, pdfTotalPages))}
+                className="gap-1"
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
     </div>
+    </AppLayout>
   );
 }

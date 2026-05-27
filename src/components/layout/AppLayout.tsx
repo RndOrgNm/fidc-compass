@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
+  /** Optional content rendered in the header between the page title and the action buttons. */
+  headerRight?: ReactNode;
 }
 
 const PAGE_TITLES: Record<string, string> = {
@@ -16,7 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/pipeline": "Pipeline de Investimentos",
   "/agent": "Agente IA",
   "/graficos": "Gráficos",
-  "/controle-de-obras": "Controle de Obras",
+  "/controle-de-ativos": "Controle de Ativos",
 };
 
 function getPageTitle(pathname: string, override?: string): string {
@@ -25,11 +27,11 @@ function getPageTitle(pathname: string, override?: string): string {
   if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
   if (pathname.startsWith("/agent")) return "Agente IA";
   if (pathname.startsWith("/graficos")) return "Gráficos";
-  if (pathname.startsWith("/controle-de-obras")) return "Controle de Obras";
+  if (pathname.startsWith("/controle-de-ativos")) return "Controle de Ativos";
   return "GIAA Compass";
 }
 
-export function AppLayout({ children, title }: AppLayoutProps) {
+export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
   const location = useLocation();
 
   const pageTitle = getPageTitle(location.pathname, title);
@@ -49,8 +51,9 @@ export function AppLayout({ children, title }: AppLayoutProps) {
               <SidebarTrigger />
               <h2 className="text-xl font-semibold text-foreground">{pageTitle}</h2>
             </div>
-            
+
             <div className="flex items-center gap-4">
+              {headerRight}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
