@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FundContextBar } from "@/components/fundos/FundContextBar";
 import { ControleDeAtivosContent } from "@/components/fundos/ControleDeAtivosContent";
 import { EmConstrucao } from "@/components/fundos/EmConstrucao";
+import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
@@ -70,7 +71,7 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="prazos" className="mt-8">
-            <EmConstrucao title="Prazos" />
+            <PrazosContent />
           </TabsContent>
         </Tabs>
       </div>
