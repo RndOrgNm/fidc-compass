@@ -1,4 +1,4 @@
-import { Home, Bot, TrendingUp, LineChart, FileText, LogOut } from "lucide-react";
+import { Home, Bot, TrendingUp, LineChart, Landmark, LogOut } from "lucide-react";
 // import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useClerk, useUser } from "@clerk/clerk-react";
@@ -22,7 +22,7 @@ const menuItems = [
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Chatbot", url: "/agent", icon: Bot },
   { title: "Gráficos", url: "/graficos", icon: LineChart },
-  { title: "Controle de Ativos", url: "/controle-de-ativos", icon: FileText },
+  { title: "Fundos", url: "/fundos", icon: Landmark },
 ];
 
 export function AppSidebar() {
@@ -82,7 +82,7 @@ export function AppSidebar() {
                   // item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/graficos" ? location.pathname.startsWith("/graficos") :
-                  item.url === "/controle-de-ativos" ? location.pathname.startsWith("/controle-de-ativos") :
+                  item.url === "/fundos" ? location.pathname.startsWith("/fundos") :
                   location.pathname === item.url;
                 // Special handling for Chatbot to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {

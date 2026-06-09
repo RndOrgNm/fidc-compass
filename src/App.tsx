@@ -15,7 +15,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Graficos from "./pages/Graficos";
-import RelatorioTeste from "./pages/RelatorioTeste";
+import Fundos from "./pages/Fundos";
 
 const queryClient = new QueryClient();
 
@@ -75,15 +75,17 @@ const App = () => (
                 }
               />
               <Route
-                path="/controle-de-ativos"
+                path="/fundos"
                 element={
                   <RequireAuth>
-                    <RelatorioTeste />
+                    <Fundos />
                   </RequireAuth>
                 }
               />
-              <Route path="/relatorio-teste" element={<Navigate to="/controle-de-ativos" replace />} />
-              <Route path="/controle-de-obras" element={<Navigate to="/controle-de-ativos" replace />} />
+              {/* Legacy routes redirect to the new Fundos hub */}
+              <Route path="/controle-de-ativos" element={<Navigate to="/fundos" replace />} />
+              <Route path="/relatorio-teste" element={<Navigate to="/fundos" replace />} />
+              <Route path="/controle-de-obras" element={<Navigate to="/fundos" replace />} />
               <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
