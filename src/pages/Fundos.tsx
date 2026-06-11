@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FileText, Users, CalendarClock } from "lucide-react";
 import { AppLayout } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,13 +16,19 @@ function fundDisplayName(f: HomeFundRow): string {
 
 export default function Fundos() {
   const { data, loading } = useHomeMetrics();
+  const [searchParams] = useSearchParams();
 
   const funds = useMemo(() => {
     if (!data?.fundos?.length) return [];
     return [...data.fundos].sort((a, b) => b.plAtual - a.plAtual);
   }, [data?.fundos]);
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Deep-link: ?fundo=<id_carteira>&tab=prazos (e.g. from the alerts bell).
+  const deepLinkFund = Number(searchParams.get("fundo")) || null;
+  const deepLinkTab = searchParams.get("tab") ?? "controle";
+
+  const [selectedId, setSelectedId] = useState<number | null>(deepLinkFund);
+  const [tab, setTab] = useState<string>(deepLinkTab);
 
   const resolvedId = selectedId ?? funds[0]?.idCarteira ?? null;
   const selectedFund = funds.find((f) => f.idCarteira === resolvedId) ?? funds[0] ?? null;
@@ -37,7 +44,7 @@ export default function Fundos() {
           onSelect={setSelectedId}
         />
 
-        <Tabs defaultValue="controle" className="w-full">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
             <TabsTrigger
               value="controle"
@@ -71,7 +78,7 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="prazos" className="mt-8">
-            <PrazosContent />
+            <PrazosContent fundoId={resolvedId} fundName={selectedFundName} />
           </TabsContent>
         </Tabs>
       </div>

@@ -2,9 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
-import { Bell } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { AlertsBell } from "@/components/layout/AlertsBell";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -54,12 +52,7 @@ export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
 
             <div className="flex items-center gap-4">
               {headerRight}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  5
-                </Badge>
-              </Button>
+              <AlertsBell />
             </div>
           </header>
 
