@@ -452,6 +452,11 @@ export default function Agent() {
                 onValueChange={(v) => {
                   const agent = v as "cvm" | "prazos";
                   setSelectedAgent(agent);
+                  setSearchParams((p) => {
+                    const next = new URLSearchParams(p);
+                    next.set("agent", agent);
+                    return next;
+                  }, { replace: true });
                 }}
               >
                 <DropdownMenuRadioItem value="cvm">CVM Agent</DropdownMenuRadioItem>
