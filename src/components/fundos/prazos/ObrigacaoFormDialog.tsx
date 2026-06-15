@@ -42,6 +42,15 @@ const TIPOS: TipoPrazo[] = [
   "FINAL_DO_MES",
 ];
 
+// Optional integer field: an empty/blank input (or a hidden field still holding
+// "") becomes `undefined` BEFORE coercion, so fields irrelevant to the selected
+// tipo_prazo never produce phantom validation errors that block submit.
+const optInt = (min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.coerce.number().int().min(min).max(max).optional()
+  );
+
 const schema = z
   .object({
     topico: z.string().trim().min(1, "Informe o tópico"),
@@ -54,11 +63,11 @@ const schema = z
       "FINAL_DO_MES",
     ]),
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
-    dia: z.coerce.number().int().min(1).max(31).optional(),
-    n_util: z.coerce.number().int().min(1).max(23).optional(),
-    dias_antes: z.coerce.number().int().min(0).max(90).optional(),
-    ref_util: z.coerce.number().int().min(1).max(23).optional(),
-    dias_apos: z.coerce.number().int().min(0).max(90).optional(),
+    dia: optInt(1, 31),
+    n_util: optInt(1, 23),
+    dias_antes: optInt(0, 90),
+    ref_util: optInt(1, 23),
+    dias_apos: optInt(0, 90),
   })
   .superRefine((val, ctx) => {
     const req = (field: keyof typeof val) => {
