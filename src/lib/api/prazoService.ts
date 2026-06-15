@@ -179,6 +179,16 @@ export async function concluirInstancia(
   return handleResponse<InstanciaResponse>(response);
 }
 
+export async function reabrirInstancia(
+  instanciaId: string
+): Promise<InstanciaResponse> {
+  const response = await fetch(
+    `${FUNDS_API_BASE_URL}/prazos/instancias/${instanciaId}/reabrir`,
+    { method: "POST", headers: JSON_HEADERS }
+  );
+  return handleResponse<InstanciaResponse>(response);
+}
+
 export async function registrarGatilho(
   instanciaId: string,
   dataEvento: string

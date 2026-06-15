@@ -10,6 +10,7 @@ import {
   Pencil,
   Trash2,
   CheckCircle2,
+  RotateCcw,
   Loader2,
   CalendarClock,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   listInstancias,
   concluirInstancia,
+  reabrirInstancia,
   registrarGatilho,
   deleteObrigacao,
   type Categoria,
@@ -163,6 +165,7 @@ function MiniCalendar({
 function PrazoItem({
   inst,
   onConcluir,
+  onReabrir,
   onEditar,
   onExcluir,
   onGatilho,
@@ -170,6 +173,7 @@ function PrazoItem({
 }: {
   inst: InstanciaResponse;
   onConcluir: (i: InstanciaResponse) => void;
+  onReabrir: (i: InstanciaResponse) => void;
   onEditar: (i: InstanciaResponse) => void;
   onExcluir: (i: InstanciaResponse) => void;
   onGatilho: (i: InstanciaResponse, dataEvento: string) => void;
@@ -250,7 +254,17 @@ function PrazoItem({
           {daysTxt(inst.status, inst.data_vencimento)}
         </span>
         <div className="mt-0.5 flex items-center gap-1">
-          {!isConcluido && (
+          {isConcluido ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 px-2 text-[11px]"
+              disabled={busy}
+              onClick={() => onReabrir(inst)}
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> Reabrir
+            </Button>
+          ) : (
             <Button
               size="sm"
               variant="ghost"
@@ -330,6 +344,15 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     onError: (e: Error) => toast({ title: "Erro ao concluir", description: e.message, variant: "destructive" }),
   });
 
+  const reabrirMut = useMutation({
+    mutationFn: (i: InstanciaResponse) => reabrirInstancia(i.id),
+    onSuccess: () => {
+      invalidate();
+      toast({ title: "Prazo reaberto", description: "A conclusão foi desfeita." });
+    },
+    onError: (e: Error) => toast({ title: "Erro ao reabrir", description: e.message, variant: "destructive" }),
+  });
+
   const gatilhoMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: string }) => registrarGatilho(id, data),
     onSuccess: () => {
@@ -348,7 +371,11 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
   });
 
-  const busy = concluirMut.isPending || gatilhoMut.isPending || deleteMut.isPending;
+  const busy =
+    concluirMut.isPending ||
+    reabrirMut.isPending ||
+    gatilhoMut.isPending ||
+    deleteMut.isPending;
 
   const filtered = filter === "todos" ? instancias : instancias.filter((i) => i.categoria === filter);
 
@@ -550,6 +577,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
                         inst={inst}
                         busy={busy}
                         onConcluir={(i) => concluirMut.mutate(i)}
+                        onReabrir={(i) => reabrirMut.mutate(i)}
                         onEditar={openEdit}
                         onExcluir={(i) => setDeleteTarget(i)}
                         onGatilho={(i, data) => gatilhoMut.mutate({ id: i.id, data })}
