@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useRef, useCallback, ReactNode } f
 import { toast } from "@/hooks/use-toast";
 import { ragService, type ConversationWithMetadata } from "@/lib/api/ragService";
 import { fundsAgentService } from "@/lib/api/fundsAgentService";
+import { prazosAgentService } from "@/lib/api/prazosAgentService";
 import type { ApiSource } from "@/lib/api/client";
 
 export interface Message {
@@ -37,8 +38,8 @@ interface ChatContextType {
   isLoadingConversations: boolean;
   streamingMessage: Message | null;
   pendingMessages: Map<string, PendingMessage>;
-  selectedAgent: "cvm" | "funds";
-  setSelectedAgent: (agent: "cvm" | "funds") => void;
+  selectedAgent: "cvm" | "funds" | "prazos";
+  setSelectedAgent: (agent: "cvm" | "funds" | "prazos") => void;
 
   setCurrentConversationId: (id: string | null) => void;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -61,7 +62,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
   const [pendingMessages, setPendingMessages] = useState<Map<string, PendingMessage>>(new Map());
-  const [selectedAgent, setSelectedAgentState] = useState<"cvm" | "funds">("cvm");
+  const [selectedAgent, setSelectedAgentState] = useState<"cvm" | "funds" | "prazos">("cvm");
 
   const isSendingMessageRef = useRef(false);
 
@@ -72,12 +73,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  const getService = useCallback(
+    (agent: "cvm" | "funds" | "prazos") =>
+      agent === "funds"
+        ? fundsAgentService
+        : agent === "prazos"
+          ? prazosAgentService
+          : ragService,
+    []
+  );
+
   const refreshConversations = useCallback(
-    async (agentOverride?: "cvm" | "funds") => {
+    async (agentOverride?: "cvm" | "funds" | "prazos") => {
       const agent = agentOverride ?? selectedAgent;
       try {
         setIsLoadingConversations(true);
-        const service = agent === "funds" ? fundsAgentService : ragService;
+        const service = getService(agent);
         const fetchedConversations = await service.fetchConversations(50);
         setConversations(fetchedConversations);
       } catch (error) {
@@ -92,11 +103,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setIsLoadingConversations(false);
       }
     },
-    [selectedAgent]
+    [selectedAgent, getService]
   );
 
   const setSelectedAgent = useCallback(
-    (agent: "cvm" | "funds") => {
+    (agent: "cvm" | "funds" | "prazos") => {
       setSelectedAgentState(agent);
       setCurrentConversationId(null);
       setMessages([]);
@@ -117,7 +128,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const service = selectedAgent === "funds" ? fundsAgentService : ragService;
+      const service = getService(selectedAgent);
       try {
         const fetchedMessages = await service.loadConversationMessages(conversationId);
         setMessages(fetchedMessages as Message[]);
@@ -131,14 +142,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [selectedAgent]
+    [selectedAgent, getService]
   );
 
   const sendMessage = useCallback(
     async (query: string) => {
       if (!query.trim() || isLoading) return;
 
-      const service = selectedAgent === "funds" ? fundsAgentService : ragService;
+      const service = getService(selectedAgent);
 
       setIsLoading(true);
       isSendingMessageRef.current = true;
@@ -267,6 +278,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isLoading,
       refreshConversations,
       selectedAgent,
+      getService,
     ]
   );
 
@@ -281,7 +293,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const service = selectedAgent === "funds" ? fundsAgentService : ragService;
+      const service = getService(selectedAgent);
 
       try {
         await service.deleteConversation(conversationId);
@@ -309,7 +321,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [currentConversationId, refreshConversations, resetToInitialState, selectedAgent]
+    [currentConversationId, refreshConversations, resetToInitialState, selectedAgent, getService]
   );
 
   const value: ChatContextType = {
