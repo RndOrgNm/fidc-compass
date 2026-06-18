@@ -6,23 +6,13 @@ import {
   PlotlyWebFigure,
   type PlotlyCarouselSlide,
 } from "@/components/graficos";
-import { extractFundNamesFromPlotlyPayload } from "@/components/graficos/PlotlyFundFilterFigure";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-const PL_EVOLUTION_URL = "/plotly/pl-evolution.json";
 
 const PL_SLIDES = [
   {
@@ -69,31 +59,9 @@ const CATEGORIES = [
   { id: "cota" as const, label: "Cota" },
 ] as const;
 
-export function GraficosContent() {
+export function GraficosContent({ fundName }: { fundName?: string }) {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
-
-  const [fundNames, setFundNames] = useState<string[]>([]);
-  const [selectedFund, setSelectedFund] = useState<string>("");
-  const [loadingFunds, setLoadingFunds] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(PL_EVOLUTION_URL)
-      .then((r) => {
-        if (!r.ok) throw new Error(r.statusText);
-        return r.json();
-      })
-      .then((payload) => {
-        if (cancelled) return;
-        const names = extractFundNamesFromPlotlyPayload(payload);
-        setFundNames(names);
-        setSelectedFund(names[0] ?? "");
-      })
-      .catch(() => {/* silent — evolution section will show its own error */})
-      .finally(() => { if (!cancelled) setLoadingFunds(false); });
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     if (!api) return;
@@ -109,29 +77,9 @@ export function GraficosContent() {
 
   return (
     <div className="space-y-8 pb-8">
-      <div className="flex items-center justify-between">
-        <Select
-          value={selectedFund}
-          onValueChange={setSelectedFund}
-          disabled={loadingFunds || !fundNames.length}
-        >
-          <SelectTrigger className="h-8 w-60 text-sm">
-            <SelectValue placeholder={loadingFunds ? "Carregando…" : "Selecionar fundo"} />
-          </SelectTrigger>
-          <SelectContent>
-            {fundNames.map((name) => (
-              <SelectItem key={name} value={name}>
-                {name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       <GraficosEvolutionSection
         variant="both"
-        selectedFund={selectedFund}
-        onFundChange={setSelectedFund}
+        selectedFund={fundName ?? ""}
       />
 
       <div className="space-y-4" aria-label="Categorias de gráficos">

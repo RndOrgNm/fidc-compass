@@ -10,7 +10,7 @@ export type GraficosEvolutionVariant = "pl" | "cota" | "both";
 export type GraficosEvolutionSectionProps = {
   variant: GraficosEvolutionVariant;
   selectedFund: string;
-  onFundChange: (value: string) => void;
+  onFundChange?: (value: string) => void;
 };
 
 /**
@@ -21,7 +21,7 @@ export type GraficosEvolutionSectionProps = {
 export function GraficosEvolutionSection({
   variant,
   selectedFund,
-  onFundChange,
+  onFundChange = () => {},
 }: GraficosEvolutionSectionProps) {
   const ariaLabel =
     variant === "both"

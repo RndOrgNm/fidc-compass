@@ -90,7 +90,7 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="graficos" className="mt-8">
-            <GraficosContent />
+            <GraficosContent fundName={selectedFundName} />
           </TabsContent>
         </Tabs>
       </div>
