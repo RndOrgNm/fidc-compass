@@ -14,7 +14,6 @@ import Agent from "./pages/Agent";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import Graficos from "./pages/Graficos";
 import Fundos from "./pages/Fundos";
 
 const queryClient = new QueryClient();
@@ -66,14 +65,7 @@ const App = () => (
                   </RequireAuth>
                 }
               />
-              <Route
-                path="/graficos"
-                element={
-                  <RequireAuth>
-                    <Graficos />
-                  </RequireAuth>
-                }
-              />
+              <Route path="/graficos" element={<Navigate to="/fundos?tab=graficos" replace />} />
               <Route
                 path="/fundos"
                 element={
@@ -86,7 +78,7 @@ const App = () => (
               <Route path="/controle-de-ativos" element={<Navigate to="/fundos" replace />} />
               <Route path="/relatorio-teste" element={<Navigate to="/fundos" replace />} />
               <Route path="/controle-de-obras" element={<Navigate to="/fundos" replace />} />
-              <Route path="/demo/plotly" element={<Navigate to="/graficos" replace />} />
+              <Route path="/demo/plotly" element={<Navigate to="/fundos?tab=graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

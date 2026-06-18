@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FileText, Users, CalendarClock } from "lucide-react";
+import { FileText, Users, CalendarClock, LineChart } from "lucide-react";
 import { AppLayout } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FundContextBar } from "@/components/fundos/FundContextBar";
 import { ControleDeAtivosContent } from "@/components/fundos/ControleDeAtivosContent";
 import { EmConstrucao } from "@/components/fundos/EmConstrucao";
 import { PrazosContent } from "@/components/fundos/PrazosContent";
+import { GraficosContent } from "@/components/fundos/GraficosContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
@@ -25,7 +26,7 @@ export default function Fundos() {
 
   // Deep-link: ?fundo=<id_carteira>&tab=prazos (e.g. from the alerts bell).
   const deepLinkFund = Number(searchParams.get("fundo")) || null;
-  const deepLinkTab = searchParams.get("tab") ?? "controle";
+  const deepLinkTab = searchParams.get("tab") ?? "prazos";
 
   const [selectedId, setSelectedId] = useState<number | null>(deepLinkFund);
   const [tab, setTab] = useState<string>(deepLinkTab);
@@ -47,11 +48,11 @@ export default function Fundos() {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
             <TabsTrigger
-              value="controle"
+              value="prazos"
               className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
-              <FileText className="h-4 w-4" />
-              Controle de Ativos
+              <CalendarClock className="h-4 w-4" />
+              Prazos
             </TabsTrigger>
             <TabsTrigger
               value="cotistas"
@@ -61,11 +62,18 @@ export default function Fundos() {
               Cotistas
             </TabsTrigger>
             <TabsTrigger
-              value="prazos"
+              value="graficos"
               className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
-              <CalendarClock className="h-4 w-4" />
-              Prazos
+              <LineChart className="h-4 w-4" />
+              Gráficos
+            </TabsTrigger>
+            <TabsTrigger
+              value="controle"
+              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <FileText className="h-4 w-4" />
+              Controle de Ativos
             </TabsTrigger>
           </TabsList>
 
@@ -79,6 +87,10 @@ export default function Fundos() {
 
           <TabsContent value="prazos" className="mt-8">
             <PrazosContent fundoId={resolvedId} fundName={selectedFundName} />
+          </TabsContent>
+
+          <TabsContent value="graficos" className="mt-8">
+            <GraficosContent />
           </TabsContent>
         </Tabs>
       </div>
