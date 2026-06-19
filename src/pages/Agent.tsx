@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ import { useChat } from "@/contexts/ChatContext";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 
 export default function Agent() {
+  const { user } = useUser();
+  const firstName = user?.fullName?.split(" ").slice(0, 2).join(" ") ?? user?.firstName ?? "";
   const location = useLocation();
   const { conversationId: conversationIdFromUrl } = useParams<{ conversationId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -474,8 +477,8 @@ export default function Agent() {
             {!isLoading ? (
           <div className="flex flex-col items-center justify-center h-full gap-6">
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-semibold">Olá! Sou seu assistente inteligente.</h2>
-              <p className="text-muted-foreground">Como posso ajudá-lo hoje?</p>
+              <h2 className="text-2xl font-semibold">Olá{firstName ? `, ${firstName}` : ""}!</h2>
+              <p className="text-muted-foreground">Como posso ajudar hoje?</p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
               <Badge 
