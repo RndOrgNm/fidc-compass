@@ -666,7 +666,7 @@ export default function Agent() {
         </div>
         <div className="px-4 pb-0 text-center">
           <p className="text-xs text-muted-foreground">
-            O Chatbot pode cometer erros. Confira informações importantes.
+            O Agente IA pode cometer erros. Confira informações importantes.
           </p>
         </div>
         </div>

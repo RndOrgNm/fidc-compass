@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
-  { title: "Chatbot", url: "/agent", icon: Bot },
+  { title: "Agente IA", url: "/agent", icon: Bot },
   { title: "Fundos", url: "/fundos", icon: Landmark },
 ];
 
@@ -82,9 +82,9 @@ export function AppSidebar() {
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/fundos" ? location.pathname.startsWith("/fundos") :
                   location.pathname === item.url;
-                // Special handling for Chatbot to reset Agent page
+                // Special handling for Agente IA to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {
-                  if (item.title === "Chatbot" && location.pathname.startsWith("/agent")) {
+                  if (item.title === "Agente IA" && location.pathname.startsWith("/agent")) {
                     e.preventDefault();
                     navigate("/agent", { replace: true, state: { reset: true } });
                   }
