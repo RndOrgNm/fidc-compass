@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +12,11 @@ const AUTO_ADVANCE_MS = 10_000;
 function SummarySlide({
   fund,
   asOfLabel,
+  onClick,
 }: {
   fund: HomeFundRow;
   asOfLabel: string;
+  onClick: () => void;
 }) {
   const name = fund.apelido ?? fund.nome;
   const badgePct = fund.variacaoDiaPct ?? null;
@@ -29,7 +32,13 @@ function SummarySlide({
   const cotaNeutral = cotaPct != null && !Number.isNaN(cotaPct) && isNeutralPercent(cotaPct, 2);
 
   return (
-    <div className="h-full min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5 lg:px-5 lg:py-5">
+    <div
+      className="h-full min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card/90 px-4 py-4 shadow-sm sm:px-5 sm:py-5 lg:px-5 lg:py-5 cursor-pointer transition-colors hover:border-primary/50 hover:bg-card"
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
+    >
       <div className="flex min-w-0 flex-col gap-1 lg:flex-row lg:items-start lg:justify-between lg:gap-2">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -218,6 +227,8 @@ export function FundSummaryCarousel({
     return clearAutoAdvance;
   }, [startAutoAdvance, list.length]);
 
+  const navigate = useNavigate();
+
   const goToPage = (index: number) => {
     api?.scrollTo(index);
     startAutoAdvance();
@@ -255,7 +266,11 @@ export function FundSummaryCarousel({
         <CarouselContent>
           {list.map((f) => (
             <CarouselItem key={f.idCarteira} className="basis-full md:basis-1/3">
-              <SummarySlide fund={f} asOfLabel={asOfLabel} />
+              <SummarySlide
+                fund={f}
+                asOfLabel={asOfLabel}
+                onClick={() => navigate(`/fundos?fundo=${f.idCarteira}`)}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>
