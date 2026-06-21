@@ -28,7 +28,7 @@ function VariationStat({ label, value }: { label: string; value: number | null |
       <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className={cn(
         "mt-0.5 font-mono text-base font-semibold tabular-nums",
-        up && "text-primary",
+        up && "text-success",
         down && "text-destructive",
         neutral && "text-foreground",
       )}>

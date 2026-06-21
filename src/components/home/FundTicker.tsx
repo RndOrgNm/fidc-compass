@@ -18,7 +18,7 @@ function DayChange({ value }: { value: number | null }) {
     <span
       className={cn(
         "inline-flex items-center gap-0.5 tabular-nums text-xs font-semibold",
-        up && "text-primary",
+        up && "text-success",
         down && "text-destructive",
         !up && !down && "text-muted-foreground",
       )}

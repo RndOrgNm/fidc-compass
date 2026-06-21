@@ -55,7 +55,7 @@ function SummarySlide({
           <span
             className={cn(
               "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums",
-              up && "bg-primary/15 text-primary",
+              up && "bg-success/15 text-success",
               down && "bg-destructive/15 text-destructive",
               !up && !down && "bg-muted text-muted-foreground",
             )}
@@ -80,7 +80,7 @@ function SummarySlide({
               <span
                 className={cn(
                   "inline-flex text-sm font-semibold tabular-nums",
-                  !pl30dNeutral && pl30dPct > 0 && "text-primary",
+                  !pl30dNeutral && pl30dPct > 0 && "text-success",
                   !pl30dNeutral && pl30dPct < 0 && "text-destructive",
                   pl30dNeutral && "text-muted-foreground",
                 )}
@@ -103,7 +103,7 @@ function SummarySlide({
               <span
                 className={cn(
                   "inline-flex text-sm font-semibold tabular-nums",
-                  !cotaNeutral && cotaPct > 0 && "text-primary",
+                  !cotaNeutral && cotaPct > 0 && "text-success",
                   !cotaNeutral && cotaPct < 0 && "text-destructive",
                   cotaNeutral && "text-muted-foreground",
                 )}

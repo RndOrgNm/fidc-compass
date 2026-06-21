@@ -90,9 +90,9 @@ export function AlertsBell() {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" aria-label="Alertas">
           <Bell className="h-5 w-5" />
-          {unread > 0 && (
+          {alertas.length > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 px-1 text-xs">
-              {unread > 99 ? "99+" : unread}
+              {alertas.length > 99 ? "99+" : alertas.length}
             </Badge>
           )}
         </Button>

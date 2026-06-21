@@ -92,7 +92,7 @@ function VariationBadge({ value }: { value: number | null }) {
     <span
       className={cn(
         "inline-flex items-center gap-0.5 tabular-nums font-medium",
-        up && "text-primary",
+        up && "text-success",
         down && "text-destructive",
         !up && !down && "text-muted-foreground",
       )}
