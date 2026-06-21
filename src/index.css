@@ -6,7 +6,8 @@
   Design tokens (HSL components only — no hsl() wrapper).
   Brand palette:
     #0D1117 — background
-    #10B981 — primary / success accent
+    #904E37 — primary accent
+    #10B981 — success accent
     #475569 — muted text, borders, secondary UI
     #fc7c78 — destructive / warning / alert accent
 */
@@ -22,7 +23,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 216 28% 7%;
 
-    --primary: 160 84% 39%;
+    --primary: 16 45% 39%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 215 16% 92%;
@@ -45,18 +46,18 @@
 
     --border: 215 16% 85%;
     --input: 215 16% 85%;
-    --ring: 160 84% 39%;
+    --ring: 16 45% 39%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 216 28% 7%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 16 45% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 216 25% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 215 19% 28%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 16 45% 39%;
   }
 
   .dark {
@@ -69,7 +70,7 @@
     --popover: 216 28% 10%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 160 84% 39%;
+    --primary: 16 45% 39%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 216 25% 12%;
@@ -92,16 +93,16 @@
 
     --border: 215 19% 22%;
     --input: 215 19% 22%;
-    --ring: 160 84% 39%;
+    --ring: 16 45% 39%;
 
     --sidebar-background: 216 28% 7%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 16 45% 39%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 216 25% 12%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 215 19% 22%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 16 45% 39%;
   }
 }
 
