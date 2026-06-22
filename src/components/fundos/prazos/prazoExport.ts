@@ -50,7 +50,7 @@ export async function exportPrazosPdf(
     body: toRows(instancias),
     startY: 26,
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [144, 78, 55], textColor: 255 },
+    headStyles: { fillColor: [122, 52, 31], textColor: 255 },
     alternateRowStyles: { fillColor: [243, 244, 246] },
     margin: { left: 14, right: 14 },
   });
