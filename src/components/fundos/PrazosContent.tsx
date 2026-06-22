@@ -78,12 +78,12 @@ function MiniCalendar({
   const startDow = first.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const byDay: Record<number, string[]> = {};
+  const byDay: Record<number, { color: string; done: boolean }[]> = {};
   instancias.forEach((i) => {
-    if (!i.data_vencimento || i.status === "CONCLUIDO") return;
+    if (!i.data_vencimento) return;
     const [y, m, d] = i.data_vencimento.split("-").map(Number);
     if (m === month + 1 && y === year) {
-      (byDay[d] = byDay[d] || []).push(CAT_META[i.categoria].color);
+      (byDay[d] = byDay[d] || []).push({ color: CAT_META[i.categoria].color, done: i.status === "CONCLUIDO" });
     }
   });
 
@@ -138,8 +138,12 @@ function MiniCalendar({
               {d}
               {pips.length > 0 && (
                 <div className="absolute bottom-[5px] flex gap-[2px]">
-                  {pips.map((color, j) => (
-                    <i key={j} className="h-1 w-1 rounded-full" style={{ background: color }} />
+                  {pips.map((pip, j) => (
+                    <i
+                      key={j}
+                      className="h-1 w-1 rounded-full"
+                      style={{ background: pip.color, opacity: pip.done ? 0.35 : 1 }}
+                    />
                   ))}
                 </div>
               )}
@@ -331,6 +335,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const [formInitial, setFormInitial] = useState<ObrigacaoFormInitial | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<InstanciaResponse | null>(null);
 
+  // Current cycle (for the agenda list)
   const query = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId) : ["prazos", "noop"],
     queryFn: () => listInstancias(fundoId as number),
@@ -338,6 +343,19 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   });
 
   const instancias = query.data?.items ?? [];
+
+  // Calendar cycle — may differ from current when user navigates forward/back
+  const currentCiclo = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const calCiclo = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
+  const isCurrentCiclo = calCiclo === currentCiclo;
+
+  const calQuery = useQuery({
+    queryKey: fundoId ? prazoKeys.instancias(fundoId, calCiclo) : ["prazos", "noop-cal"],
+    queryFn: () => listInstancias(fundoId as number, calCiclo),
+    enabled: fundoId != null && !isCurrentCiclo,
+  });
+
+  const calInstancias = isCurrentCiclo ? instancias : (calQuery.data?.items ?? []);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: prazoKeys.all });
@@ -603,7 +621,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
             </div>
 
             <MiniCalendar
-              instancias={instancias}
+              instancias={calInstancias}
               year={calYear}
               month={calMonth}
               onPrev={handlePrevMonth}
