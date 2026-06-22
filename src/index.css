@@ -5,7 +5,7 @@
 /*
   Design tokens (HSL components only — no hsl() wrapper).
   Brand palette:
-    #0D1117 — background
+    #18181b — background (dark mode)
     #7a341f — primary accent
     #10B981 — success accent
     #475569 — muted text, borders, secondary UI
@@ -61,47 +61,47 @@
   }
 
   .dark {
-    --background: 216 28% 7%;
+    --background: 240 6% 10%;
     --foreground: 0 0% 98%;
 
-    --card: 216 28% 10%;
+    --card: 240 4% 13%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 216 28% 10%;
+    --popover: 240 4% 13%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 14 59% 30%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 25% 12%;
+    --secondary: 240 4% 16%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 216 25% 12%;
-    --muted-foreground: 215 19% 35%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 215 14% 42%;
 
-    --accent: 216 25% 14%;
+    --accent: 240 3% 19%;
     --accent-foreground: 0 0% 98%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
     --warning: 2 96% 73%;
-    --warning-foreground: 216 28% 7%;
+    --warning-foreground: 240 6% 10%;
 
     --destructive: 2 96% 73%;
-    --destructive-foreground: 216 28% 7%;
+    --destructive-foreground: 240 6% 10%;
 
-    --border: 215 19% 22%;
-    --input: 215 19% 22%;
+    --border: 240 5% 26%;
+    --input: 240 5% 26%;
     --ring: 14 59% 30%;
 
-    --sidebar-background: 216 28% 7%;
+    --sidebar-background: 240 6% 8%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 14 59% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 25% 12%;
+    --sidebar-accent: 240 4% 14%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 215 19% 22%;
+    --sidebar-border: 240 5% 20%;
     --sidebar-ring: 14 59% 30%;
   }
 }
