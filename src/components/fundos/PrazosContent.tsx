@@ -427,10 +427,24 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     gatilhoMut.isPending ||
     deleteMut.isPending;
 
+  // Merge next-cycle instances whose due date falls in the current month or earlier
+  // (cross-month tasks like "15 days before 10th BDay of next month") into the main list.
+  const nextCycleItems = calQueryNext.data?.items ?? [];
+  const currentYearNum = today.getFullYear();
+  const currentMonthNum = today.getMonth() + 1;
+  const crossMonthItems = nextCycleItems.filter((i) => {
+    if (!i.data_vencimento) return false;
+    const [y, m] = i.data_vencimento.split("-").map(Number);
+    return y < currentYearNum || (y === currentYearNum && m <= currentMonthNum);
+  });
+  const allUpcoming = [...instancias, ...crossMonthItems].filter(
+    (i, idx, arr) => arr.findIndex((x) => x.id === i.id) === idx
+  );
+
   const toggleStatusFilter = (s: typeof statusFilter) =>
     setStatusFilter((prev) => (prev === s ? "todos" : s));
 
-  const filtered = instancias
+  const filtered = allUpcoming
     .filter((i) => filter === "todos" || i.categoria === filter)
     .filter((i) => statusFilter === "todos" || i.status === statusFilter);
 
@@ -448,16 +462,9 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   }, [filtered]);
 
   // KPIs (over the whole fund, unfiltered)
-  const pendentes = instancias.filter((i) => i.status === "PENDENTE").length;
+  const pendentes = allUpcoming.filter((i) => i.status === "PENDENTE").length;
   const atrasados = instancias.filter((i) => i.status === "ATRASADO").length;
   const concluidos = instancias.filter((i) => i.status === "CONCLUIDO").length;
-
-  // Include next-cycle instances so cross-month tasks (e.g. "15 days before 10th BDay of next
-  // month") are considered when computing the nearest upcoming deadline.
-  const nextCycleItems = calQueryNext.data?.items ?? [];
-  const allUpcoming = [...instancias, ...nextCycleItems].filter(
-    (i, idx, arr) => arr.findIndex((x) => x.id === i.id) === idx
-  );
   const prox = allUpcoming
     .filter((i) => i.status === "PENDENTE" && i.data_vencimento && daysFromTodayISO(i.data_vencimento) >= 0)
     .sort((a, b) => daysFromTodayISO(a.data_vencimento!) - daysFromTodayISO(b.data_vencimento!))[0];
