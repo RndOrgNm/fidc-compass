@@ -58,17 +58,16 @@ export function PlotlyFundFilterFigure({
   const [error, setError] = useState<string | null>(null);
   const [internalSelected, setInternalSelected] = useState<string>("");
 
-  const isControlled =
-    hideFundSelector &&
-    typeof onSelectedValueChange === "function" &&
-    selectedValue !== undefined;
+  // Controlled when a parent provides selectedValue (read) and optionally onSelectedValueChange (write-back).
+  const isControlled = hideFundSelector && selectedValue !== undefined;
 
   const selected = isControlled ? selectedValue! : internalSelected;
 
   const setSelected = (value: string) => {
-    if (isControlled) {
-      onSelectedValueChange!(value);
-    } else {
+    if (onSelectedValueChange) {
+      onSelectedValueChange(value);
+    }
+    if (!isControlled) {
       setInternalSelected(value);
     }
   };
