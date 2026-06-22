@@ -359,7 +359,24 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     enabled: fundoId != null && !isCurrentCiclo,
   });
 
-  const calInstancias = isCurrentCiclo ? instancias : (calQuery.data?.items ?? []);
+  // Also fetch the NEXT cycle so cross-month tasks (e.g. "15 days before 10th business day
+  // of next month") have their dot shown in the correct calendar month.
+  const nextCalDate = new Date(calYear, calMonth + 1, 1);
+  const calCicloNext = `${nextCalDate.getFullYear()}-${String(nextCalDate.getMonth() + 1).padStart(2, "0")}`;
+
+  const calQueryNext = useQuery({
+    queryKey: fundoId ? prazoKeys.instancias(fundoId, calCicloNext) : ["prazos", "noop-cal-next"],
+    queryFn: async () => {
+      await reconcile(calCicloNext).catch(() => {});
+      return listInstancias(fundoId as number, calCicloNext);
+    },
+    enabled: fundoId != null,
+  });
+
+  const calInstancias = [
+    ...(isCurrentCiclo ? instancias : (calQuery.data?.items ?? [])),
+    ...(calQueryNext.data?.items ?? []),
+  ];
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: prazoKeys.all });
