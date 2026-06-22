@@ -31,7 +31,7 @@ export function useTeamMembers(): { members: TeamMember[]; isLoaded: boolean } {
             imageUrl: d.imageUrl ?? undefined,
           };
         });
-        console.log("[useTeamMembers] getMemberships →", mapped);
+        console.log("[useTeamMembers] orgId:", organization.id, "orgName:", organization.name, "getMemberships →", mapped);
         setMembers(mapped);
         setIsLoaded(true);
       })
