@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useOrganization } from "@clerk/clerk-react";
 
 export interface TeamMember {
@@ -8,28 +9,37 @@ export interface TeamMember {
 }
 
 export function useTeamMembers(): { members: TeamMember[]; isLoaded: boolean } {
-  const { isLoaded, organization, memberships } = useOrganization({
-    memberships: { pageSize: 100 },
-  });
+  const { organization } = useOrganization();
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  console.log("[useTeamMembers]", { isLoaded, orgId: organization?.id, orgName: organization?.name, memberCount: memberships?.count, data: memberships?.data?.map(m => ({ userId: m.publicUserData?.userId, email: m.publicUserData?.identifier })) });
+  useEffect(() => {
+    if (!organization) return;
+    setIsLoaded(false);
+    organization
+      .getMemberships({ limit: 100 })
+      .then(({ data }) => {
+        const mapped = data.map((m) => {
+          const d = m.publicUserData;
+          const nome =
+            [d.firstName, d.lastName].filter(Boolean).join(" ").trim() ||
+            d.identifier;
+          return {
+            id: d.userId,
+            nome,
+            email: d.identifier,
+            imageUrl: d.imageUrl ?? undefined,
+          };
+        });
+        console.log("[useTeamMembers] getMemberships →", mapped);
+        setMembers(mapped);
+        setIsLoaded(true);
+      })
+      .catch((err) => {
+        console.error("[useTeamMembers] error", err);
+        setIsLoaded(true);
+      });
+  }, [organization]);
 
-  if (!isLoaded || !memberships?.data) {
-    return { members: [], isLoaded: false };
-  }
-
-  const members: TeamMember[] = memberships.data.map((m) => {
-    const d = m.publicUserData;
-    const nome =
-      [d.firstName, d.lastName].filter(Boolean).join(" ").trim() ||
-      d.identifier;
-    return {
-      id: d.userId,
-      nome,
-      email: d.identifier,
-      imageUrl: d.imageUrl ?? undefined,
-    };
-  });
-
-  return { members, isLoaded: true };
+  return { members, isLoaded };
 }
