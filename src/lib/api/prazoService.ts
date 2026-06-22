@@ -30,6 +30,10 @@ export interface ObrigacaoResponse {
   ativa: boolean;
   criado_por: string | null;
   criado_em: string;
+  descricao?: string | null;
+  responsavel_id?: string | null;
+  responsavel_nome?: string | null;
+  responsavel_email?: string | null;
 }
 
 export interface ObrigacaoListResponse {
@@ -52,6 +56,10 @@ export interface InstanciaResponse {
   status: PrazoStatus;
   concluido_por: string | null;
   concluido_em: string | null;
+  descricao?: string | null;
+  responsavel_id?: string | null;
+  responsavel_nome?: string | null;
+  responsavel_email?: string | null;
 }
 
 export interface InstanciaListResponse {
@@ -85,6 +93,10 @@ export interface ObrigacaoCreateRequest {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   criado_por?: string;
+  descricao?: string;
+  responsavel_id?: string;
+  responsavel_nome?: string;
+  responsavel_email?: string;
 }
 
 export interface ObrigacaoUpdateRequest {
@@ -93,6 +105,10 @@ export interface ObrigacaoUpdateRequest {
   tipo_prazo?: TipoPrazo;
   parametros?: Record<string, number>;
   antecedencia_alerta_dias?: number;
+  descricao?: string;
+  responsavel_id?: string;
+  responsavel_nome?: string;
+  responsavel_email?: string;
 }
 
 // ── Fetch helper ──────────────────────────────────────────────────────────────

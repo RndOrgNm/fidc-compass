@@ -128,6 +128,9 @@ export function AlertsBell() {
                         <div className="truncate text-sm font-medium">{a.topico}</div>
                         <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
                           {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
+                          {a.responsavel_nome && (
+                            <> · {a.responsavel_nome}</>
+                          )}
                         </div>
                       </div>
                       <span className={cn("inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>

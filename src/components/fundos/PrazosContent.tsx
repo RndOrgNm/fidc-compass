@@ -221,6 +221,16 @@ function PrazoItem({
           </span>
         </div>
 
+        {inst.descricao && (
+          <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{inst.descricao}</p>
+        )}
+
+        {inst.responsavel_nome && (
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            Responsável: <span className="font-medium text-foreground">{inst.responsavel_nome}</span>
+          </p>
+        )}
+
         {/* Gatilho inline editor */}
         {isAguardando && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -415,10 +425,14 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     setFormInitial({
       id: i.obrigacao_id,
       topico: i.topico,
+      descricao: i.descricao,
       categoria: i.categoria,
       tipo_prazo: i.tipo_prazo,
       parametros: i.parametros,
       antecedencia_alerta_dias: i.antecedencia_alerta_dias,
+      responsavel_id: i.responsavel_id,
+      responsavel_nome: i.responsavel_nome,
+      responsavel_email: i.responsavel_email,
     });
     setFormOpen(true);
   };

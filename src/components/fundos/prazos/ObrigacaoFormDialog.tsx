@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ import {
 } from "@/lib/api/prazoService";
 import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
 import { CAT_META, CAT_ORDER, TIPO_LABEL } from "./prazoMeta";
+import { ResponsavelSelect } from "./ResponsavelSelect";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 const TIPOS: TipoPrazo[] = [
   "DIA_FIXO",
@@ -54,6 +57,7 @@ const optInt = (min: number, max: number) =>
 const schema = z
   .object({
     topico: z.string().trim().min(1, "Informe o tópico"),
+    descricao: z.string().trim().optional(),
     categoria: z.enum(["REGULATORIO", "OPERACIONAL", "RECEBIVEL", "COTISTA"]),
     tipo_prazo: z.enum([
       "DIA_FIXO",
@@ -63,6 +67,7 @@ const schema = z
       "FINAL_DO_MES",
     ]),
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
+    responsavel_id: z.string().optional(),
     dia: optInt(1, 31),
     n_util: optInt(1, 23),
     dias_antes: optInt(0, 90),
@@ -109,10 +114,14 @@ function buildParametros(v: FormValues): Record<string, number> {
 export interface ObrigacaoFormInitial {
   id?: string;
   topico: string;
+  descricao?: string | null;
   categoria: Categoria;
   tipo_prazo: TipoPrazo;
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
+  responsavel_id?: string | null;
+  responsavel_nome?: string | null;
+  responsavel_email?: string | null;
 }
 
 interface Props {
@@ -124,6 +133,7 @@ interface Props {
 
 export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Props) {
   const { user } = useUser();
+  const { members, isLoaded: membersLoaded } = useTeamMembers();
   const queryClient = useQueryClient();
   const isEdit = Boolean(initial?.id);
 
@@ -138,50 +148,76 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
     resolver: zodResolver(schema),
     defaultValues: {
       topico: "",
+      descricao: "",
       categoria: "REGULATORIO",
       tipo_prazo: "DIA_FIXO",
       antecedencia_alerta_dias: 7,
+      responsavel_id: undefined,
     },
   });
 
   // Refill the form whenever the dialog opens (create resets, edit prefills).
   useEffect(() => {
     if (!open) return;
+    const defaultResponsavel =
+      initial?.responsavel_id ??
+      (membersLoaded && members.some((m) => m.id === user?.id)
+        ? user?.id
+        : undefined);
     reset({
       topico: initial?.topico ?? "",
+      descricao: initial?.descricao ?? "",
       categoria: initial?.categoria ?? "REGULATORIO",
       tipo_prazo: initial?.tipo_prazo ?? "DIA_FIXO",
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
+      responsavel_id: defaultResponsavel,
       dia: initial?.parametros?.dia,
       n_util: initial?.parametros?.n_util,
       dias_antes: initial?.parametros?.dias_antes,
       ref_util: initial?.parametros?.ref_util,
       dias_apos: initial?.parametros?.dias_apos,
     });
-  }, [open, initial, reset]);
+  }, [open, initial, reset, user?.id, membersLoaded, members]);
 
   const tipo = watch("tipo_prazo");
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
       const parametros = buildParametros(values);
+      const selectedMember = members.find((m) => m.id === values.responsavel_id);
+      const responsavelFields = selectedMember
+        ? {
+            responsavel_id: selectedMember.id,
+            responsavel_nome: selectedMember.nome,
+            responsavel_email: selectedMember.email,
+          }
+        : {
+            responsavel_id: undefined,
+            responsavel_nome: undefined,
+            responsavel_email: undefined,
+          };
+
       if (isEdit && initial?.id) {
         return updateObrigacao(initial.id, {
           topico: values.topico,
+          descricao: values.descricao || undefined,
           categoria: values.categoria,
           tipo_prazo: values.tipo_prazo,
           parametros,
           antecedencia_alerta_dias: values.antecedencia_alerta_dias,
+          ...responsavelFields,
         });
       }
       return createObrigacao({
         fundo_id: fundoId,
         topico: values.topico,
+        descricao: values.descricao || undefined,
         categoria: values.categoria,
         tipo_prazo: values.tipo_prazo,
         parametros,
         antecedencia_alerta_dias: values.antecedencia_alerta_dias,
         criado_por: user?.id,
+        ...responsavelFields,
       });
     },
     onSuccess: () => {
@@ -223,7 +259,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar obrigação" : "Nova obrigação"}</DialogTitle>
           <DialogDescription>
@@ -242,6 +278,17 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             {errors.topico && (
               <p className="text-[11px] text-destructive">{errors.topico.message}</p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="descricao">Descrição <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+            <Textarea
+              id="descricao"
+              placeholder="Detalhes adicionais sobre a obrigação…"
+              rows={2}
+              className="resize-none"
+              {...register("descricao")}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -309,19 +356,36 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="antecedencia_alerta_dias">Antecedência do alerta (dias)</Label>
-            <Input
-              id="antecedencia_alerta_dias"
-              type="number"
-              className="w-32"
-              {...register("antecedencia_alerta_dias")}
-            />
-            {errors.antecedencia_alerta_dias && (
-              <p className="text-[11px] text-destructive">
-                {errors.antecedencia_alerta_dias.message}
-              </p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="antecedencia_alerta_dias">Antecedência do alerta (dias)</Label>
+              <Input
+                id="antecedencia_alerta_dias"
+                type="number"
+                {...register("antecedencia_alerta_dias")}
+              />
+              {errors.antecedencia_alerta_dias && (
+                <p className="text-[11px] text-destructive">
+                  {errors.antecedencia_alerta_dias.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Responsável</Label>
+              <Controller
+                control={control}
+                name="responsavel_id"
+                render={({ field }) => (
+                  <ResponsavelSelect
+                    members={members}
+                    isLoaded={membersLoaded}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </div>
           </div>
 
           <DialogFooter>

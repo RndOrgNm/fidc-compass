@@ -1,5 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useOrganizationList } from "@clerk/clerk-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AlertsBell } from "@/components/layout/AlertsBell";
@@ -29,6 +30,15 @@ function getPageTitle(pathname: string, override?: string): string {
   return "GIAA Compass";
 }
 
+function OrgBootstrap() {
+  const { isLoaded, setActive, userMemberships } = useOrganizationList({ userMemberships: true });
+  useEffect(() => {
+    if (!isLoaded || !userMemberships?.data?.length) return;
+    setActive({ organization: userMemberships.data[0].organization.id });
+  }, [isLoaded, userMemberships?.data?.length]);
+  return null;
+}
+
 export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
   const location = useLocation();
 
@@ -40,6 +50,7 @@ export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
+      <OrgBootstrap />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         

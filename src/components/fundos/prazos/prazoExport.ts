@@ -1,12 +1,13 @@
 import type { InstanciaResponse } from "@/lib/api/prazoService";
 import { CAT_META, TIPO_LABEL, STATUS_META, displayStatus, formatVencBr } from "./prazoMeta";
 
-// Columns shared by PDF and Excel: tópico, categoria, tipo, vencimento, status.
-const HEADERS = ["Tópico", "Categoria", "Tipo", "Vencimento", "Status"];
+const HEADERS = ["Tópico", "Descrição", "Responsável", "Categoria", "Tipo", "Vencimento", "Status"];
 
 function toRows(instancias: InstanciaResponse[]): string[][] {
   return instancias.map((i) => [
     i.topico,
+    i.descricao ?? "",
+    i.responsavel_nome ?? "",
     CAT_META[i.categoria].label,
     TIPO_LABEL[i.tipo_prazo],
     formatVencBr(i.data_vencimento),
@@ -20,7 +21,7 @@ export async function exportPrazosExcel(
 ): Promise<void> {
   const { utils, writeFile } = await import("xlsx");
   const ws = utils.aoa_to_sheet([HEADERS, ...toRows(instancias)]);
-  ws["!cols"] = [{ wch: 38 }, { wch: 14 }, { wch: 22 }, { wch: 13 }, { wch: 20 }];
+  ws["!cols"] = [{ wch: 36 }, { wch: 30 }, { wch: 22 }, { wch: 14 }, { wch: 22 }, { wch: 13 }, { wch: 20 }];
   const wb = utils.book_new();
   utils.book_append_sheet(wb, ws, "Prazos");
   writeFile(wb, `${filename}.xlsx`);
@@ -49,7 +50,7 @@ export async function exportPrazosPdf(
     body: toRows(instancias),
     startY: 26,
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+    headStyles: { fillColor: [144, 78, 55], textColor: 255 },
     alternateRowStyles: { fillColor: [243, 244, 246] },
     margin: { left: 14, right: 14 },
   });
