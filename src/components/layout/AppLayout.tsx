@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useOrganizationList } from "@clerk/clerk-react";
+import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AlertsBell } from "@/components/layout/AlertsBell";
@@ -32,10 +32,12 @@ function getPageTitle(pathname: string, override?: string): string {
 
 function OrgBootstrap() {
   const { isLoaded, setActive, userMemberships } = useOrganizationList({ userMemberships: true });
+  const { organization } = useOrganization();
+
   useEffect(() => {
-    if (!isLoaded || !userMemberships?.data?.length) return;
-    setActive({ organization: userMemberships.data[0].organization.id });
-  }, [isLoaded, userMemberships?.data?.length]);
+    if (!isLoaded || organization || !userMemberships?.data?.length) return;
+    setActive({ organization: userMemberships.data[0].organization.id }).catch(console.error);
+  }, [isLoaded, organization, setActive, userMemberships?.data]);
   return null;
 }
 
