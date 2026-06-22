@@ -197,6 +197,12 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             responsavel_email: undefined,
           };
 
+      const actorNome =
+        user?.fullName ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+        user?.primaryEmailAddress?.emailAddress ||
+        "";
+
       if (isEdit && initial?.id) {
         return updateObrigacao(initial.id, {
           topico: values.topico,
@@ -205,6 +211,8 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
           tipo_prazo: values.tipo_prazo,
           parametros,
           antecedencia_alerta_dias: values.antecedencia_alerta_dias,
+          atualizado_por: user?.id,
+          atualizado_por_nome: actorNome,
           ...responsavelFields,
         });
       }
@@ -217,6 +225,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
         parametros,
         antecedencia_alerta_dias: values.antecedencia_alerta_dias,
         criado_por: user?.id,
+        criado_por_nome: actorNome,
         ...responsavelFields,
       });
     },

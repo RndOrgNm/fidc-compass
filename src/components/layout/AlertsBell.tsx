@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, CheckCircle2, ChevronRight, Loader2 } from "lucide-react";
+import { Bell, CheckCircle2, ChevronRight, Loader2, UserCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,27 @@ import { toast } from "@/hooks/use-toast";
 
 import {
   listAlertas,
+  listAssignmentNotifs,
   concluirInstancia,
   marcarAlertaLido,
+  markAssignmentRead,
   type AlertaResponse,
+  type AssignmentNotifResponse,
 } from "@/lib/api/prazoService";
-import { alertaKeys, prazoKeys } from "@/lib/queryKeys";
+import { alertaKeys, assignmentKeys, prazoKeys } from "@/lib/queryKeys";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import { STATUS_META, displayStatus, formatVencBr } from "@/components/fundos/prazos/prazoMeta";
+
+function relativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  return `há ${d}d`;
+}
 
 export function AlertsBell() {
   const { user } = useUser();
@@ -44,7 +58,7 @@ export function AlertsBell() {
     return map;
   }, [home?.fundos]);
 
-  const query = useQuery({
+  const alertaQuery = useQuery({
     queryKey: alertaKeys.list(userId),
     queryFn: () => listAlertas(userId),
     enabled: Boolean(userId),
@@ -52,15 +66,27 @@ export function AlertsBell() {
     staleTime: 30_000,
   });
 
-  const alertas = query.data?.items ?? [];
-  const unread = query.data?.unread_count ?? 0;
+  const assignmentQuery = useQuery({
+    queryKey: assignmentKeys.list(userId),
+    queryFn: () => listAssignmentNotifs(userId),
+    enabled: Boolean(userId),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const alertas = alertaQuery.data?.items ?? [];
+  const assignments = assignmentQuery.data?.items ?? [];
+  const unreadAssignments = assignments.filter((a) => a.lido_em === null);
+
+  // Badge = deadline alerts (always shown) + unread assignment notifs
+  const badgeCount = alertas.length + unreadAssignments.length;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: alertaKeys.all });
     queryClient.invalidateQueries({ queryKey: prazoKeys.all });
   };
 
-  // Opening the panel marks the displayed alerts as read for this user.
+  // Opening the panel marks deadline alerts as read — assignments persist until clicked.
   useEffect(() => {
     if (!open || !userId) return;
     const unreadIds = alertas.filter((a) => !a.lido).map((a) => a.id);
@@ -85,14 +111,24 @@ export function AlertsBell() {
     navigate(`/fundos?fundo=${a.fundo_id}&tab=prazos`);
   };
 
+  const verAssignment = async (n: AssignmentNotifResponse) => {
+    await markAssignmentRead(n.id).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
+    setOpen(false);
+    navigate(`/fundos?fundo=${n.fundo_id}&tab=prazos`);
+  };
+
+  const isLoading = alertaQuery.isLoading || assignmentQuery.isLoading;
+  const isEmpty = alertas.length === 0 && assignments.length === 0;
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" aria-label="Alertas">
           <Bell className="h-5 w-5" />
-          {alertas.length > 0 && (
+          {badgeCount > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 px-1 text-xs">
-              {alertas.length > 99 ? "99+" : alertas.length}
+              {badgeCount > 99 ? "99+" : badgeCount}
             </Badge>
           )}
         </Button>
@@ -100,72 +136,124 @@ export function AlertsBell() {
 
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
         <SheetHeader className="border-b px-5 py-4">
-          <SheetTitle>Alertas de prazos</SheetTitle>
+          <SheetTitle>Notificações</SheetTitle>
           <SheetDescription>
-            Obrigações em janela de alerta ou atrasadas em todo o portfólio.
+            Atribuições e prazos ativos em todo o portfólio.
           </SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          {query.isLoading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
             </div>
-          ) : alertas.length === 0 ? (
+          ) : isEmpty ? (
             <div className="py-16 text-center">
               <CheckCircle2 className="mx-auto h-8 w-8 text-primary/60" />
               <p className="mt-3 text-sm font-medium">Tudo em dia</p>
-              <p className="mt-1 text-[13px] text-muted-foreground">Nenhum alerta ativo no momento.</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">Nenhuma notificação no momento.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
-              {alertas.map((a) => {
-                const st = STATUS_META[displayStatus(a)];
-                return (
-                  <li key={a.id} className={cn("px-5 py-3.5", !a.lido && "bg-primary/[0.04]")}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">{a.topico}</div>
-                        <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                          {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
-                          {a.responsavel_nome && (
-                            <> · {a.responsavel_nome}</>
-                          )}
+            <>
+              {/* ── Assignment notifications ── */}
+              {assignments.length > 0 && (
+                <div>
+                  <p className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Atribuições
+                  </p>
+                  <ul className="divide-y divide-border">
+                    {assignments.map((n) => (
+                      <li
+                        key={n.id}
+                        className={cn("px-5 py-3.5", n.lido_em === null && "bg-primary/[0.04]")}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <UserCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+                              <span className="truncate text-sm font-medium">{n.topico}</span>
+                            </div>
+                            <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                              {n.assigned_by_nome} atribuiu você a esta tarefa
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {relativeTime(n.criado_em)}
+                          </span>
                         </div>
-                      </div>
-                      <span className={cn("inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
-                        {st.icon}
-                        {st.label}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        Vence {formatVencBr(a.data_vencimento)}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 gap-1 px-2 text-[11px]"
-                          disabled={concluirMut.isPending}
-                          onClick={() => concluirMut.mutate(a)}
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 gap-0.5 px-2 text-[11px]"
-                          onClick={() => verDetalhes(a)}
-                        >
-                          Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                        <div className="mt-1 flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 gap-0.5 px-2 text-[11px]"
+                            onClick={() => verAssignment(n)}
+                          >
+                            Ver <ChevronRight className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* ── Deadline alerts ── */}
+              {alertas.length > 0 && (
+                <div>
+                  {assignments.length > 0 && (
+                    <p className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground border-t">
+                      Prazos
+                    </p>
+                  )}
+                  <ul className="divide-y divide-border">
+                    {alertas.map((a) => {
+                      const st = STATUS_META[displayStatus(a)];
+                      return (
+                        <li key={a.id} className={cn("px-5 py-3.5", !a.lido && "bg-primary/[0.04]")}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-medium">{a.topico}</div>
+                              <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
+                                {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
+                                {a.responsavel_nome && <> · {a.responsavel_nome}</>}
+                              </div>
+                            </div>
+                            <span className={cn("inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
+                              {st.icon}
+                              {st.label}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <span className="font-mono text-[11px] text-muted-foreground">
+                              Vence {formatVencBr(a.data_vencimento)}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 gap-1 px-2 text-[11px]"
+                                disabled={concluirMut.isPending}
+                                onClick={() => concluirMut.mutate(a)}
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Concluir
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 gap-0.5 px-2 text-[11px]"
+                                onClick={() => verDetalhes(a)}
+                              >
+                                Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </ScrollArea>
       </SheetContent>

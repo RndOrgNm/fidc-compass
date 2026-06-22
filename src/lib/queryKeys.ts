@@ -17,3 +17,8 @@ export const alertaKeys = {
   /** Active alerts for a user (drives the bell badge). */
   list: (usuarioId: string) => ["alertas", usuarioId] as const,
 };
+
+export const assignmentKeys = {
+  all: ["assignments"] as const,
+  list: (usuarioId: string) => ["assignments", usuarioId] as const,
+};

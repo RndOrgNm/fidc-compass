@@ -83,6 +83,22 @@ export interface ReconcileResponse {
   existentes: number;
 }
 
+export interface AssignmentNotifResponse {
+  id: string;
+  obrigacao_id: string;
+  fundo_id: number;
+  topico: string;
+  assigned_by_nome: string;
+  criado_em: string;
+  lido_em: string | null;
+}
+
+export interface AssignmentNotifListResponse {
+  items: AssignmentNotifResponse[];
+  total: number;
+  unread_count: number;
+}
+
 // ── Request shapes ────────────────────────────────────────────────────────────
 
 export interface ObrigacaoCreateRequest {
@@ -93,6 +109,7 @@ export interface ObrigacaoCreateRequest {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   criado_por?: string;
+  criado_por_nome?: string;
   descricao?: string;
   responsavel_id?: string;
   responsavel_nome?: string;
@@ -109,6 +126,8 @@ export interface ObrigacaoUpdateRequest {
   responsavel_id?: string;
   responsavel_nome?: string;
   responsavel_email?: string;
+  atualizado_por?: string;
+  atualizado_por_nome?: string;
 }
 
 // ── Fetch helper ──────────────────────────────────────────────────────────────
@@ -232,6 +251,21 @@ export async function marcarAlertaLido(
   const response = await fetch(
     `${FUNDS_API_BASE_URL}/prazos/alertas/${instanciaId}/ler`,
     { method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ usuario_id: usuarioId }) }
+  );
+  await handleResponse<void>(response);
+}
+
+export async function listAssignmentNotifs(
+  usuarioId: string
+): Promise<AssignmentNotifListResponse> {
+  const url = `${FUNDS_API_BASE_URL}/prazos/alertas/assignments?usuario_id=${encodeURIComponent(usuarioId)}`;
+  return handleResponse<AssignmentNotifListResponse>(await fetch(url));
+}
+
+export async function markAssignmentRead(notifId: string): Promise<void> {
+  const response = await fetch(
+    `${FUNDS_API_BASE_URL}/prazos/alertas/assignments/${notifId}/ler`,
+    { method: "POST" }
   );
   await handleResponse<void>(response);
 }
