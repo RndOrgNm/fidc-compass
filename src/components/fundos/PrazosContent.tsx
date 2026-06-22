@@ -36,6 +36,7 @@ import {
   reabrirInstancia,
   registrarGatilho,
   deleteObrigacao,
+  reconcile,
   type Categoria,
   type InstanciaResponse,
 } from "@/lib/api/prazoService";
@@ -351,7 +352,10 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
   const calQuery = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId, calCiclo) : ["prazos", "noop-cal"],
-    queryFn: () => listInstancias(fundoId as number, calCiclo),
+    queryFn: async () => {
+      await reconcile(calCiclo).catch(() => {});
+      return listInstancias(fundoId as number, calCiclo);
+    },
     enabled: fundoId != null && !isCurrentCiclo,
   });
 
