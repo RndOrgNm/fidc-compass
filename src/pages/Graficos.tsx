@@ -39,6 +39,7 @@ const PL_CONCENTRACAO_ATIVOS_SLIDE = {
   file: "concentracao-ativos-top10.json",
   caption: "Concentração por ativo (top 10) — % do PL",
   filterable: true,
+  hideFundSelector: true,
 } as const satisfies PlotlyCarouselSlide;
 
 const PL_COMPOSICAO_TREEMAP_SLIDE = {
@@ -200,7 +201,11 @@ export default function Graficos() {
                     <h2 className="text-lg font-semibold text-foreground">Concentração</h2>
                     <div className="space-y-8">
                       <PlotlySlideCard slide={PL_COMPOSICAO_TREEMAP_SLIDE} />
-                      <PlotlySlideCard slide={PL_CONCENTRACAO_ATIVOS_SLIDE} />
+                      <PlotlySlideCard
+                        slide={PL_CONCENTRACAO_ATIVOS_SLIDE}
+                        selectedFund={selectedFund}
+                        onFundChange={setSelectedFund}
+                      />
                     </div>
                   </section>
                 </div>
