@@ -328,6 +328,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const queryClient = useQueryClient();
 
   const [filter, setFilter] = useState<Categoria | "todos">("todos");
+  const [statusFilter, setStatusFilter] = useState<"todos" | "PENDENTE" | "ATRASADO" | "CONCLUIDO">("todos");
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
@@ -426,7 +427,12 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     gatilhoMut.isPending ||
     deleteMut.isPending;
 
-  const filtered = filter === "todos" ? instancias : instancias.filter((i) => i.categoria === filter);
+  const toggleStatusFilter = (s: typeof statusFilter) =>
+    setStatusFilter((prev) => (prev === s ? "todos" : s));
+
+  const filtered = instancias
+    .filter((i) => filter === "todos" || i.categoria === filter)
+    .filter((i) => statusFilter === "todos" || i.status === statusFilter);
 
   const groups = useMemo(() => {
     const dias = (i: InstanciaResponse) =>
@@ -560,35 +566,70 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
         <>
           {/* KPI cards */}
           <div className="mb-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-            <div className="rounded-lg border border-border bg-card/50 px-4 py-3.5">
+            <button
+              type="button"
+              onClick={() => toggleStatusFilter("PENDENTE")}
+              className={cn(
+                "rounded-lg border px-4 py-3.5 text-left transition-colors hover:bg-card/80",
+                statusFilter === "PENDENTE"
+                  ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30"
+                  : "border-border bg-card/50"
+              )}
+            >
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Próximo prazo</div>
               <div className="mt-2 flex items-baseline gap-1.5 text-2xl font-semibold tabular-nums">
                 {proxDias != null ? proxDias : "—"}
                 {proxDias != null && <small className="text-sm font-normal text-muted-foreground">{proxDias === 1 ? "dia" : "dias"}</small>}
               </div>
               <div className="mt-1.5 truncate text-[11px] text-muted-foreground">{prox ? prox.topico : "—"}</div>
-            </div>
+            </button>
 
-            <div className="rounded-lg border border-border bg-card/50 px-4 py-3.5">
+            <button
+              type="button"
+              onClick={() => toggleStatusFilter("PENDENTE")}
+              className={cn(
+                "rounded-lg border px-4 py-3.5 text-left transition-colors hover:bg-card/80",
+                statusFilter === "PENDENTE"
+                  ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30"
+                  : "border-border bg-card/50"
+              )}
+            >
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pendentes</div>
               <div className="mt-2 text-2xl font-semibold tabular-nums">{pendentes}</div>
               <div className="mt-1.5 text-[11px] text-muted-foreground">aguardando ação</div>
-            </div>
+            </button>
 
-            <div className={cn(
-              "rounded-lg border bg-card/50 px-4 py-3.5",
-              atrasados > 0 ? "border-destructive/40 bg-destructive/5" : "border-border"
-            )}>
+            <button
+              type="button"
+              onClick={() => toggleStatusFilter("ATRASADO")}
+              className={cn(
+                "rounded-lg border px-4 py-3.5 text-left transition-colors",
+                statusFilter === "ATRASADO"
+                  ? "border-destructive/60 bg-destructive/10 ring-1 ring-destructive/30"
+                  : atrasados > 0
+                  ? "border-destructive/40 bg-destructive/5 hover:bg-destructive/10"
+                  : "border-border bg-card/50 hover:bg-card/80"
+              )}
+            >
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Atrasados</div>
               <div className={cn("mt-2 text-2xl font-semibold tabular-nums", atrasados > 0 && "text-destructive")}>{atrasados}</div>
               <div className="mt-1.5 text-[11px] text-muted-foreground">requer atenção</div>
-            </div>
+            </button>
 
-            <div className="rounded-lg border border-border bg-card/50 px-4 py-3.5">
+            <button
+              type="button"
+              onClick={() => toggleStatusFilter("CONCLUIDO")}
+              className={cn(
+                "rounded-lg border px-4 py-3.5 text-left transition-colors hover:bg-card/80",
+                statusFilter === "CONCLUIDO"
+                  ? "border-primary/60 bg-primary/10 ring-1 ring-primary/30"
+                  : "border-border bg-card/50"
+              )}
+            >
               <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Concluídos no mês</div>
               <div className="mt-2 text-2xl font-semibold tabular-nums">{concluidos}</div>
               <div className="mt-1.5 text-[11px] text-muted-foreground">entregues no prazo</div>
-            </div>
+            </button>
           </div>
 
           {/* Category filters */}
