@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-  <polyline points="16 7 22 7 22 13"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" fill="none" stroke="#7a341f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Left tall building: angled top-left -->
+  <path d="M7 133 L7 30 L26 8 L52 8 L52 133"/>
+  <!-- Left building inner step (creates the stepped G-shape) -->
+  <polyline points="52,44 34,44 34,66 52,66"/>
+  <!-- Right building, visible above step and behind left -->
+  <path d="M52 133 L52 36 L78 36 L78 22 L94 22 L94 133"/>
+  <!-- Shared base -->
+  <line x1="7" y1="133" x2="94" y2="133"/>
 </svg>

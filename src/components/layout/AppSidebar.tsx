@@ -1,4 +1,4 @@
-import { Home, Bot, TrendingUp, Landmark, LogOut } from "lucide-react";
+import { Home, Bot, Landmark, LogOut } from "lucide-react";
 // import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useClerk, useUser } from "@clerk/clerk-react";
@@ -59,7 +59,7 @@ export function AppSidebar() {
           to="/"
           className="flex items-center gap-3 rounded-md p-2 -mx-2 hover:bg-sidebar-accent/50 transition-colors min-h-0 overflow-visible"
         >
-          <TrendingUp className="h-8 w-8 text-primary shrink-0" />
+          <img src="/logo-mark-white.png" alt="GIAA" className="h-8 w-8 shrink-0 object-contain" />
           {!collapsed && (
             <div className="min-w-0 flex flex-col justify-center overflow-visible">
               <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">
