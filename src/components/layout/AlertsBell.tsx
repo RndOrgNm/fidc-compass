@@ -119,7 +119,7 @@ export function AlertsBell() {
   };
 
   const isLoading = alertaQuery.isLoading || assignmentQuery.isLoading;
-  const isEmpty = alertas.length === 0 && assignments.length === 0;
+  const isEmpty = alertas.length === 0 && unreadAssignments.length === 0;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -156,13 +156,13 @@ export function AlertsBell() {
           ) : (
             <>
               {/* ── Assignment notifications ── */}
-              {assignments.length > 0 && (
+              {unreadAssignments.length > 0 && (
                 <div>
                   <p className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Atribuições
                   </p>
                   <ul className="divide-y divide-border">
-                    {assignments.map((n) => (
+                    {unreadAssignments.map((n) => (
                       <li
                         key={n.id}
                         className={cn("px-5 py-3.5", n.lido_em === null && "bg-primary/[0.04]")}
@@ -198,7 +198,7 @@ export function AlertsBell() {
               {/* ── Deadline alerts ── */}
               {alertas.length > 0 && (
                 <div>
-                  {assignments.length > 0 && (
+                  {unreadAssignments.length > 0 && (
                     <p className="px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground border-t">
                       Prazos
                     </p>
