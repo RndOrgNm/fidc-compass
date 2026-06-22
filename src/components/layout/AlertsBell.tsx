@@ -143,7 +143,6 @@ export function AlertsBell() {
         </SheetHeader>
 
         <ScrollArea className="flex-1">
-          <div className="pr-3">
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
@@ -168,15 +167,13 @@ export function AlertsBell() {
                         key={n.id}
                         className={cn("px-5 py-3.5", n.lido_em === null && "bg-primary/[0.04]")}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <UserCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
-                              <span className="truncate text-sm font-medium">{n.topico}</span>
-                            </div>
-                            <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                              {n.assigned_by_nome} atribuiu você a esta tarefa
-                            </div>
+                        <div className="flex items-center gap-1.5">
+                          <UserCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span className="truncate text-sm font-medium">{n.topico}</span>
+                        </div>
+                        <div className="mt-0.5 flex items-center justify-between gap-2">
+                          <div className="min-w-0 truncate text-[12px] text-muted-foreground">
+                            {n.assigned_by_nome} atribuiu você a esta tarefa
                           </div>
                           <span className="shrink-0 text-[11px] text-muted-foreground">
                             {relativeTime(n.criado_em)}
@@ -211,15 +208,13 @@ export function AlertsBell() {
                       const st = STATUS_META[displayStatus(a)];
                       return (
                         <li key={a.id} className={cn("px-5 py-3.5", !a.lido && "bg-primary/[0.04]")}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="truncate text-sm font-medium">{a.topico}</div>
-                              <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
-                                {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
-                                {a.responsavel_nome && <> · {a.responsavel_nome}</>}
-                              </div>
+                          <div className="truncate text-sm font-medium">{a.topico}</div>
+                          <div className="mt-0.5 flex items-center justify-between gap-2">
+                            <div className="min-w-0 truncate text-[12px] text-muted-foreground">
+                              {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
+                              {a.responsavel_nome && <> · {a.responsavel_nome}</>}
                             </div>
-                            <span className={cn("inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
+                            <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
                               {st.icon}
                               {st.label}
                             </span>
@@ -256,7 +251,6 @@ export function AlertsBell() {
               )}
             </>
           )}
-          </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>
