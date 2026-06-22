@@ -484,9 +484,17 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const pendentes = allUpcoming.filter((i) => i.status === "PENDENTE").length;
   const atrasados = instancias.filter((i) => i.status === "ATRASADO").length;
   const concluidos = instancias.filter((i) => i.status === "CONCLUIDO").length;
-  const prox = allUpcoming
-    .filter((i) => i.status === "PENDENTE" && i.data_vencimento && daysFromTodayISO(i.data_vencimento) >= 0)
-    .sort((a, b) => daysFromTodayISO(a.data_vencimento!) - daysFromTodayISO(b.data_vencimento!))[0];
+  const proxCandidates = allUpcoming.filter(
+    (i) => i.status === "PENDENTE" && i.data_vencimento && daysFromTodayISO(i.data_vencimento) >= 0
+  );
+  // When everything in the current month is done, look ahead to the next cycle.
+  const proxSource =
+    proxCandidates.length > 0
+      ? proxCandidates
+      : nextCycleItems.filter((i) => i.status === "PENDENTE" && i.data_vencimento);
+  const prox = proxSource.sort(
+    (a, b) => daysFromTodayISO(a.data_vencimento!) - daysFromTodayISO(b.data_vencimento!)
+  )[0];
   const proxDias = prox ? daysFromTodayISO(prox.data_vencimento!) : null;
 
   const handlePrevMonth = () => {
