@@ -445,7 +445,14 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const pendentes = instancias.filter((i) => i.status === "PENDENTE").length;
   const atrasados = instancias.filter((i) => i.status === "ATRASADO").length;
   const concluidos = instancias.filter((i) => i.status === "CONCLUIDO").length;
-  const prox = instancias
+
+  // Include next-cycle instances so cross-month tasks (e.g. "15 days before 10th BDay of next
+  // month") are considered when computing the nearest upcoming deadline.
+  const nextCycleItems = calQueryNext.data?.items ?? [];
+  const allUpcoming = [...instancias, ...nextCycleItems].filter(
+    (i, idx, arr) => arr.findIndex((x) => x.id === i.id) === idx
+  );
+  const prox = allUpcoming
     .filter((i) => i.status === "PENDENTE" && i.data_vencimento && daysFromTodayISO(i.data_vencimento) >= 0)
     .sort((a, b) => daysFromTodayISO(a.data_vencimento!) - daysFromTodayISO(b.data_vencimento!))[0];
   const proxDias = prox ? daysFromTodayISO(prox.data_vencimento!) : null;
