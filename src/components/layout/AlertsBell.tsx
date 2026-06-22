@@ -143,6 +143,7 @@ export function AlertsBell() {
         </SheetHeader>
 
         <ScrollArea className="flex-1">
+          <div className="pr-3">
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Carregando…
@@ -218,7 +219,7 @@ export function AlertsBell() {
                                 {a.responsavel_nome && <> · {a.responsavel_nome}</>}
                               </div>
                             </div>
-                            <span className={cn("inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
+                            <span className={cn("inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
                               {st.icon}
                               {st.label}
                             </span>
@@ -255,6 +256,7 @@ export function AlertsBell() {
               )}
             </>
           )}
+          </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>
