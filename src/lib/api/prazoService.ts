@@ -19,6 +19,12 @@ export type PrazoStatus =
 
 // ── Response shapes ───────────────────────────────────────────────────────────
 
+export interface ResponsavelInfo {
+  id: string;
+  nome: string;
+  email?: string | null;
+}
+
 export interface ObrigacaoResponse {
   id: string;
   fundo_id: number;
@@ -28,9 +34,11 @@ export interface ObrigacaoResponse {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   ativa: boolean;
+  recorrente: boolean;
   criado_por: string | null;
   criado_em: string;
   descricao?: string | null;
+  responsaveis: ResponsavelInfo[];
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
   responsavel_email?: string | null;
@@ -50,6 +58,7 @@ export interface InstanciaResponse {
   tipo_prazo: TipoPrazo;
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
+  recorrente: boolean;
   ciclo: string;
   data_vencimento: string | null;
   data_evento_gatilho: string | null;
@@ -57,6 +66,7 @@ export interface InstanciaResponse {
   concluido_por: string | null;
   concluido_em: string | null;
   descricao?: string | null;
+  responsaveis: ResponsavelInfo[];
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
   responsavel_email?: string | null;
@@ -108,12 +118,11 @@ export interface ObrigacaoCreateRequest {
   tipo_prazo: TipoPrazo;
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
+  recorrente?: boolean;
   criado_por?: string;
   criado_por_nome?: string;
   descricao?: string;
-  responsavel_id?: string;
-  responsavel_nome?: string;
-  responsavel_email?: string;
+  responsaveis: ResponsavelInfo[];
 }
 
 export interface ObrigacaoUpdateRequest {
@@ -122,10 +131,9 @@ export interface ObrigacaoUpdateRequest {
   tipo_prazo?: TipoPrazo;
   parametros?: Record<string, number>;
   antecedencia_alerta_dias?: number;
+  recorrente?: boolean;
   descricao?: string;
-  responsavel_id?: string;
-  responsavel_nome?: string;
-  responsavel_email?: string;
+  responsaveis?: ResponsavelInfo[];
   atualizado_por?: string;
   atualizado_por_nome?: string;
 }

@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 
 import {
@@ -31,6 +32,7 @@ import {
   updateObrigacao,
   type Categoria,
   type TipoPrazo,
+  type ResponsavelInfo,
 } from "@/lib/api/prazoService";
 import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
 import { CAT_META, CAT_ORDER, TIPO_LABEL } from "./prazoMeta";
@@ -67,7 +69,8 @@ const schema = z
       "FINAL_DO_MES",
     ]),
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
-    responsavel_id: z.string().optional(),
+    recorrente: z.boolean().default(true),
+    responsavel_ids: z.array(z.string()).default([]),
     dia: optInt(1, 31),
     n_util: optInt(1, 23),
     dias_antes: optInt(0, 90),
@@ -119,9 +122,8 @@ export interface ObrigacaoFormInitial {
   tipo_prazo: TipoPrazo;
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
-  responsavel_id?: string | null;
-  responsavel_nome?: string | null;
-  responsavel_email?: string | null;
+  recorrente?: boolean | null;
+  responsaveis?: ResponsavelInfo[] | null;
 }
 
 interface Props {
@@ -152,25 +154,27 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
       categoria: "REGULATORIO",
       tipo_prazo: "DIA_FIXO",
       antecedencia_alerta_dias: 7,
-      responsavel_id: undefined,
+      recorrente: true,
+      responsavel_ids: [] as string[],
     },
   });
 
   // Refill the form whenever the dialog opens (create resets, edit prefills).
   useEffect(() => {
     if (!open) return;
-    const defaultResponsavel =
-      initial?.responsavel_id ??
-      (membersLoaded && members.some((m) => m.id === user?.id)
-        ? user?.id
-        : undefined);
+    const defaultIds =
+      initial?.responsaveis?.map((r) => r.id) ??
+      (membersLoaded && members.some((m) => m.id === user?.id) && !initial
+        ? [user!.id]
+        : []);
     reset({
       topico: initial?.topico ?? "",
       descricao: initial?.descricao ?? "",
       categoria: initial?.categoria ?? "REGULATORIO",
       tipo_prazo: initial?.tipo_prazo ?? "DIA_FIXO",
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
-      responsavel_id: defaultResponsavel,
+      recorrente: initial?.recorrente ?? true,
+      responsavel_ids: defaultIds,
       dia: initial?.parametros?.dia,
       n_util: initial?.parametros?.n_util,
       dias_antes: initial?.parametros?.dias_antes,
@@ -184,18 +188,10 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
       const parametros = buildParametros(values);
-      const selectedMember = members.find((m) => m.id === values.responsavel_id);
-      const responsavelFields = selectedMember
-        ? {
-            responsavel_id: selectedMember.id,
-            responsavel_nome: selectedMember.nome,
-            responsavel_email: selectedMember.email,
-          }
-        : {
-            responsavel_id: undefined,
-            responsavel_nome: undefined,
-            responsavel_email: undefined,
-          };
+      const responsaveis: ResponsavelInfo[] = values.responsavel_ids
+        .map((id) => members.find((m) => m.id === id))
+        .filter((m): m is NonNullable<typeof m> => Boolean(m))
+        .map((m) => ({ id: m.id, nome: m.nome, email: m.email }));
 
       const actorNome =
         user?.fullName ||
@@ -211,9 +207,10 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
           tipo_prazo: values.tipo_prazo,
           parametros,
           antecedencia_alerta_dias: values.antecedencia_alerta_dias,
+          recorrente: values.recorrente,
+          responsaveis,
           atualizado_por: user?.id,
           atualizado_por_nome: actorNome,
-          ...responsavelFields,
         });
       }
       return createObrigacao({
@@ -224,9 +221,10 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
         tipo_prazo: values.tipo_prazo,
         parametros,
         antecedencia_alerta_dias: values.antecedencia_alerta_dias,
+        recorrente: values.recorrente,
+        responsaveis,
         criado_por: user?.id,
         criado_por_nome: actorNome,
-        ...responsavelFields,
       });
     },
     onSuccess: () => {
@@ -381,10 +379,10 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             </div>
 
             <div className="space-y-1.5">
-              <Label>Responsável</Label>
+              <Label>Responsáveis</Label>
               <Controller
                 control={control}
-                name="responsavel_id"
+                name="responsavel_ids"
                 render={({ field }) => (
                   <ResponsavelSelect
                     members={members}
@@ -395,6 +393,25 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
                 )}
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium">Repetir todos os meses</p>
+              <p className="text-[11px] text-muted-foreground">
+                Desative para criar uma tarefa única, sem recorrência.
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="recorrente"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
           </div>
 
           <DialogFooter>

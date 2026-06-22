@@ -55,6 +55,8 @@ import {
   type ObrigacaoFormInitial,
 } from "./prazos/ObrigacaoFormDialog";
 import { exportPrazosPdf, exportPrazosExcel } from "./prazos/prazoExport";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { initials } from "./prazos/ResponsavelSelect";
 
 // ── MiniCalendar ──────────────────────────────────────────────────────────────
 
@@ -230,10 +232,27 @@ function PrazoItem({
           <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{inst.descricao}</p>
         )}
 
-        {inst.responsavel_nome && (
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Responsável: <span className="font-medium text-foreground">{inst.responsavel_nome}</span>
-          </p>
+        {inst.responsaveis?.length > 0 && (
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className="flex -space-x-1.5">
+              {inst.responsaveis.slice(0, 3).map((r) => (
+                <Avatar key={r.id} className="h-4 w-4 ring-1 ring-background">
+                  <AvatarFallback className="text-[8px]">{initials(r.nome)}</AvatarFallback>
+                </Avatar>
+              ))}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {inst.responsaveis.length === 1 ? "Responsável: " : "Responsáveis: "}
+              <span className="font-medium text-foreground">
+                {inst.responsaveis.map((r) => r.nome).join(", ")}
+              </span>
+            </span>
+          </div>
+        )}
+        {!inst.recorrente && (
+          <span className="mt-1 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            Única
+          </span>
         )}
 
         {/* Gatilho inline editor */}
@@ -489,9 +508,8 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
       tipo_prazo: i.tipo_prazo,
       parametros: i.parametros,
       antecedencia_alerta_dias: i.antecedencia_alerta_dias,
-      responsavel_id: i.responsavel_id,
-      responsavel_nome: i.responsavel_nome,
-      responsavel_email: i.responsavel_email,
+      recorrente: i.recorrente,
+      responsaveis: i.responsaveis,
     });
     setFormOpen(true);
   };

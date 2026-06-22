@@ -212,7 +212,7 @@ export function AlertsBell() {
                           <div className="mt-0.5 flex items-center justify-between gap-2">
                             <div className="min-w-0 truncate text-[12px] text-muted-foreground">
                               {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
-                              {a.responsavel_nome && <> · {a.responsavel_nome}</>}
+                              {a.responsaveis?.length > 0 && <> · {a.responsaveis.map((r) => r.nome).join(", ")}</>}
                             </div>
                             <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>
                               {st.icon}

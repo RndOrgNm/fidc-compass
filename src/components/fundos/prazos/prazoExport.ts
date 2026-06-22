@@ -7,7 +7,7 @@ function toRows(instancias: InstanciaResponse[]): string[][] {
   return instancias.map((i) => [
     i.topico,
     i.descricao ?? "",
-    i.responsavel_nome ?? "",
+    (i.responsaveis ?? []).map((r) => r.nome).join(", "),
     CAT_META[i.categoria].label,
     TIPO_LABEL[i.tipo_prazo],
     formatVencBr(i.data_vencimento),

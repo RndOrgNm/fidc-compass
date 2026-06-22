@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown, User } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,11 +21,11 @@ import type { TeamMember } from "@/hooks/useTeamMembers";
 interface ResponsavelSelectProps {
   members: TeamMember[];
   isLoaded: boolean;
-  value: string | undefined;
-  onChange: (value: string | undefined) => void;
+  value: string[];
+  onChange: (value: string[]) => void;
 }
 
-function initials(nome: string): string {
+export function initials(nome: string): string {
   return nome
     .split(" ")
     .slice(0, 2)
@@ -41,7 +41,11 @@ export function ResponsavelSelect({
   onChange,
 }: ResponsavelSelectProps) {
   const [open, setOpen] = useState(false);
-  const selected = members.find((m) => m.id === value);
+  const selected = members.filter((m) => value.includes(m.id));
+
+  const toggle = (id: string) => {
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,21 +57,23 @@ export function ResponsavelSelect({
           className="w-full justify-between font-normal"
           disabled={!isLoaded}
         >
-          {selected ? (
-            <span className="flex items-center gap-2 min-w-0">
-              <Avatar className="h-5 w-5 shrink-0">
-                {selected.imageUrl && (
-                  <AvatarImage src={selected.imageUrl} alt={selected.nome} />
-                )}
-                <AvatarFallback className="text-[9px]">
-                  {initials(selected.nome)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate">{selected.nome}</span>
-            </span>
-          ) : (
+          {selected.length === 0 ? (
             <span className="text-muted-foreground">
               {isLoaded ? "Não atribuído" : "Carregando…"}
+            </span>
+          ) : (
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="flex -space-x-2 shrink-0">
+                {selected.slice(0, 3).map((m) => (
+                  <Avatar key={m.id} className="h-5 w-5 ring-2 ring-background">
+                    {m.imageUrl && <AvatarImage src={m.imageUrl} alt={m.nome} />}
+                    <AvatarFallback className="text-[9px]">{initials(m.nome)}</AvatarFallback>
+                  </Avatar>
+                ))}
+              </span>
+              <span className="truncate text-sm">
+                {selected.length === 1 ? selected[0].nome : `${selected.length} responsáveis`}
+              </span>
             </span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -79,25 +85,11 @@ export function ResponsavelSelect({
           <CommandList>
             <CommandEmpty>Nenhum membro encontrado.</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value="__none__"
-                onSelect={() => {
-                  onChange(undefined);
-                  setOpen(false);
-                }}
-              >
-                <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Não atribuído</span>
-                {!value && <Check className="ml-auto h-4 w-4" />}
-              </CommandItem>
               {members.map((m) => (
                 <CommandItem
                   key={m.id}
                   value={`${m.nome} ${m.email}`}
-                  onSelect={() => {
-                    onChange(m.id);
-                    setOpen(false);
-                  }}
+                  onSelect={() => toggle(m.id)}
                 >
                   <Avatar className="mr-2 h-5 w-5 shrink-0">
                     {m.imageUrl && (
@@ -113,7 +105,9 @@ export function ResponsavelSelect({
                       {m.email}
                     </p>
                   </div>
-                  {value === m.id && <Check className="ml-auto h-4 w-4 shrink-0" />}
+                  {value.includes(m.id) && (
+                    <Check className="ml-auto h-4 w-4 shrink-0 text-primary" />
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
