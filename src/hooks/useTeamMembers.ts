@@ -8,11 +8,11 @@ export interface TeamMember {
 }
 
 export function useTeamMembers(): { members: TeamMember[]; isLoaded: boolean } {
-  const { isLoaded, memberships } = useOrganization({
+  const { isLoaded, organization, memberships } = useOrganization({
     memberships: { pageSize: 100 },
   });
 
-  console.debug("[useTeamMembers]", { isLoaded, memberships, data: memberships?.data, count: memberships?.count });
+  console.log("[useTeamMembers]", { isLoaded, orgId: organization?.id, orgName: organization?.name, memberCount: memberships?.count, data: memberships?.data?.map(m => ({ userId: m.publicUserData?.userId, email: m.publicUserData?.identifier })) });
 
   if (!isLoaded || !memberships?.data) {
     return { members: [], isLoaded: false };
