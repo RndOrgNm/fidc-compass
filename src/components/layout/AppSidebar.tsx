@@ -59,7 +59,7 @@ export function AppSidebar() {
           to="/"
           className="flex items-center gap-3 rounded-md p-2 -mx-2 hover:bg-sidebar-accent/50 transition-colors min-h-0 overflow-visible"
         >
-          <img src="/logo-mark-white.png" alt="GIAA" className="h-8 w-8 shrink-0 object-contain" />
+          <img src="/logo-mark.png" alt="GIAA" className="h-8 w-8 shrink-0 object-contain" />
           {!collapsed && (
             <div className="min-w-0 flex flex-col justify-center overflow-visible">
               <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">
