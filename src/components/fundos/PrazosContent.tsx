@@ -36,7 +36,6 @@ import {
   reabrirInstancia,
   registrarGatilho,
   deleteObrigacao,
-  reconcile,
   type Categoria,
   type InstanciaResponse,
 } from "@/lib/api/prazoService";
@@ -372,10 +371,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
   const calQuery = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId, calCiclo) : ["prazos", "noop-cal"],
-    queryFn: async () => {
-      await reconcile(calCiclo).catch(() => {});
-      return listInstancias(fundoId as number, calCiclo);
-    },
+    queryFn: () => listInstancias(fundoId as number, calCiclo),
     enabled: fundoId != null && !isCurrentCiclo,
   });
 
@@ -386,10 +382,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
   const calQueryNext = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId, calCicloNext) : ["prazos", "noop-cal-next"],
-    queryFn: async () => {
-      await reconcile(calCicloNext).catch(() => {});
-      return listInstancias(fundoId as number, calCicloNext);
-    },
+    queryFn: () => listInstancias(fundoId as number, calCicloNext),
     enabled: fundoId != null,
   });
 
