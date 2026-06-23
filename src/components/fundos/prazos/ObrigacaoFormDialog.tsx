@@ -301,7 +301,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
           onSubmit={handleSubmit((v) => mutation.mutate(v))}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+          <div className="flex-1 space-y-4 overflow-y-auto px-1">
           <div className="space-y-1.5">
             <Label htmlFor="topico">Tópico</Label>
             <Input id="topico" placeholder="Ex.: Informe mensal CVM" {...register("topico")} />
@@ -418,6 +418,25 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             </div>
           </div>
 
+          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium">Repetir todos os meses</p>
+              <p className="text-[11px] text-muted-foreground">
+                Desative para criar uma tarefa única, sem recorrência.
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="recorrente"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+
           {!isEdit && (
             <div className="space-y-1.5">
               <Label>Primeiro ciclo</Label>
@@ -444,25 +463,6 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
               </p>
             </div>
           )}
-
-          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium">Repetir todos os meses</p>
-              <p className="text-[11px] text-muted-foreground">
-                Desative para criar uma tarefa única, sem recorrência.
-              </p>
-            </div>
-            <Controller
-              control={control}
-              name="recorrente"
-              render={({ field }) => (
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              )}
-            />
-          </div>
 
           </div>
 
