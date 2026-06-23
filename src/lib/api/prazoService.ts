@@ -123,6 +123,7 @@ export interface ObrigacaoCreateRequest {
   criado_por_nome?: string;
   descricao?: string;
   responsaveis: ResponsavelInfo[];
+  ciclo_inicial?: string; // "YYYY-MM"; defaults to current month on the server
 }
 
 export interface ObrigacaoUpdateRequest {

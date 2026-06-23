@@ -47,6 +47,24 @@ const TIPOS: TipoPrazo[] = [
   "FINAL_DO_MES",
 ];
 
+const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+function buildCycleOptions(): { value: string; label: string }[] {
+  const options = [];
+  const now = new Date();
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = i === 0
+      ? `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()} (mês atual)`
+      : `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+    options.push({ value, label });
+  }
+  return options;
+}
+
+const CYCLE_OPTIONS = buildCycleOptions();
+
 // Optional integer field: an empty/blank input (or a hidden field still holding
 // "") becomes `undefined` BEFORE coercion, so fields irrelevant to the selected
 // tipo_prazo never produce phantom validation errors that block submit.
@@ -71,6 +89,7 @@ const schema = z
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
     recorrente: z.boolean().default(false),
     responsavel_ids: z.array(z.string()).default([]),
+    ciclo_inicial: z.string().optional(),
     dia: optInt(1, 31),
     n_util: optInt(1, 23),
     dias_antes: optInt(0, 90),
@@ -156,6 +175,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
       antecedencia_alerta_dias: 7,
       recorrente: false,
       responsavel_ids: [] as string[],
+      ciclo_inicial: CYCLE_OPTIONS[0].value,
     },
   });
 
@@ -175,6 +195,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
       recorrente: initial?.recorrente ?? false,
       responsavel_ids: defaultIds,
+      ciclo_inicial: CYCLE_OPTIONS[0].value,
       dia: initial?.parametros?.dia,
       n_util: initial?.parametros?.n_util,
       dias_antes: initial?.parametros?.dias_antes,
@@ -225,6 +246,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
         responsaveis,
         criado_por: user?.id,
         criado_por_nome: actorNome,
+        ciclo_inicial: values.ciclo_inicial !== CYCLE_OPTIONS[0].value ? values.ciclo_inicial : undefined,
       });
     },
     onSuccess: () => {
@@ -394,6 +416,33 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
               />
             </div>
           </div>
+
+          {!isEdit && (
+            <div className="space-y-1.5">
+              <Label>Primeiro ciclo</Label>
+              <Controller
+                control={control}
+                name="ciclo_inicial"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CYCLE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Mês a partir do qual a primeira instância será criada.
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
             <div>
