@@ -288,7 +288,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px]">
+      <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-[540px]">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar obrigação" : "Nova obrigação"}</DialogTitle>
           <DialogDescription>
@@ -299,8 +299,9 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
 
         <form
           onSubmit={handleSubmit((v) => mutation.mutate(v))}
-          className="space-y-4"
+          className="flex min-h-0 flex-1 flex-col"
         >
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
           <div className="space-y-1.5">
             <Label htmlFor="topico">Tópico</Label>
             <Input id="topico" placeholder="Ex.: Informe mensal CVM" {...register("topico")} />
@@ -463,7 +464,9 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
             />
           </div>
 
-          <DialogFooter>
+          </div>
+
+          <DialogFooter className="pt-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
