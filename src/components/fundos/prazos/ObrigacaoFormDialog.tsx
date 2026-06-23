@@ -154,9 +154,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: ObrigacaoFormInitial;
+  onCreated?: (ciclo: string) => void;
 }
 
-export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Props) {
+export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCreated }: Props) {
   const { user } = useUser();
   const { members, isLoaded: membersLoaded } = useTeamMembers();
   const queryClient = useQueryClient();
@@ -253,7 +254,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
         ciclo_inicial: values.ciclo_inicial !== CYCLE_OPTIONS[0].value ? values.ciclo_inicial : undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: prazoKeys.all });
       queryClient.invalidateQueries({ queryKey: alertaKeys.all });
       toast({
@@ -262,6 +263,9 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial }: Pr
           ? "As alterações foram salvas."
           : "A obrigação foi adicionada ao calendário do fundo.",
       });
+      if (!isEdit && onCreated) {
+        onCreated(variables.ciclo_inicial ?? CYCLE_OPTIONS[0].value);
+      }
       onOpenChange(false);
     },
     onError: (err: Error) => {

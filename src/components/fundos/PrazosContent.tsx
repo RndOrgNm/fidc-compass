@@ -447,17 +447,16 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     gatilhoMut.isPending ||
     deleteMut.isPending;
 
-  // Merge next-cycle instances whose due date falls in the current month or earlier
-  // (cross-month tasks like "15 days before 10th BDay of next month") into the main list.
+  // Agenda shows the selected calendar cycle (not hardcoded to current month).
+  // Cross-month items from the next cycle that fall within the calendar month are merged in.
+  const agendaBase = isCurrentCiclo ? instancias : (calQuery.data?.items ?? []);
   const nextCycleItems = calQueryNext.data?.items ?? [];
-  const currentYearNum = today.getFullYear();
-  const currentMonthNum = today.getMonth() + 1;
   const crossMonthItems = nextCycleItems.filter((i) => {
     if (!i.data_vencimento) return false;
     const [y, m] = i.data_vencimento.split("-").map(Number);
-    return y < currentYearNum || (y === currentYearNum && m <= currentMonthNum);
+    return y < calYear || (y === calYear && m <= calMonth + 1);
   });
-  const allUpcoming = [...instancias, ...crossMonthItems].filter(
+  const allUpcoming = [...agendaBase, ...crossMonthItems].filter(
     (i, idx, arr) => arr.findIndex((x) => x.id === i.id) === idx
   );
 
@@ -508,6 +507,12 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   };
 
   const openCreate = () => { setFormInitial(undefined); setFormOpen(true); };
+
+  const handleCreated = (ciclo: string) => {
+    const [y, m] = ciclo.split("-").map(Number);
+    setCalYear(y);
+    setCalMonth(m - 1);
+  };
   const openEdit = (i: InstanciaResponse) => {
     setFormInitial({
       id: i.obrigacao_id,
@@ -740,6 +745,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
         open={formOpen}
         onOpenChange={setFormOpen}
         initial={formInitial}
+        onCreated={handleCreated}
       />
 
       {/* Delete confirmation */}
