@@ -32,6 +32,7 @@ import { toast } from "@/hooks/use-toast";
 
 import {
   listInstancias,
+  listObrigacoes,
   concluirInstancia,
   reabrirInstancia,
   registrarGatilho,
@@ -355,6 +356,13 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const [formInitial, setFormInitial] = useState<ObrigacaoFormInitial | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<InstanciaResponse | null>(null);
 
+  // Whether any obligation rules exist for this fund (drives isEmpty — independent of cycle)
+  const obrigacoesQuery = useQuery({
+    queryKey: fundoId ? prazoKeys.obrigacoes(fundoId) : ["prazos", "noop-ob"],
+    queryFn: () => listObrigacoes(fundoId as number),
+    enabled: fundoId != null,
+  });
+
   // Current cycle (for the agenda list)
   const query = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId) : ["prazos", "noop"],
@@ -556,7 +564,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     );
   }
 
-  const isEmpty = instancias.length === 0;
+  const isEmpty = (obrigacoesQuery.data?.total ?? 0) === 0;
 
   return (
     <div>

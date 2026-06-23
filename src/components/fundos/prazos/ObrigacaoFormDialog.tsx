@@ -52,13 +52,17 @@ const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julh
 function buildCycleOptions(): { value: string; label: string }[] {
   const options = [];
   const now = new Date();
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+  const end = new Date(2030, 11, 1); // December 2030
+  let d = new Date(now.getFullYear(), now.getMonth(), 1);
+  let i = 0;
+  while (d <= end) {
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const label = i === 0
       ? `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()} (mês atual)`
       : `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
     options.push({ value, label });
+    d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    i++;
   }
   return options;
 }
