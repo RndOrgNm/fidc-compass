@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw, ChevronDown } from "lucide-react";
+import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw, ChevronDown, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,7 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
-import { RAG_API_BASE_URL } from "@/lib/api/config";
+import { RAG_API_BASE_URL, FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { useChat } from "@/contexts/ChatContext";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 
@@ -63,6 +63,11 @@ export default function Agent() {
   const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -341,6 +346,48 @@ export default function Agent() {
   const handleSuggestionClick = (text: string) => {
     setInputValue(text);
     textareaRef.current?.focus();
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/ogg";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setIsRecording(false);
+        setIsTranscribing(true);
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: mimeType });
+          const form = new FormData();
+          form.append("file", blob, `audio.${mimeType.split("/")[1]}`);
+          const res = await fetch(`${FUNDS_AGENT_API_URL}/transcribe`, { method: "POST", body: form });
+          if (!res.ok) throw new Error("Transcription request failed");
+          const { text } = await res.json();
+          if (text?.trim()) {
+            setInputValue((prev) => (prev ? `${prev} ${text.trim()}` : text.trim()));
+            textareaRef.current?.focus();
+          }
+        } catch {
+          toast({ title: "Erro na transcrição", description: "Não foi possível transcrever o áudio.", variant: "destructive" });
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+    } catch {
+      toast({ title: "Microfone indisponível", description: "Permita o acesso ao microfone e tente novamente.", variant: "destructive" });
+    }
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -654,6 +701,23 @@ export default function Agent() {
             rows={1}
             disabled={isLoading}
           />
+          <Button
+            type="button"
+            variant={isRecording ? "destructive" : "outline"}
+            size="lg"
+            onClick={toggleRecording}
+            disabled={isLoading || isTranscribing}
+            title={isRecording ? "Parar gravação" : "Gravar áudio"}
+            className={isRecording ? "animate-pulse" : ""}
+          >
+            {isTranscribing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isRecording ? (
+              <MicOff className="h-5 w-5" />
+            ) : (
+              <Mic className="h-5 w-5" />
+            )}
+          </Button>
           <Button
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isLoading}
