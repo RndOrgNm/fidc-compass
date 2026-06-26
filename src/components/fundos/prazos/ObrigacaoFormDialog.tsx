@@ -169,6 +169,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
     control,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -184,14 +185,10 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
     },
   });
 
-  // Refill the form whenever the dialog opens (create resets, edit prefills).
+  // Full reset only when the dialog opens or switches between create/edit.
+  // Never triggered by background member list re-fetches.
   useEffect(() => {
     if (!open) return;
-    const defaultIds =
-      initial?.responsaveis?.map((r) => r.id) ??
-      (membersLoaded && members.some((m) => m.id === user?.id) && !initial
-        ? [user!.id]
-        : []);
     reset({
       topico: initial?.topico ?? "",
       descricao: initial?.descricao ?? "",
@@ -199,7 +196,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
       tipo_prazo: initial?.tipo_prazo ?? "DIA_FIXO",
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
       recorrente: initial?.recorrente ?? false,
-      responsavel_ids: defaultIds,
+      responsavel_ids: initial?.responsaveis?.map((r) => r.id) ?? [],
       ciclo_inicial: CYCLE_OPTIONS[0].value,
       dia: initial?.parametros?.dia,
       n_util: initial?.parametros?.n_util,
@@ -208,7 +205,17 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
       dias_apos: initial?.parametros?.dias_apos,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial, reset, user?.id, membersLoaded]);
+  }, [open, initial]);
+
+  // Once members load (create mode only), pre-select the current user — using
+  // setValue so text fields are never wiped by background re-fetches.
+  useEffect(() => {
+    if (!open || !membersLoaded || initial) return;
+    if (members.some((m) => m.id === user?.id)) {
+      setValue("responsavel_ids", [user!.id]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, membersLoaded]);
 
   const tipo = watch("tipo_prazo");
 
