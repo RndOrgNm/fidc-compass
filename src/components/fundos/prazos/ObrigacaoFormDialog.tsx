@@ -207,7 +207,8 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
       ref_util: initial?.parametros?.ref_util,
       dias_apos: initial?.parametros?.dias_apos,
     });
-  }, [open, initial, reset, user?.id, membersLoaded, members]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial, reset, user?.id, membersLoaded]);
 
   const tipo = watch("tipo_prazo");
 
