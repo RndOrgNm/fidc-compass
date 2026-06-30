@@ -60,18 +60,24 @@ import { initials } from "./prazos/ResponsavelSelect";
 
 // ── MiniCalendar ──────────────────────────────────────────────────────────────
 
+const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const CAL_YEAR_MIN = 2020;
+const CAL_YEAR_MAX = 2035;
+
 function MiniCalendar({
   instancias,
   year,
   month,
   onPrev,
   onNext,
+  onGoTo,
 }: {
   instancias: InstanciaResponse[];
   year: number;
   month: number; // 0-indexed
   onPrev: () => void;
   onNext: () => void;
+  onGoTo: (year: number, month: number) => void;
 }) {
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
@@ -95,28 +101,49 @@ function MiniCalendar({
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const monthLabel = `${["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][month]} ${year}`;
+  const selectClass = "bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors";
 
   return (
     <div className="sticky top-6 rounded-xl border border-border bg-card/50 p-[18px]">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-sm font-semibold">{monthLabel}</span>
-        <div className="flex gap-1">
-          <button
-            onClick={onPrev}
-            aria-label="Mês anterior"
-            className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+        <button
+          onClick={onPrev}
+          aria-label="Mês anterior"
+          className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+
+        <div className="flex items-center gap-1">
+          <select
+            value={month}
+            onChange={(e) => onGoTo(year, Number(e.target.value))}
+            aria-label="Mês"
+            className={selectClass}
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={onNext}
-            aria-label="Próximo mês"
-            className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+            {MONTH_NAMES.map((name, i) => (
+              <option key={i} value={i}>{name}</option>
+            ))}
+          </select>
+          <select
+            value={year}
+            onChange={(e) => onGoTo(Number(e.target.value), month)}
+            aria-label="Ano"
+            className={selectClass}
           >
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+            {Array.from({ length: CAL_YEAR_MAX - CAL_YEAR_MIN + 1 }, (_, i) => CAL_YEAR_MIN + i).map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
         </div>
+
+        <button
+          onClick={onNext}
+          aria-label="Próximo mês"
+          className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-border bg-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       <div className="mb-1 grid grid-cols-7 gap-1">
@@ -734,6 +761,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
               month={calMonth}
               onPrev={handlePrevMonth}
               onNext={handleNextMonth}
+              onGoTo={(y, m) => { setCalYear(y); setCalMonth(m); }}
             />
           </div>
         </>
