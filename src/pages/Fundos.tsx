@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { FileText, Users, CalendarClock, LineChart } from "lucide-react";
 import { AppLayout } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,29 +11,38 @@ import { GraficosContent } from "@/components/fundos/GraficosContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
+const VALID_TABS = ["prazos", "cotistas", "graficos", "controle"];
+
 function fundDisplayName(f: HomeFundRow): string {
   return (f.apelido?.trim() || f.nome).trim() || "—";
 }
 
 export default function Fundos() {
   const { data, loading } = useHomeMetrics();
-  const [searchParams] = useSearchParams();
+  const { tab: tabParam, fundoId: fundoIdParam } = useParams<{ tab?: string; fundoId?: string }>();
+  const navigate = useNavigate();
 
   const funds = useMemo(() => {
     if (!data?.fundos?.length) return [];
     return [...data.fundos].sort((a, b) => b.plAtual - a.plAtual);
   }, [data?.fundos]);
 
-  // Deep-link: ?fundo=<id_carteira>&tab=prazos (e.g. from the alerts bell).
-  const deepLinkFund = Number(searchParams.get("fundo")) || null;
-  const deepLinkTab = searchParams.get("tab") ?? "prazos";
-
-  const [selectedId, setSelectedId] = useState<number | null>(deepLinkFund);
-  const [tab, setTab] = useState<string>(deepLinkTab);
-
-  const resolvedId = selectedId ?? funds[0]?.idCarteira ?? null;
+  const tab = VALID_TABS.includes(tabParam ?? "") ? tabParam! : "prazos";
+  const urlFundoId = Number(fundoIdParam) || null;
+  const resolvedId = urlFundoId ?? funds[0]?.idCarteira ?? null;
   const selectedFund = funds.find((f) => f.idCarteira === resolvedId) ?? funds[0] ?? null;
   const selectedFundName = selectedFund ? fundDisplayName(selectedFund) : undefined;
+
+  function handleTabChange(newTab: string) {
+    const id = resolvedId;
+    if (id) navigate(`/fundos/${newTab}/${id}`, { replace: true });
+    else navigate(`/fundos/${newTab}`, { replace: true });
+  }
+
+  function handleFundSelect(id: number | null) {
+    const fundId = id ?? funds[0]?.idCarteira;
+    if (fundId) navigate(`/fundos/${tab}/${fundId}`, { replace: true });
+  }
 
   return (
     <AppLayout>
@@ -42,10 +51,10 @@ export default function Fundos() {
           funds={funds}
           loading={loading}
           selectedId={resolvedId}
-          onSelect={setSelectedId}
+          onSelect={handleFundSelect}
         />
 
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
             <TabsTrigger
               value="prazos"

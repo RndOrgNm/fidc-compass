@@ -65,9 +65,25 @@ const App = () => (
                   </RequireAuth>
                 }
               />
-              <Route path="/graficos" element={<Navigate to="/fundos?tab=graficos" replace />} />
+              <Route path="/graficos" element={<Navigate to="/fundos/graficos" replace />} />
               <Route
                 path="/fundos"
+                element={
+                  <RequireAuth>
+                    <Fundos />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/fundos/:tab"
+                element={
+                  <RequireAuth>
+                    <Fundos />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/fundos/:tab/:fundoId"
                 element={
                   <RequireAuth>
                     <Fundos />
@@ -78,7 +94,7 @@ const App = () => (
               <Route path="/controle-de-ativos" element={<Navigate to="/fundos" replace />} />
               <Route path="/relatorio-teste" element={<Navigate to="/fundos" replace />} />
               <Route path="/controle-de-obras" element={<Navigate to="/fundos" replace />} />
-              <Route path="/demo/plotly" element={<Navigate to="/fundos?tab=graficos" replace />} />
+              <Route path="/demo/plotly" element={<Navigate to="/fundos/graficos" replace />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

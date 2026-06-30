@@ -108,14 +108,14 @@ export function AlertsBell() {
 
   const verDetalhes = (a: AlertaResponse) => {
     setOpen(false);
-    navigate(`/fundos?fundo=${a.fundo_id}&tab=prazos`);
+    navigate(`/fundos/prazos/${a.fundo_id}`);
   };
 
   const verAssignment = async (n: AssignmentNotifResponse) => {
     await markAssignmentRead(n.id).catch(() => {});
     queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
     setOpen(false);
-    navigate(`/fundos?fundo=${n.fundo_id}&tab=prazos`);
+    navigate(`/fundos/prazos/${n.fundo_id}`);
   };
 
   const isLoading = alertaQuery.isLoading || assignmentQuery.isLoading;
