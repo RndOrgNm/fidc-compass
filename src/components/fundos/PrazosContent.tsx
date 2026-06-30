@@ -4,7 +4,6 @@ import { useUser } from "@clerk/clerk-react";
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Plus,
   FileDown,
   Sheet as SheetIcon,
@@ -19,6 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -113,33 +119,27 @@ function MiniCalendar({
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex items-center">
-            <select
-              value={month}
-              onChange={(e) => onGoTo(year, Number(e.target.value))}
-              aria-label="Mês"
-              className="appearance-none bg-transparent pr-4 text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors"
-            >
+        <div className="flex items-center gap-1">
+          <Select value={String(month)} onValueChange={(v) => onGoTo(year, Number(v))}>
+            <SelectTrigger className="h-auto gap-1 border-none bg-transparent p-0 text-sm font-semibold shadow-none focus:ring-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-60">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {MONTH_NAMES.map((name, i) => (
-                <option key={i} value={i}>{name}</option>
+                <SelectItem key={i} value={String(i)}>{name}</SelectItem>
               ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-0 h-3 w-3 text-muted-foreground" />
-          </div>
-          <div className="relative flex items-center">
-            <select
-              value={year}
-              onChange={(e) => onGoTo(Number(e.target.value), month)}
-              aria-label="Ano"
-              className="appearance-none bg-transparent pr-4 text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors"
-            >
+            </SelectContent>
+          </Select>
+          <Select value={String(year)} onValueChange={(v) => onGoTo(Number(v), month)}>
+            <SelectTrigger className="h-auto gap-1 border-none bg-transparent p-0 text-sm font-semibold shadow-none focus:ring-0 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-60">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {Array.from({ length: CAL_YEAR_MAX - CAL_YEAR_MIN + 1 }, (_, i) => CAL_YEAR_MIN + i).map((y) => (
-                <option key={y} value={y}>{y}</option>
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
               ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-0 h-3 w-3 text-muted-foreground" />
-          </div>
+            </SelectContent>
+          </Select>
         </div>
 
         <button
