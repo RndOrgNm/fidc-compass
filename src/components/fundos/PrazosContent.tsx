@@ -4,6 +4,7 @@ import { useUser } from "@clerk/clerk-react";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Plus,
   FileDown,
   Sheet as SheetIcon,
@@ -101,8 +102,6 @@ function MiniCalendar({
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const selectClass = "bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors";
-
   return (
     <div className="sticky top-6 rounded-xl border border-border bg-card/50 p-[18px]">
       <div className="mb-4 flex items-center justify-between">
@@ -114,27 +113,33 @@ function MiniCalendar({
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
 
-        <div className="flex items-center gap-1">
-          <select
-            value={month}
-            onChange={(e) => onGoTo(year, Number(e.target.value))}
-            aria-label="Mês"
-            className={selectClass}
-          >
-            {MONTH_NAMES.map((name, i) => (
-              <option key={i} value={i}>{name}</option>
-            ))}
-          </select>
-          <select
-            value={year}
-            onChange={(e) => onGoTo(Number(e.target.value), month)}
-            aria-label="Ano"
-            className={selectClass}
-          >
-            {Array.from({ length: CAL_YEAR_MAX - CAL_YEAR_MIN + 1 }, (_, i) => CAL_YEAR_MIN + i).map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+        <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
+            <select
+              value={month}
+              onChange={(e) => onGoTo(year, Number(e.target.value))}
+              aria-label="Mês"
+              className="appearance-none bg-transparent pr-4 text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors"
+            >
+              {MONTH_NAMES.map((name, i) => (
+                <option key={i} value={i}>{name}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-0 h-3 w-3 text-muted-foreground" />
+          </div>
+          <div className="relative flex items-center">
+            <select
+              value={year}
+              onChange={(e) => onGoTo(Number(e.target.value), month)}
+              aria-label="Ano"
+              className="appearance-none bg-transparent pr-4 text-sm font-semibold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors"
+            >
+              {Array.from({ length: CAL_YEAR_MAX - CAL_YEAR_MIN + 1 }, (_, i) => CAL_YEAR_MIN + i).map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-0 h-3 w-3 text-muted-foreground" />
+          </div>
         </div>
 
         <button
