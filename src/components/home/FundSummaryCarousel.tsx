@@ -269,7 +269,7 @@ export function FundSummaryCarousel({
               <SummarySlide
                 fund={f}
                 asOfLabel={asOfLabel}
-                onClick={() => navigate(`/fundos?fundo=${f.idCarteira}`)}
+                onClick={() => navigate(`/fundos/prazos/${f.idCarteira}`)}
               />
             </CarouselItem>
           ))}
