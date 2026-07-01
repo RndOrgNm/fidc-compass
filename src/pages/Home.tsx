@@ -246,11 +246,11 @@ export default function Home() {
             </CardHeader>
           </Card>
 
-          <Card className="border-border/80 bg-card/50 sm:col-span-2 lg:col-span-2">
+          <Card className="border-border/80 bg-card/50">
             <CardHeader className="pb-2 space-y-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-0">
-                  <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Variação 30d</div>
+                  <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Variação de PL 30D</div>
                   {loading ? (
                     <Skeleton className="h-9 w-32 mt-2" />
                   ) : (
@@ -261,8 +261,8 @@ export default function Home() {
                 </div>
                 <KpiHoverIcon
                   icon={LineChart}
-                  ariaLabel="Ver variação 30 dias ao passar o ponteiro"
-                  heading="Variação 30 dias"
+                  ariaLabel="Ver variação de PL 30 dias ao passar o ponteiro"
+                  heading="Variação de PL 30 dias"
                   disabled={!kpiHoverReady}
                 >
                   <div className="space-y-4">
@@ -290,6 +290,62 @@ export default function Home() {
                               <span className="min-w-0 font-medium text-foreground">{fundDisplayName(f)}</span>
                               <span className="shrink-0 tabular-nums">
                                 <VariationBadge value={f.variacaoPct} />
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </KpiHoverIcon>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-border/80 bg-card/50">
+            <CardHeader className="pb-2 space-y-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-0">
+                  <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">Variação de Cota 30D</div>
+                  {loading ? (
+                    <Skeleton className="h-9 w-32 mt-2" />
+                  ) : (
+                    <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">
+                      <VariationBadge value={data?.variacaoCotaPortfolioPct ?? null} />
+                    </p>
+                  )}
+                </div>
+                <KpiHoverIcon
+                  icon={LineChart}
+                  ariaLabel="Ver variação de cota 30 dias ao passar o ponteiro"
+                  heading="Variação de Cota 30 dias"
+                  disabled={!kpiHoverReady}
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Carteira (ponderado por PL)
+                      </p>
+                      <p className="mt-1 text-lg font-semibold tabular-nums">
+                        <VariationBadge value={data?.variacaoCotaPortfolioPct ?? null} />
+                      </p>
+                    </div>
+                    {fundosSortedByName.length === 0 ? (
+                      <p className="text-muted-foreground">Nenhum fundo disponível.</p>
+                    ) : (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Por fundo
+                        </p>
+                        <ul className="mt-2 space-y-2">
+                          {fundosSortedByName.map((f) => (
+                            <li
+                              key={f.idCarteira}
+                              className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-b-0 last:pb-0"
+                            >
+                              <span className="min-w-0 font-medium text-foreground">{fundDisplayName(f)}</span>
+                              <span className="shrink-0 tabular-nums">
+                                <VariationBadge value={f.variacaoCotaPct ?? null} />
                               </span>
                             </li>
                           ))}

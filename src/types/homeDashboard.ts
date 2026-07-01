@@ -19,6 +19,10 @@ export interface HomeFundRow {
   cotaDiaAnterior?: number | null;
   /** % change cota vs dia anterior. */
   variacaoCotaDiaPct?: number | null;
+  /** Reference cota (last observation on or before asOf − 30d). */
+  cotaReferencia30d?: number | null;
+  /** % change cota vs 30d ago: (cotaAtual / cotaReferencia30d) - 1. */
+  variacaoCotaPct?: number | null;
 }
 
 export interface HomeDashboardMetrics {
@@ -29,6 +33,8 @@ export interface HomeDashboardMetrics {
   variacaoPortfolioPct: number | null;
   /** Aggregate PL change vs previous day (funds with ≥2 observations). */
   variacaoPortfolioDiaPct?: number | null;
+  /** PL-weighted average of each fund's 30d cota return: Σ(plAtual_i × variacaoCotaPct_i) / Σ(plAtual_i). */
+  variacaoCotaPortfolioPct?: number | null;
   captacaoLiquida30d: number | null;
   aportes30d: number | null;
   resgates30d: number | null;
