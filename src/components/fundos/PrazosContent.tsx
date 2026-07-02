@@ -555,6 +555,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
       parametros: i.parametros,
       antecedencia_alerta_dias: i.antecedencia_alerta_dias,
       recorrente: i.recorrente,
+      intervalo_meses: i.intervalo_meses,
       responsaveis: i.responsaveis,
     });
     setFormOpen(true);

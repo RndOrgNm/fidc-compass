@@ -47,6 +47,14 @@ const TIPOS: TipoPrazo[] = [
   "FINAL_DO_MES",
 ];
 
+const INTERVALO_OPTIONS: { value: string; label: string }[] = [
+  { value: "1", label: "Mensal" },
+  { value: "2", label: "Bimestral (a cada 2 meses)" },
+  { value: "3", label: "Trimestral (a cada 3 meses)" },
+  { value: "6", label: "Semestral (a cada 6 meses)" },
+  { value: "12", label: "Anual (a cada 12 meses)" },
+];
+
 const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 function buildCycleOptions(): { value: string; label: string }[] {
@@ -92,6 +100,7 @@ const schema = z
     ]),
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
     recorrente: z.boolean().default(false),
+    intervalo_meses: z.coerce.number().int().min(1).max(12).default(1),
     responsavel_ids: z.array(z.string()).default([]),
     ciclo_inicial: z.string().optional(),
     dia: optInt(1, 31),
@@ -146,6 +155,7 @@ export interface ObrigacaoFormInitial {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   recorrente?: boolean | null;
+  intervalo_meses?: number | null;
   responsaveis?: ResponsavelInfo[] | null;
 }
 
@@ -180,6 +190,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
       tipo_prazo: "DIA_FIXO",
       antecedencia_alerta_dias: 7,
       recorrente: false,
+      intervalo_meses: 1,
       responsavel_ids: [] as string[],
       ciclo_inicial: CYCLE_OPTIONS[0].value,
     },
@@ -196,6 +207,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
       tipo_prazo: initial?.tipo_prazo ?? "DIA_FIXO",
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
       recorrente: initial?.recorrente ?? false,
+      intervalo_meses: initial?.intervalo_meses ?? 1,
       responsavel_ids: initial?.responsaveis?.map((r) => r.id) ?? [],
       ciclo_inicial: CYCLE_OPTIONS[0].value,
       dia: initial?.parametros?.dia,
@@ -218,6 +230,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
   }, [open, membersLoaded]);
 
   const tipo = watch("tipo_prazo");
+  const recorrente = watch("recorrente");
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
@@ -242,6 +255,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
           parametros,
           antecedencia_alerta_dias: values.antecedencia_alerta_dias,
           recorrente: values.recorrente,
+          intervalo_meses: values.intervalo_meses,
           responsaveis,
           atualizado_por: user?.id,
           atualizado_por_nome: actorNome,
@@ -256,6 +270,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
         parametros,
         antecedencia_alerta_dias: values.antecedencia_alerta_dias,
         recorrente: values.recorrente,
+        intervalo_meses: values.intervalo_meses,
         responsaveis,
         criado_por: user?.id,
         criado_por_nome: actorNome,
@@ -436,7 +451,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
 
           <div className="flex items-center justify-between rounded-lg border px-3 py-2.5">
             <div>
-              <p className="text-sm font-medium">Repetir todos os meses</p>
+              <p className="text-sm font-medium">Repetir periodicamente</p>
               <p className="text-[11px] text-muted-foreground">
                 Desative para criar uma tarefa única, sem recorrência.
               </p>
@@ -452,6 +467,36 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
               )}
             />
           </div>
+
+          {recorrente && (
+            <div className="space-y-1.5">
+              <Label>Frequência</Label>
+              <Controller
+                control={control}
+                name="intervalo_meses"
+                render={({ field }) => (
+                  <Select
+                    value={String(field.value)}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INTERVALO_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Com que frequência esta obrigação se repete, contada a partir do primeiro ciclo.
+              </p>
+            </div>
+          )}
 
           {!isEdit && (
             <div className="space-y-1.5">

@@ -35,6 +35,7 @@ export interface ObrigacaoResponse {
   antecedencia_alerta_dias: number;
   ativa: boolean;
   recorrente: boolean;
+  intervalo_meses: number;
   criado_por: string | null;
   criado_em: string;
   descricao?: string | null;
@@ -59,6 +60,7 @@ export interface InstanciaResponse {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   recorrente: boolean;
+  intervalo_meses: number;
   ciclo: string;
   data_vencimento: string | null;
   data_evento_gatilho: string | null;
@@ -119,6 +121,7 @@ export interface ObrigacaoCreateRequest {
   parametros: Record<string, number>;
   antecedencia_alerta_dias: number;
   recorrente?: boolean;
+  intervalo_meses?: number;
   criado_por?: string;
   criado_por_nome?: string;
   descricao?: string;
@@ -133,6 +136,7 @@ export interface ObrigacaoUpdateRequest {
   parametros?: Record<string, number>;
   antecedencia_alerta_dias?: number;
   recorrente?: boolean;
+  intervalo_meses?: number;
   descricao?: string;
   responsaveis?: ResponsavelInfo[];
   atualizado_por?: string;
