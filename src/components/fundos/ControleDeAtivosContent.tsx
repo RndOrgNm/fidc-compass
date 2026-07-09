@@ -814,13 +814,13 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
                                 ) : <span className="inline-block w-3.5" aria-hidden />}
                                 {formatReferenceDate(group.latest)}
                                 {hasVersions && (
-                                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                    {group.members.length} versões
+                                  <span className="shrink-0 whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                    {group.members.length} {group.members.length === 1 ? "versão" : "versões"}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(group.latest.createdAt)}</td>
+                            <td className="whitespace-nowrap py-2.5 pr-4 text-muted-foreground">{formatDate(group.latest.createdAt)}</td>
                             <td className="py-2.5">
                               <div className="flex items-center gap-1.5">
                                 <Button
@@ -846,7 +846,7 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
                               <td className="py-2 pr-4 pl-6 text-xs text-muted-foreground">
                                 Versão {run.version}
                               </td>
-                              <td className="py-2 pr-4 text-xs text-muted-foreground">{formatDate(run.createdAt)}</td>
+                              <td className="whitespace-nowrap py-2 pr-4 text-xs text-muted-foreground">{formatDate(run.createdAt)}</td>
                               <td className="py-2">
                                 <div className="flex items-center gap-1.5">
                                   <Button
