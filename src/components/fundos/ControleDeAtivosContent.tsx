@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useReportJob, type ConfigPayload } from "@/contexts/ReportJobContext";
 import {
   FileSpreadsheet, FileDown, BarChart2, History, Loader2, Trash2, X,
-  CheckCircle2, Presentation, ChevronLeft, ChevronRight,
+  CheckCircle2, Presentation, ChevronLeft, ChevronRight, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
@@ -57,6 +57,7 @@ type ReportRun = {
   status: string;
   version: number;
   createdAt: string | null;
+  referenceDate: string | null;  // competência (YYYY-MM-DD); may be null for legacy runs
 };
 
 type JobStatus = "idle" | "presigning" | "uploading" | "processing" | "rendering" | "completed" | "error";
@@ -89,6 +90,42 @@ function formatDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+/** The competência month key (YYYY-MM) used to group runs: reference date if
+ *  present, else the creation month (legacy runs recorded before competência). */
+function monthKey(run: ReportRun): string {
+  const src = run.referenceDate ?? run.createdAt;
+  return src ? src.slice(0, 7) : "—";
+}
+
+/** Data de Referência as a specific date (dd/mm/aaaa). Legacy runs without a
+ *  competência fall back to a MM/AAAA label derived from the creation month. */
+function formatReferenceDate(run: ReportRun): string {
+  if (run.referenceDate) {
+    const [y, m, d] = run.referenceDate.split("-");
+    return `${d}/${m}/${y}`;
+  }
+  const key = monthKey(run);
+  if (key === "—") return "—";
+  const [y, m] = key.split("-");
+  return `${m}/${y}`;
+}
+
+type MonthGroup = { key: string; members: ReportRun[]; latest: ReportRun };
+
+/** Group runs by competência month, newest month first, members newest-first. */
+function groupByMonth(runs: ReportRun[]): MonthGroup[] {
+  const byKey = new Map<string, ReportRun[]>();
+  for (const run of runs) {
+    const key = monthKey(run);
+    const bucket = byKey.get(key);
+    if (bucket) bucket.push(run);
+    else byKey.set(key, [run]);
+  }
+  return Array.from(byKey.entries())
+    .map(([key, members]) => ({ key, members, latest: members[0] }))
+    .sort((a, b) => (a.key < b.key ? 1 : a.key > b.key ? -1 : 0));
 }
 
 const PT_MONTHS = [
@@ -157,7 +194,10 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
   const [pdfFetchError, setPdfFetchError] = useState<string | null>(null);
 
   const [premio, setPremio] = useState<string>("");
-  const [mesReferencia, setMesReferencia] = useState<string>("");
+  const [mesReferencia, setMesReferencia] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
@@ -200,13 +240,23 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
   const [runs, setRuns] = useState<ReportRun[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
+  const monthGroups = useMemo(() => groupByMonth(runs), [runs]);
+  const toggleMonth = useCallback((key: string) => {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const loadHistory = useCallback(async (fund: string) => {
     if (!BASE_URL || !fund) return;
     setLoadingHistory(true);
     setHistoryError(null);
     try {
-      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=5`);
+      const res = await fetch(`${REPORT_RUNS_URL}?fund_name=${encodeURIComponent(fund.trim())}&limit=50`);
       const histText = await res.text();
       if (!res.ok) {
         const b = tryParseJsonRecord(histText) as Record<string, string>;
@@ -324,6 +374,13 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
       if (baseOutrosKey) workerBody.baseOutrosKey = baseOutrosKey;
       const premioTrimmed = premio.trim().replace(",", ".");
       if (premioTrimmed) workerBody.taxaPremio = premioTrimmed;
+      // Competência: the month picker (YYYY-MM) becomes the reference date at
+      // month-end (YYYY-MM-DD) — the posição de fechamento the report refers to.
+      if (mesReferencia) {
+        const [refY, refM] = mesReferencia.split("-").map(Number);
+        const lastDay = new Date(refY, refM, 0).getDate();
+        workerBody.referenceDate = `${mesReferencia}-${String(lastDay).padStart(2, "0")}`;
+      }
       const workerRes = await fetch(WORKER_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -733,35 +790,87 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/60">
+                      <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data de Referência</th>
                       <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground">Data de Criação</th>
                       <th className="pb-2 text-left text-xs font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/40">
-                    {runs.map((run) => (
-                      <tr key={run.id} className="group">
-                        <td className="py-2.5 pr-4 font-medium text-foreground">{formatDate(run.createdAt)}</td>
-                        <td className="py-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 gap-1.5 text-xs"
-                              onClick={() => void loadRunArtifacts(run)}
-                            >
-                              <BarChart2 className="h-3.5 w-3.5" aria-hidden />
-                              Ver Relatório
-                            </Button>
-                            {run.pptxKey && (
-                              <span className="text-xs text-muted-foreground">
-                                <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {monthGroups.map((group) => {
+                      const hasVersions = group.members.length > 1;
+                      const isExpanded = expandedMonths.has(group.key);
+                      return (
+                        <Fragment key={group.key}>
+                          <tr
+                            className={cn("group", hasVersions && "cursor-pointer hover:bg-muted/40")}
+                            onClick={hasVersions ? () => toggleMonth(group.key) : undefined}
+                          >
+                            <td className="py-2.5 pr-4 font-medium text-foreground">
+                              <div className="flex items-center gap-1.5">
+                                {hasVersions ? (
+                                  isExpanded
+                                    ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                                    : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                                ) : <span className="inline-block w-3.5" aria-hidden />}
+                                {formatReferenceDate(group.latest)}
+                                {hasVersions && (
+                                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                    {group.members.length} versões
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 pr-4 text-muted-foreground">{formatDate(group.latest.createdAt)}</td>
+                            <td className="py-2.5">
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1.5 text-xs"
+                                  onClick={(e) => { e.stopPropagation(); void loadRunArtifacts(group.latest); }}
+                                >
+                                  <BarChart2 className="h-3.5 w-3.5" aria-hidden />
+                                  Ver Relatório
+                                </Button>
+                                {group.latest.pptxKey && (
+                                  <span className="text-xs text-muted-foreground">
+                                    <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {isExpanded && group.members.slice(1).map((run) => (
+                            <tr key={run.id} className="bg-muted/20">
+                              <td className="py-2 pr-4 pl-6 text-xs text-muted-foreground">
+                                Versão {run.version}
+                              </td>
+                              <td className="py-2 pr-4 text-xs text-muted-foreground">{formatDate(run.createdAt)}</td>
+                              <td className="py-2">
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 gap-1.5 text-xs"
+                                    onClick={(e) => { e.stopPropagation(); void loadRunArtifacts(run); }}
+                                  >
+                                    <BarChart2 className="h-3.5 w-3.5" aria-hidden />
+                                    Ver Relatório
+                                  </Button>
+                                  {run.pptxKey && (
+                                    <span className="text-xs text-muted-foreground">
+                                      <Presentation className="inline h-3.5 w-3.5" aria-hidden /> PPTX
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
