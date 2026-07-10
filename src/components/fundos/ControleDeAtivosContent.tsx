@@ -99,13 +99,9 @@ function monthKey(run: ReportRun): string {
   return src ? src.slice(0, 7) : "—";
 }
 
-/** Data de Referência as a specific date (dd/mm/aaaa). Legacy runs without a
- *  competência fall back to a MM/AAAA label derived from the creation month. */
+/** Data de Referência as month/year (mm/aaaa) — the competência month, with no
+ *  day. Legacy runs without a competência fall back to the creation month. */
 function formatReferenceDate(run: ReportRun): string {
-  if (run.referenceDate) {
-    const [y, m, d] = run.referenceDate.split("-");
-    return `${d}/${m}/${y}`;
-  }
   const key = monthKey(run);
   if (key === "—") return "—";
   const [y, m] = key.split("-");
