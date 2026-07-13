@@ -908,10 +908,10 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
             </div>
           </div>
 
-          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3" style={{ height: "80vh" }}>
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-auto">
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3">
+            <div className="w-full bg-white shadow-xl rounded-lg overflow-auto" style={{ maxHeight: "80vh" }}>
               {pdfLoading && (
-                <div className="flex h-full items-center justify-center">
+                <div className="flex items-center justify-center py-24">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
                     <span className="text-sm">Carregando PDF…</span>
