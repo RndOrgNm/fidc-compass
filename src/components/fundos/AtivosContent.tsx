@@ -1,5 +1,9 @@
+import { useNavigate } from "react-router-dom";
+import { CalendarPlus } from "lucide-react";
+
 import { cn } from "@/lib/utils";
-import { getAtivosData, type AtivoStatus } from "@/data/ativosData";
+import { getAtivosData, type AtivoAsset, type AtivoObrigacao, type AtivoStatus } from "@/data/ativosData";
+import type { ObrigacaoFormInitial } from "./prazos/ObrigacaoFormDialog";
 
 export interface AtivosContentProps {
   fundoId: number | null;
@@ -13,6 +17,8 @@ const STATUS_CHIP: Record<AtivoStatus, string> = {
 };
 
 export function AtivosContent({ fundoId }: AtivosContentProps) {
+  const navigate = useNavigate();
+
   if (fundoId == null) {
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
@@ -29,6 +35,21 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
         Sem dados de ativos disponíveis para este fundo.
       </p>
     );
+  }
+
+  // Jump to the Prazos tab with the "Nova obrigação" dialog pre-filled from this
+  // contractual obligation. The empreendimento + contract item ride along in the
+  // descrição, since the obrigações backend has no empreendimento field yet.
+  function criarPrazo(asset: AtivoAsset, o: AtivoObrigacao) {
+    const prefill: ObrigacaoFormInitial = {
+      topico: o.obrigacao,
+      descricao: `${asset.nome} · ${o.item}`,
+      categoria: "OPERACIONAL",
+      tipo_prazo: "DIA_FIXO",
+      parametros: { dia: 1 },
+      antecedencia_alerta_dias: 7,
+    };
+    navigate(`/fundos/prazos/${fundoId}`, { state: { novaObrigacao: { prefill } } });
   }
 
   return (
@@ -61,7 +82,10 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
                       <th className="pb-2 px-3 text-left font-medium">Obrigação</th>
                       <th className="pb-2 px-3 text-left font-medium">Responsável</th>
                       <th className="pb-2 px-3 text-left font-medium">Vencimento</th>
-                      <th className="pb-2 pl-3 text-right font-medium">Status</th>
+                      <th className="pb-2 px-3 text-left font-medium">Status</th>
+                      <th className="pb-2 pl-3 text-right font-medium">
+                        <span className="sr-only">Ações</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -77,7 +101,7 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
                         <td className="px-3 py-2.5 text-[13px] text-foreground">{o.obrigacao}</td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">{o.responsavel}</td>
                         <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs tabular-nums text-muted-foreground">{o.vencimento}</td>
-                        <td className="py-2.5 pl-3 text-right">
+                        <td className="px-3 py-2.5">
                           <span
                             className={cn(
                               "inline-block whitespace-nowrap rounded-full px-2.5 py-[3px] text-[10px] font-medium tracking-wide",
@@ -86,6 +110,17 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
                           >
                             {o.status}
                           </span>
+                        </td>
+                        <td className="py-2.5 pl-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => criarPrazo(a, o)}
+                            title="Criar prazo a partir desta obrigação"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <CalendarPlus className="h-4 w-4" />
+                            <span className="sr-only">Criar prazo em Prazos</span>
+                          </button>
                         </td>
                       </tr>
                     ))}

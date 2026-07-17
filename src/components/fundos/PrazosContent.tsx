@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
 import {
@@ -387,6 +388,22 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [formInitial, setFormInitial] = useState<ObrigacaoFormInitial | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<InstanciaResponse | null>(null);
+
+  // Deep-link from the Ativos tab: open "Nova obrigação" pre-filled, then clear
+  // the nav state so switching back to this tab (or refresh) doesn't reopen it.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const novaHandledRef = useRef(false);
+  useEffect(() => {
+    const nova = (location.state as { novaObrigacao?: { prefill?: ObrigacaoFormInitial } } | null)
+      ?.novaObrigacao;
+    if (nova && !novaHandledRef.current && fundoId != null) {
+      novaHandledRef.current = true;
+      setFormInitial(nova.prefill);
+      setFormOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, fundoId, navigate]);
 
   // Whether any obligation rules exist for this fund (drives isEmpty — independent of cycle)
   const obrigacoesQuery = useQuery({
