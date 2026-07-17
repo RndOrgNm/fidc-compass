@@ -1,17 +1,18 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FileText, Users, CalendarClock, LineChart } from "lucide-react";
+import { FileText, Users, CalendarClock, LineChart, Building2 } from "lucide-react";
 import { AppLayout } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FundContextBar } from "@/components/fundos/FundContextBar";
 import { ControleDeAtivosContent } from "@/components/fundos/ControleDeAtivosContent";
+import { AtivosContent } from "@/components/fundos/AtivosContent";
 import { CotistasContent } from "@/components/fundos/CotistasContent";
 import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { GraficosContent } from "@/components/fundos/GraficosContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
-const VALID_TABS = ["prazos", "cotistas", "graficos", "controle"];
+const VALID_TABS = ["ativos", "prazos", "cotistas", "graficos", "controle"];
 
 function fundDisplayName(f: HomeFundRow): string {
   return (f.apelido?.trim() || f.nome).trim() || "—";
@@ -27,7 +28,7 @@ export default function Fundos() {
     return [...data.fundos].sort((a, b) => b.plAtual - a.plAtual);
   }, [data?.fundos]);
 
-  const tab = VALID_TABS.includes(tabParam ?? "") ? tabParam! : "prazos";
+  const tab = VALID_TABS.includes(tabParam ?? "") ? tabParam! : "ativos";
   const urlFundoId = Number(fundoIdParam) || null;
   const resolvedId = urlFundoId ?? funds[0]?.idCarteira ?? null;
   const selectedFund = funds.find((f) => f.idCarteira === resolvedId) ?? funds[0] ?? null;
@@ -57,6 +58,13 @@ export default function Fundos() {
         <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-b border-border bg-transparent p-0">
             <TabsTrigger
+              value="ativos"
+              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Building2 className="h-4 w-4" />
+              Ativos
+            </TabsTrigger>
+            <TabsTrigger
               value="prazos"
               className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
@@ -85,6 +93,10 @@ export default function Fundos() {
               Controle de Ativos
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ativos" className="mt-8">
+            <AtivosContent fundoId={resolvedId} fundName={selectedFundName} />
+          </TabsContent>
 
           <TabsContent value="controle" className="mt-8">
             <ControleDeAtivosContent fundName={selectedFundName} />
