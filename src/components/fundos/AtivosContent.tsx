@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 import {
   Plus,
   SquarePen,
-  Download,
+  Trash2,
   Upload,
   UploadCloud,
   FileCheck2,
@@ -11,6 +13,7 @@ import {
   Calendar as CalendarIcon,
   Info,
   FolderX,
+  Loader2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -22,6 +25,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,16 +45,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DOC_TYPES, DOC_STATUS, cadenciaLabel, cadenciaNote } from "@/data/ativosData";
+import { documentoKeys } from "@/lib/queryKeys";
 import {
-  getAtivosData,
-  cadenciaLabel,
-  cadenciaNote,
-  DOC_TYPES,
-  DOC_STATUS,
-  type AtivoAsset,
-  type Documento,
+  listDocumentosByFundo,
+  createDocumento,
+  updateDocumento,
+  deleteDocumento,
+  uploadDocumentoFile,
+  getDownloadUrl,
+  criarPrazoParaDocumento,
   type DocTipo,
-} from "@/data/ativosData";
+  type DocumentoResponse,
+  type AtivoComDocumentosResponse,
+} from "@/lib/api/documentoService";
 
 export interface AtivosContentProps {
   fundoId: number | null;
@@ -50,8 +67,36 @@ export interface AtivosContentProps {
 
 const RESP_OPCOES = ["Jurídico", "Contábil", "Financeiro", "Engenharia", "Comercial", "Compliance", "SPE"];
 
+// ── Date helpers (API: "YYYY-MM-DD" ↔ UI: "dd/mm/aaaa") ────────────────────────
+
+function isoToBr(iso?: string | null): string | null {
+  if (!iso) return null;
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return null;
+  return `${d}/${m}/${y}`;
+}
+
+function brToIso(br: string): string | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br.trim());
+  if (!match) return null;
+  const [, d, m, y] = match;
+  const date = new Date(Number(y), Number(m) - 1, Number(d));
+  if (date.getFullYear() !== Number(y) || date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d)) {
+    return null;
+  }
+  return `${y}-${m}-${d}`;
+}
+
+function formatBytes(bytes?: number | null): string {
+  if (bytes == null) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 // ── Criar prazo dialog ────────────────────────────────────────────────────────
 interface PrazoPrefill {
+  documentoId: string;
   topico: string;
   resp: string;
 }
@@ -60,10 +105,14 @@ function CriarPrazoDialog({
   prefill,
   open,
   onOpenChange,
+  onSave,
+  saving,
 }: {
   prefill: PrazoPrefill | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  onSave: (values: { topico: string; vencimento: string; resp: string }) => void;
+  saving: boolean;
 }) {
   const [topico, setTopico] = useState("");
   const [vencimento, setVencimento] = useState("");
@@ -77,11 +126,6 @@ function CriarPrazoDialog({
       setResp(prefill?.resp ?? "");
     }
   }, [open, prefill]);
-
-  function salvar() {
-    toast({ title: "Prazo criado", description: "Prazo criado e vinculado ao documento." });
-    onOpenChange(false);
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -113,9 +157,12 @@ function CriarPrazoDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button size="sm" onClick={salvar}>
-            <CalendarPlus className="mr-1 h-4 w-4" /> Criar prazo
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button size="sm" disabled={saving || !topico || !vencimento} onClick={() => onSave({ topico, vencimento, resp })}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <CalendarPlus className="mr-1 h-4 w-4" />}
+            Criar prazo
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -130,32 +177,44 @@ function DocumentDialog({
   isNew,
   open,
   onOpenChange,
+  onSave,
+  saving,
   onCriarPrazo,
 }: {
-  asset: AtivoAsset;
-  doc: Documento | null;
+  asset: AtivoComDocumentosResponse;
+  doc: DocumentoResponse | null;
   isNew: boolean;
   open: boolean;
   onOpenChange: (o: boolean) => void;
+  onSave: (values: { tipo: DocTipo; periodo: string; file: File | null }) => void;
+  saving: boolean;
   onCriarPrazo: (prefill: PrazoPrefill) => void;
 }) {
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
-  const [periodo, setPeriodo] = useState(doc?.periodo ?? "");
+  const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Re-seed local state whenever a different document opens the dialog.
   useEffect(() => {
     if (open) {
       setTipo(doc?.tipo ?? "balancete");
-      setPeriodo(doc?.periodo ?? "");
+      setPeriodo(doc?.periodo_referencia ?? "");
+      setFile(null);
     }
   }, [open, doc, isNew]);
 
   const meta = DOC_TYPES[tipo];
-  const note = cadenciaNote(tipo, asset);
+  const note = cadenciaNote(tipo, asset.imovel_no_nome_do_fundo);
 
-  function salvar() {
-    toast({ title: "Documento salvo", description: "Documento enviado e versão atualizada." });
-    onOpenChange(false);
+  async function handleDownload() {
+    if (!doc) return;
+    try {
+      const { download_url } = await getDownloadUrl(doc.id);
+      window.open(download_url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast({ title: "Erro ao baixar", description: (e as Error).message, variant: "destructive" });
+    }
   }
 
   return (
@@ -166,23 +225,43 @@ function DocumentDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-1">
-          {doc?.arquivo && (
+          {doc?.arquivo_nome && (
             <div className="flex items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5">
               <FileCheck2 className="h-5 w-5 shrink-0 text-success" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium">{doc.arquivo.nome}</div>
-                <div className="text-[11px] text-muted-foreground">{doc.arquivo.tamanho} · vigente desde {doc.vigente}</div>
+                <div className="truncate text-[13px] font-medium">{doc.arquivo_nome}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {formatBytes(doc.arquivo_tamanho)} · vigente desde {isoToBr(doc.vigente_desde)}
+                </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Baixar">
-                <Download className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Baixar" onClick={handleDownload}>
+                <Upload className="h-4 w-4 rotate-180" />
               </Button>
             </div>
           )}
 
-          <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border py-7 text-center">
+          <div
+            className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border py-7 text-center"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const dropped = e.dataTransfer.files?.[0];
+              if (dropped) setFile(dropped);
+            }}
+          >
             <UploadCloud className="h-6 w-6 text-muted-foreground" />
-            <p className="text-[13px] font-medium">{doc?.arquivo ? "Enviar nova versão" : "Enviar arquivo"}</p>
+            <p className="text-[13px] font-medium">
+              {file ? file.name : doc?.arquivo_nome ? "Enviar nova versão" : "Enviar arquivo"}
+            </p>
             <span className="text-[11px] text-muted-foreground">Arraste ou clique para selecionar · PDF, XLSX, DOCX</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.xlsx,.xls,.docx,.doc"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -205,7 +284,7 @@ function DocumentDialog({
 
           <div className="space-y-1.5">
             <Label>Cadência</Label>
-            <Input value={cadenciaLabel(tipo, asset)} disabled />
+            <Input value={cadenciaLabel(tipo, asset.imovel_no_nome_do_fundo)} disabled />
           </div>
           {note && (
             <div className="flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
@@ -218,33 +297,46 @@ function DocumentDialog({
             <Input placeholder="ex.: 2º tri/2026" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Vincular a um prazo</Label>
-            {doc?.prazo ? (
-              <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                <span className="flex items-center gap-1.5 text-[13px]">
-                  <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                  {doc.prazo.titulo} · vence {doc.prazo.data}
-                </span>
-                <span className="text-[11px] text-muted-foreground">{doc.prazo.resp}</span>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-fit"
-                onClick={() => onCriarPrazo({ topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`, resp: meta.resp })}
-              >
-                <CalendarPlus className="mr-1 h-4 w-4" /> Criar prazo
-              </Button>
-            )}
-          </div>
+          {!isNew && doc && (
+            <div className="space-y-1.5">
+              <Label>Vincular a um prazo</Label>
+              {doc.prazo ? (
+                <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+                  <span className="flex items-center gap-1.5 text-[13px]">
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                    {doc.prazo.topico} · vence {isoToBr(doc.prazo.data_vencimento)}
+                  </span>
+                  {doc.prazo.responsavel_nome && (
+                    <span className="text-[11px] text-muted-foreground">{doc.prazo.responsavel_nome}</span>
+                  )}
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() =>
+                    onCriarPrazo({
+                      documentoId: doc.id,
+                      topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`,
+                      resp: meta.resp,
+                    })
+                  }
+                >
+                  <CalendarPlus className="mr-1 h-4 w-4" /> Criar prazo
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button size="sm" onClick={salvar}>
-            <Upload className="mr-1 h-4 w-4" /> Salvar
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button size="sm" disabled={saving} onClick={() => onSave({ tipo, periodo, file })}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
+            Salvar
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -253,11 +345,11 @@ function DocumentDialog({
 }
 
 // ── Prazo cell ────────────────────────────────────────────────────────────────
-function DocPrazoCell({ doc, onCreatePrazo }: { doc: Documento; onCreatePrazo: () => void }) {
+function DocPrazoCell({ doc, onCreatePrazo }: { doc: DocumentoResponse; onCreatePrazo: () => void }) {
   if (doc.prazo) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums text-success">
-        <CalendarClock className="h-3.5 w-3.5" /> {doc.prazo.data}
+        <CalendarClock className="h-3.5 w-3.5" /> {isoToBr(doc.prazo.data_vencimento)}
       </span>
     );
   }
@@ -279,19 +371,87 @@ function DocPrazoCell({ doc, onCreatePrazo }: { doc: Documento; onCreatePrazo: (
 }
 
 // ── Asset card ────────────────────────────────────────────────────────────────
-function AssetCard({ asset }: { asset: AtivoAsset }) {
-  const [docState, setDocState] = useState<{ doc: Documento | null; isNew: boolean } | null>(null);
+function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fundoId: number }) {
+  const { user } = useUser();
+  const queryClient = useQueryClient();
+
+  const [docState, setDocState] = useState<{ doc: DocumentoResponse | null; isNew: boolean } | null>(null);
   const [prazoPrefill, setPrazoPrefill] = useState<PrazoPrefill | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DocumentoResponse | null>(null);
+  const [saving, setSaving] = useState(false);
   const docs = asset.documentos;
+
+  function invalidate() {
+    return queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
+  }
+
+  async function handleSaveDocument(values: { tipo: DocTipo; periodo: string; file: File | null }) {
+    setSaving(true);
+    try {
+      let docId = docState?.doc?.id;
+      if (docState?.isNew) {
+        const created = await createDocumento({
+          ativo_id: asset.ativo_id,
+          fundo_id: fundoId,
+          tipo: values.tipo,
+          periodo_referencia: values.periodo || undefined,
+        });
+        docId = created.id;
+      } else if (docId && values.periodo !== (docState?.doc?.periodo_referencia ?? "")) {
+        await updateDocumento(docId, { periodo_referencia: values.periodo || undefined });
+      }
+      if (docId && values.file) {
+        await uploadDocumentoFile(docId, values.file);
+      }
+      await invalidate();
+      toast({ title: "Documento salvo", description: "Documento enviado e versão atualizada." });
+      setDocState(null);
+    } catch (e) {
+      toast({ title: "Erro ao salvar documento", description: (e as Error).message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteDocumento(id),
+    onSuccess: async () => {
+      await invalidate();
+      toast({ title: "Documento excluído" });
+      setDeleteTarget(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+  });
+
+  const criarPrazoMut = useMutation({
+    mutationFn: (vars: { documentoId: string; topico: string; vencimento: string; resp: string }) => {
+      const iso = brToIso(vars.vencimento);
+      if (!iso) throw new Error("Data inválida — use o formato dd/mm/aaaa.");
+      return criarPrazoParaDocumento(vars.documentoId, {
+        topico: vars.topico,
+        data_vencimento: iso,
+        responsavel_id: user?.id,
+        responsavel_nome: user?.fullName ?? user?.id ?? undefined,
+        responsavel_email: user?.primaryEmailAddress?.emailAddress,
+        criado_por: user?.id,
+      });
+    },
+    onSuccess: async () => {
+      await invalidate();
+      toast({ title: "Prazo criado", description: "Prazo criado e vinculado ao documento." });
+      setPrazoPrefill(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao criar prazo", description: e.message, variant: "destructive" }),
+  });
 
   return (
     <div
       className="mb-4 rounded-lg border border-l-[3px] border-border bg-card/50 px-5 py-4"
-      style={{ borderLeftColor: asset.cor }}
+      style={{ borderLeftColor: asset.cor ?? undefined }}
     >
       <div className="mb-3">
         <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
-        <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>
+        {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
       </div>
 
       <div className="mb-3">
@@ -304,7 +464,7 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
         <div className="flex flex-col items-center gap-2 py-8 text-center">
           <FolderX className="h-7 w-7 text-muted-foreground/60" />
           <p className="max-w-sm text-[13px] text-muted-foreground">
-            Nenhum documento configurado para este ativo ainda. Defina quais documentos acompanhar e as respectivas cadências.
+            Nenhum documento configurado para este ativo ainda. Clique em "Novo documento" para começar.
           </p>
         </div>
       ) : (
@@ -324,19 +484,16 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
               </tr>
             </thead>
             <tbody>
-              {docs.map((d, i) => {
+              {docs.map((d) => {
                 const meta = DOC_TYPES[d.tipo];
                 const st = DOC_STATUS[d.status];
                 const DocIcon = meta.icon;
                 const StatusIcon = st.icon;
-                const note = cadenciaNote(d.tipo, asset);
+                const note = cadenciaNote(d.tipo, asset.imovel_no_nome_do_fundo);
                 return (
                   <tr
-                    key={i}
-                    className={cn(
-                      "border-b border-border/50 transition-colors hover:bg-card/40",
-                      i === docs.length - 1 && "border-b-0",
-                    )}
+                    key={d.id}
+                    className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-card/40"
                   >
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-2 text-[13px] text-foreground">
@@ -346,13 +503,17 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
                     </td>
                     <td className="px-3 py-2.5">
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={note ?? undefined}>
-                        {cadenciaLabel(d.tipo, asset)}
+                        {cadenciaLabel(d.tipo, asset.imovel_no_nome_do_fundo)}
                         {d.tipo === "matricula" && <Info className="h-3 w-3" />}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo || "—"}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo_referencia || "—"}</td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                      {d.vigente ? `vigente desde ${d.vigente}` : <span className="italic text-muted-foreground/70">nenhum arquivo enviado</span>}
+                      {d.vigente_desde ? (
+                        `vigente desde ${isoToBr(d.vigente_desde)}`
+                      ) : (
+                        <span className="italic text-muted-foreground/70">nenhum arquivo enviado</span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-[3px] text-[10px] font-medium", st.chip)}>
@@ -362,7 +523,13 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
                     <td className="px-3 py-2.5">
                       <DocPrazoCell
                         doc={d}
-                        onCreatePrazo={() => setPrazoPrefill({ topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`, resp: meta.resp })}
+                        onCreatePrazo={() =>
+                          setPrazoPrefill({
+                            documentoId: d.id,
+                            topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`,
+                            resp: meta.resp,
+                          })
+                        }
                       />
                     </td>
                     <td className="py-2.5 pl-3">
@@ -374,20 +541,19 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
                         >
                           <SquarePen className="h-4 w-4" />
                         </button>
-                        {d.arquivo && (
-                          <button
-                            aria-label="Baixar"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                        )}
                         <button
                           aria-label="Enviar novo"
                           onClick={() => setDocState({ doc: d, isNew: false })}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10"
                         >
                           <Upload className="h-4 w-4" />
+                        </button>
+                        <button
+                          aria-label="Excluir"
+                          onClick={() => setDeleteTarget(d)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -405,6 +571,8 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
         isNew={docState?.isNew ?? false}
         open={docState != null}
         onOpenChange={(o) => !o && setDocState(null)}
+        onSave={handleSaveDocument}
+        saving={saving}
         onCriarPrazo={(prefill) => {
           setDocState(null);
           setPrazoPrefill(prefill);
@@ -414,13 +582,45 @@ function AssetCard({ asset }: { asset: AtivoAsset }) {
         prefill={prazoPrefill}
         open={prazoPrefill != null}
         onOpenChange={(o) => !o && setPrazoPrefill(null)}
+        onSave={(values) => {
+          if (prazoPrefill) criarPrazoMut.mutate({ documentoId: prazoPrefill.documentoId, ...values });
+        }}
+        saving={criarPrazoMut.isPending}
       />
+
+      <AlertDialog open={deleteTarget != null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{deleteTarget && DOC_TYPES[deleteTarget.tipo].label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O registro e o arquivo enviado serão removidos. Esta ação não pode ser desfeita pela interface.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMut.isPending}
+              onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)}
+            >
+              {deleteMut.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 // ── Content ───────────────────────────────────────────────────────────────────
-export function AtivosContent({ fundoId }: AtivosContentProps) {
+export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
+  const query = useQuery({
+    queryKey: fundoId != null ? documentoKeys.byFundo(fundoId) : documentoKeys.all,
+    queryFn: () => listDocumentosByFundo(fundoId as number),
+    enabled: fundoId != null,
+  });
+
   if (fundoId == null) {
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
@@ -429,12 +629,28 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
     );
   }
 
-  const data = getAtivosData(fundoId);
+  if (query.isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" /> Carregando ativos…
+      </div>
+    );
+  }
 
-  if (!data) {
+  if (query.isError) {
+    return (
+      <p className="py-16 text-center text-sm text-destructive">
+        Erro ao carregar ativos: {(query.error as Error).message}
+      </p>
+    );
+  }
+
+  const assets = query.data?.assets ?? [];
+
+  if (assets.length === 0) {
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
-        Sem dados de ativos disponíveis para este fundo.
+        Sem dados de ativos disponíveis para este fundo{fundName ? ` (${fundName})` : ""}.
       </p>
     );
   }
@@ -443,11 +659,11 @@ export function AtivosContent({ fundoId }: AtivosContentProps) {
     <div>
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Empreendimento</h3>
-        <span className="text-xs text-muted-foreground">Posição em {data.asOf}</span>
+        {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
       </div>
 
-      {data.assets.map((a, idx) => (
-        <AssetCard key={idx} asset={a} />
+      {assets.map((asset) => (
+        <AssetCard key={asset.ativo_id} asset={asset} fundoId={fundoId} />
       ))}
     </div>
   );

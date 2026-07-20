@@ -22,3 +22,10 @@ export const assignmentKeys = {
   all: ["assignments"] as const,
   list: (usuarioId: string) => ["assignments", usuarioId] as const,
 };
+
+export const documentoKeys = {
+  /** All ativos/documentos queries (broad invalidation root). */
+  all: ["documentos"] as const,
+  /** Ativos + documentos of a fund, grouped by ativo (the Ativos tab payload). */
+  byFundo: (fundoId: number) => ["documentos", "fundo", fundoId] as const,
+};
