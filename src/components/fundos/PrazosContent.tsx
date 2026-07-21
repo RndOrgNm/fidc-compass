@@ -47,8 +47,10 @@ import {
   deleteObrigacao,
   type Categoria,
   type InstanciaResponse,
+  type ObrigacaoResponse,
 } from "@/lib/api/prazoService";
-import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
+import { vincularPrazo } from "@/lib/api/documentoService";
+import { prazoKeys, alertaKeys, documentoKeys } from "@/lib/queryKeys";
 import {
   CAT_META,
   CAT_ORDER,
@@ -391,15 +393,21 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
   // Deep-link from the Ativos tab: open "Nova obrigação" pre-filled, then clear
   // the nav state so switching back to this tab (or refresh) doesn't reopen it.
+  // `documentoId`, when present, is linked back to the created obrigação once
+  // the form saves (see handleCreated) — closing the loop so the document's
+  // "Prazo" cell shows the obligation the user just created here.
   const location = useLocation();
   const navigate = useNavigate();
   const novaHandledRef = useRef(false);
+  const [linkDocumentoId, setLinkDocumentoId] = useState<string | null>(null);
   useEffect(() => {
-    const nova = (location.state as { novaObrigacao?: { prefill?: ObrigacaoFormInitial } } | null)
-      ?.novaObrigacao;
+    const nova = (
+      location.state as { novaObrigacao?: { prefill?: ObrigacaoFormInitial; documentoId?: string } } | null
+    )?.novaObrigacao;
     if (nova && !novaHandledRef.current && fundoId != null) {
       novaHandledRef.current = true;
       setFormInitial(nova.prefill);
+      setLinkDocumentoId(nova.documentoId ?? null);
       setFormOpen(true);
       navigate(location.pathname, { replace: true, state: null });
     }
@@ -557,10 +565,24 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
   const openCreate = () => { setFormInitial(undefined); setFormOpen(true); };
 
-  const handleCreated = (ciclo: string) => {
+  const vincularPrazoMut = useMutation({
+    mutationFn: ({ documentoId, obrigacaoId }: { documentoId: string; obrigacaoId: string }) =>
+      vincularPrazo(documentoId, obrigacaoId),
+    onSuccess: () => {
+      if (fundoId != null) queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Prazo criado, mas não vinculado ao documento", description: e.message, variant: "destructive" }),
+  });
+
+  const handleCreated = (obrigacao: ObrigacaoResponse, ciclo: string) => {
     const [y, m] = ciclo.split("-").map(Number);
     setCalYear(y);
     setCalMonth(m - 1);
+    if (linkDocumentoId) {
+      vincularPrazoMut.mutate({ documentoId: linkDocumentoId, obrigacaoId: obrigacao.id });
+      setLinkDocumentoId(null);
+    }
   };
   const openEdit = (i: InstanciaResponse) => {
     setFormInitial({

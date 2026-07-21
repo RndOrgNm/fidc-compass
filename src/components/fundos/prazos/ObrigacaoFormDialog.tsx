@@ -33,6 +33,7 @@ import {
   type Categoria,
   type TipoPrazo,
   type ResponsavelInfo,
+  type ObrigacaoResponse,
 } from "@/lib/api/prazoService";
 import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
 import { CAT_META, CAT_ORDER, TIPO_LABEL } from "./prazoMeta";
@@ -164,7 +165,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: ObrigacaoFormInitial;
-  onCreated?: (ciclo: string) => void;
+  onCreated?: (obrigacao: ObrigacaoResponse, ciclo: string) => void;
 }
 
 export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCreated }: Props) {
@@ -219,10 +220,11 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initial]);
 
-  // Once members load (create mode only), pre-select the current user — using
+  // Once members load (create mode only — including a prefilled create, e.g.
+  // a deep-link from the Ativos tab), pre-select the current user. Uses
   // setValue so text fields are never wiped by background re-fetches.
   useEffect(() => {
-    if (!open || !membersLoaded || initial) return;
+    if (!open || !membersLoaded || initial?.id) return;
     if (members.some((m) => m.id === user?.id)) {
       setValue("responsavel_ids", [user!.id]);
     }
@@ -277,7 +279,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
         ciclo_inicial: values.ciclo_inicial !== CYCLE_OPTIONS[0].value ? values.ciclo_inicial : undefined,
       });
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: prazoKeys.all });
       queryClient.invalidateQueries({ queryKey: alertaKeys.all });
       toast({
@@ -287,7 +289,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
           : "A obrigação foi adicionada ao calendário do fundo.",
       });
       if (!isEdit && onCreated) {
-        onCreated(variables.ciclo_inicial ?? CYCLE_OPTIONS[0].value);
+        onCreated(result, variables.ciclo_inicial ?? CYCLE_OPTIONS[0].value);
       }
       onOpenChange(false);
     },

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@clerk/clerk-react";
 import {
   Plus,
   SquarePen,
@@ -70,7 +70,6 @@ import {
   deleteDocumento,
   uploadDocumentoFile,
   getDownloadUrl,
-  criarPrazoParaDocumento,
   type DocTipo,
   type Cadencia,
   type DocumentoResponse,
@@ -84,8 +83,6 @@ export interface AtivosContentProps {
   fundName?: string;
 }
 
-const RESP_OPCOES = ["Jurídico", "Contábil", "Financeiro", "Engenharia", "Comercial", "Compliance", "SPE"];
-
 // ── Date helpers (API: "YYYY-MM-DD" ↔ UI: "dd/mm/aaaa") ────────────────────────
 
 function isoToBr(iso?: string | null): string | null {
@@ -95,17 +92,6 @@ function isoToBr(iso?: string | null): string | null {
   return `${d}/${m}/${y}`;
 }
 
-function brToIso(br: string): string | null {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br.trim());
-  if (!match) return null;
-  const [, d, m, y] = match;
-  const date = new Date(Number(y), Number(m) - 1, Number(d));
-  if (date.getFullYear() !== Number(y) || date.getMonth() !== Number(m) - 1 || date.getDate() !== Number(d)) {
-    return null;
-  }
-  return `${y}-${m}-${d}`;
-}
-
 function formatBytes(bytes?: number | null): string {
   if (bytes == null) return "";
   if (bytes < 1024) return `${bytes} B`;
@@ -113,80 +99,15 @@ function formatBytes(bytes?: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// ── Criar prazo dialog ────────────────────────────────────────────────────────
+// "Criar prazo" no longer opens an in-place dialog — it navigates to the
+// Prazos tab's real "Nova Obrigação" form (richer: categoria, tipo_prazo,
+// recorrência, real Clerk responsáveis), prefilled from the document, and
+// links the resulting obrigação back to the document once saved (see
+// PrazosContent's `novaObrigacao` deep-link + `handleCreated`).
 interface PrazoPrefill {
   documentoId: string;
   topico: string;
   resp: string;
-}
-
-function CriarPrazoDialog({
-  prefill,
-  open,
-  onOpenChange,
-  onSave,
-  saving,
-}: {
-  prefill: PrazoPrefill | null;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onSave: (values: { topico: string; vencimento: string; resp: string }) => void;
-  saving: boolean;
-}) {
-  const [topico, setTopico] = useState("");
-  const [vencimento, setVencimento] = useState("");
-  const [resp, setResp] = useState("");
-
-  // Seed fields when the dialog opens with a fresh prefill.
-  useEffect(() => {
-    if (open) {
-      setTopico(prefill?.topico ?? "");
-      setVencimento("");
-      setResp(prefill?.resp ?? "");
-    }
-  }, [open, prefill]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Criar prazo</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-1">
-          <div className="space-y-1.5">
-            <Label>Tópico</Label>
-            <Input value={topico} onChange={(e) => setTopico(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Vencimento</Label>
-            <Input placeholder="dd/mm/aaaa" value={vencimento} onChange={(e) => setVencimento(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Responsável</Label>
-            <Select value={resp} onValueChange={setResp}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {RESP_OPCOES.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button size="sm" disabled={saving || !topico || !vencimento} onClick={() => onSave({ topico, vencimento, resp })}>
-            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <CalendarPlus className="mr-1 h-4 w-4" />}
-            Criar prazo
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ── Document (upload / edit fields) dialog ────────────────────────────────────
@@ -437,11 +358,9 @@ function DocPrazoCell({ doc, onCreatePrazo }: { doc: DocumentoResponse; onCreate
 
 // ── Asset card ────────────────────────────────────────────────────────────────
 function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fundoId: number }) {
-  const { user } = useUser();
   const queryClient = useQueryClient();
-
+  const navigate = useNavigate();
   const [docState, setDocState] = useState<{ doc: DocumentoResponse | null; isNew: boolean } | null>(null);
-  const [prazoPrefill, setPrazoPrefill] = useState<PrazoPrefill | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentoResponse | null>(null);
   const [editAtivoOpen, setEditAtivoOpen] = useState(false);
   const [viewDoc, setViewDoc] = useState<DocumentoResponse | null>(null);
@@ -512,26 +431,26 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
     onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
   });
 
-  const criarPrazoMut = useMutation({
-    mutationFn: (vars: { documentoId: string; topico: string; vencimento: string; resp: string }) => {
-      const iso = brToIso(vars.vencimento);
-      if (!iso) throw new Error("Data inválida — use o formato dd/mm/aaaa.");
-      return criarPrazoParaDocumento(vars.documentoId, {
-        topico: vars.topico,
-        data_vencimento: iso,
-        responsavel_id: user?.id,
-        responsavel_nome: user?.fullName ?? user?.id ?? undefined,
-        responsavel_email: user?.primaryEmailAddress?.emailAddress,
-        criado_por: user?.id,
-      });
-    },
-    onSuccess: async () => {
-      await invalidate();
-      toast({ title: "Prazo criado", description: "Prazo criado e vinculado ao documento." });
-      setPrazoPrefill(null);
-    },
-    onError: (e: Error) => toast({ title: "Erro ao criar prazo", description: e.message, variant: "destructive" }),
-  });
+  // Deep-links to Prazos → Nova Obrigação, prefilled from the document. The
+  // dialog there links the created obrigação back to this document once saved
+  // (PrazosContent's `novaObrigacao` deep-link + `handleCreated`).
+  function goToNovaObrigacao(prefill: PrazoPrefill) {
+    navigate(`/fundos/prazos/${fundoId}`, {
+      state: {
+        novaObrigacao: {
+          documentoId: prefill.documentoId,
+          prefill: {
+            topico: prefill.topico,
+            descricao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
+            categoria: "REGULATORIO",
+            tipo_prazo: "DIA_FIXO",
+            parametros: {},
+            antecedencia_alerta_dias: 7,
+          },
+        },
+      },
+    });
+  }
 
   return (
     <div
@@ -621,7 +540,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                       <DocPrazoCell
                         doc={d}
                         onCreatePrazo={() =>
-                          setPrazoPrefill({
+                          goToNovaObrigacao({
                             documentoId: d.id,
                             topico: `${label} — ${asset.nome.split(" · ")[0]}`,
                             resp: meta.resp,
@@ -680,17 +599,8 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
         saving={saving}
         onCriarPrazo={(prefill) => {
           setDocState(null);
-          setPrazoPrefill(prefill);
+          goToNovaObrigacao(prefill);
         }}
-      />
-      <CriarPrazoDialog
-        prefill={prazoPrefill}
-        open={prazoPrefill != null}
-        onOpenChange={(o) => !o && setPrazoPrefill(null)}
-        onSave={(values) => {
-          if (prazoPrefill) criarPrazoMut.mutate({ documentoId: prazoPrefill.documentoId, ...values });
-        }}
-        saving={criarPrazoMut.isPending}
       />
 
       <AlertDialog open={deleteTarget != null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
