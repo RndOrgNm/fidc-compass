@@ -54,6 +54,8 @@ export interface DocumentoResponse {
   ativo_id: string;
   fundo_id: number;
   tipo: DocTipo;
+  /** Label livre — só usado (e obrigatório) quando tipo="outro". */
+  nome_personalizado?: string | null;
   cadencia: Cadencia;
   periodo_referencia?: string | null;
   versao?: string | null;
@@ -116,11 +118,13 @@ export interface DocumentoCreateRequest {
   ativo_id: string;
   fundo_id: number;
   tipo: DocTipo;
+  nome_personalizado?: string; // obrigatório quando tipo="outro"
   cadencia?: Cadencia; // se omitido, o backend usa a cadência sugerida do tipo
   periodo_referencia?: string;
 }
 
 export interface DocumentoUpdateRequest {
+  nome_personalizado?: string;
   cadencia?: Cadencia;
   periodo_referencia?: string;
   proximo_vencimento?: string; // "YYYY-MM-DD"

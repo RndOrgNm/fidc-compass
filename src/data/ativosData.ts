@@ -78,3 +78,9 @@ export function cadenciaNote(tipo: DocTipo, imovelNoNomeDoFundo: boolean): strin
     ? "Imóvel já averbado em nome do fundo → atualização anual."
     : "Imóvel ainda não está em nome do fundo → atualização semestral.";
 }
+
+/** Effective display label — the catalog label, or the custom name when tipo="outro". */
+export function docLabel(tipo: DocTipo, nomePersonalizado?: string | null): string {
+  if (tipo === "outro" && nomePersonalizado) return nomePersonalizado;
+  return DOC_TYPES[tipo].label;
+}

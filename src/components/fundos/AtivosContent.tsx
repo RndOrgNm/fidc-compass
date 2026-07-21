@@ -59,7 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
-import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote } from "@/data/ativosData";
+import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote, docLabel } from "@/data/ativosData";
 import { documentoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
@@ -205,11 +205,18 @@ function DocumentDialog({
   isNew: boolean;
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  onSave: (values: { tipo: DocTipo; cadencia: Cadencia; periodo: string; file: File | null }) => void;
+  onSave: (values: {
+    tipo: DocTipo;
+    nomePersonalizado: string;
+    cadencia: Cadencia;
+    periodo: string;
+    file: File | null;
+  }) => void;
   saving: boolean;
   onCriarPrazo: (prefill: PrazoPrefill) => void;
 }) {
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
+  const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
   const [cadencia, setCadencia] = useState<Cadencia>(
     doc?.cadencia ?? cadenciaSugerida("balancete", asset.imovel_no_nome_do_fundo)
   );
@@ -222,6 +229,7 @@ function DocumentDialog({
     if (open) {
       const initialTipo = doc?.tipo ?? "balancete";
       setTipo(initialTipo);
+      setNomePersonalizado(doc?.nome_personalizado ?? "");
       setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo, asset.imovel_no_nome_do_fundo));
       setPeriodo(doc?.periodo_referencia ?? "");
       setFile(null);
@@ -230,6 +238,8 @@ function DocumentDialog({
 
   const meta = DOC_TYPES[tipo];
   const note = cadenciaNote(tipo, asset.imovel_no_nome_do_fundo);
+  const label = docLabel(tipo, tipo === "outro" ? nomePersonalizado : undefined);
+  const isOutroSemNome = tipo === "outro" && !nomePersonalizado.trim();
 
   function handleTipoChange(v: string) {
     const next = v as DocTipo;
@@ -252,7 +262,7 @@ function DocumentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isNew ? "Novo documento" : `${meta.label} · ${asset.nome.split(" · ")[0]}`}</DialogTitle>
+          <DialogTitle>{isNew ? "Novo documento" : `${label} · ${asset.nome.split(" · ")[0]}`}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
@@ -313,6 +323,17 @@ function DocumentDialog({
             )}
           </div>
 
+          {tipo === "outro" && (
+            <div className="space-y-1.5">
+              <Label>Nome do documento</Label>
+              <Input
+                placeholder="ex.: Apólice de Seguro Fiança"
+                value={nomePersonalizado}
+                onChange={(e) => setNomePersonalizado(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Cadência</Label>
             <Select value={cadencia} onValueChange={(v) => setCadencia(v as Cadencia)}>
@@ -358,7 +379,7 @@ function DocumentDialog({
                   onClick={() =>
                     onCriarPrazo({
                       documentoId: doc.id,
-                      topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`,
+                      topico: `${label} — ${asset.nome.split(" · ")[0]}`,
                       resp: meta.resp,
                     })
                   }
@@ -374,7 +395,11 @@ function DocumentDialog({
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button size="sm" disabled={saving} onClick={() => onSave({ tipo, cadencia, periodo, file })}>
+          <Button
+            size="sm"
+            disabled={saving || isOutroSemNome}
+            onClick={() => onSave({ tipo, nomePersonalizado: nomePersonalizado.trim(), cadencia, periodo, file })}
+          >
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
             Salvar
           </Button>
@@ -437,7 +462,13 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
     onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
   });
 
-  async function handleSaveDocument(values: { tipo: DocTipo; cadencia: Cadencia; periodo: string; file: File | null }) {
+  async function handleSaveDocument(values: {
+    tipo: DocTipo;
+    nomePersonalizado: string;
+    cadencia: Cadencia;
+    periodo: string;
+    file: File | null;
+  }) {
     setSaving(true);
     try {
       let docId = docState?.doc?.id;
@@ -446,12 +477,14 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
           ativo_id: asset.ativo_id,
           fundo_id: fundoId,
           tipo: values.tipo,
+          nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
         });
         docId = created.id;
       } else if (docId) {
         await updateDocumento(docId, {
+          nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
         });
@@ -554,6 +587,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                 const st = DOC_STATUS[d.status];
                 const DocIcon = meta.icon;
                 const StatusIcon = st.icon;
+                const label = docLabel(d.tipo, d.nome_personalizado);
                 return (
                   <tr
                     key={d.id}
@@ -562,7 +596,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-2 text-[13px] text-foreground">
                         <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {meta.label}
+                        {label}
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
@@ -589,7 +623,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                         onCreatePrazo={() =>
                           setPrazoPrefill({
                             documentoId: d.id,
-                            topico: `${meta.label} — ${asset.nome.split(" · ")[0]}`,
+                            topico: `${label} — ${asset.nome.split(" · ")[0]}`,
                             resp: meta.resp,
                           })
                         }
@@ -662,7 +696,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
       <AlertDialog open={deleteTarget != null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir "{deleteTarget && DOC_TYPES[deleteTarget.tipo].label}"?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir "{deleteTarget && docLabel(deleteTarget.tipo, deleteTarget.nome_personalizado)}"?</AlertDialogTitle>
             <AlertDialogDescription>
               O registro e o arquivo enviado serão removidos. Esta ação não pode ser desfeita pela interface.
             </AlertDialogDescription>
@@ -768,9 +802,8 @@ function DocumentViewerSheet({
     };
   }, [open, doc]);
 
-  const meta = doc ? DOC_TYPES[doc.tipo] : null;
   const title = doc
-    ? `${meta?.label ?? doc.tipo}${doc.periodo_referencia ? ` · ${doc.periodo_referencia}` : ""}`
+    ? `${docLabel(doc.tipo, doc.nome_personalizado)}${doc.periodo_referencia ? ` · ${doc.periodo_referencia}` : ""}`
     : "";
 
   return (
