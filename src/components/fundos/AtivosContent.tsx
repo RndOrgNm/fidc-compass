@@ -39,7 +39,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -643,14 +642,12 @@ function NovoAtivoDialog({
   const [nome, setNome] = useState("");
   const [sub, setSub] = useState("");
   const [cor, setCor] = useState<string>(COR_PRESETS[COR_PRESETS.length - 1].value);
-  const [imovelNoNomeDoFundo, setImovelNoNomeDoFundo] = useState(false);
 
   useEffect(() => {
     if (open) {
       setNome("");
       setSub("");
       setCor(COR_PRESETS[COR_PRESETS.length - 1].value);
-      setImovelNoNomeDoFundo(false);
     }
   }, [open]);
 
@@ -661,7 +658,6 @@ function NovoAtivoDialog({
       nome: nome.trim(),
       sub: sub.trim() || undefined,
       cor,
-      imovel_no_nome_do_fundo: imovelNoNomeDoFundo,
     });
   }
 
@@ -701,15 +697,6 @@ function NovoAtivoDialog({
                 />
               ))}
             </div>
-          </div>
-          <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5">
-            <div>
-              <Label className="text-[13px]">Imóvel já em nome do fundo</Label>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Define a cadência da matrícula: anual (sim) ou semestral (não).
-              </p>
-            </div>
-            <Switch checked={imovelNoNomeDoFundo} onCheckedChange={setImovelNoNomeDoFundo} />
           </div>
         </div>
         <DialogFooter>
