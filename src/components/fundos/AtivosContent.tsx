@@ -59,7 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
-import { DOC_TYPES, DOC_STATUS, cadenciaLabel, cadenciaNote } from "@/data/ativosData";
+import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote } from "@/data/ativosData";
 import { documentoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
@@ -72,6 +72,7 @@ import {
   getDownloadUrl,
   criarPrazoParaDocumento,
   type DocTipo,
+  type Cadencia,
   type DocumentoResponse,
   type AtivoComDocumentosResponse,
   type AtivoCreateRequest,
@@ -204,11 +205,14 @@ function DocumentDialog({
   isNew: boolean;
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  onSave: (values: { tipo: DocTipo; periodo: string; file: File | null }) => void;
+  onSave: (values: { tipo: DocTipo; cadencia: Cadencia; periodo: string; file: File | null }) => void;
   saving: boolean;
   onCriarPrazo: (prefill: PrazoPrefill) => void;
 }) {
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
+  const [cadencia, setCadencia] = useState<Cadencia>(
+    doc?.cadencia ?? cadenciaSugerida("balancete", asset.imovel_no_nome_do_fundo)
+  );
   const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -216,14 +220,23 @@ function DocumentDialog({
   // Re-seed local state whenever a different document opens the dialog.
   useEffect(() => {
     if (open) {
-      setTipo(doc?.tipo ?? "balancete");
+      const initialTipo = doc?.tipo ?? "balancete";
+      setTipo(initialTipo);
+      setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo, asset.imovel_no_nome_do_fundo));
       setPeriodo(doc?.periodo_referencia ?? "");
       setFile(null);
     }
-  }, [open, doc, isNew]);
+  }, [open, doc, isNew, asset.imovel_no_nome_do_fundo]);
 
   const meta = DOC_TYPES[tipo];
   const note = cadenciaNote(tipo, asset.imovel_no_nome_do_fundo);
+
+  function handleTipoChange(v: string) {
+    const next = v as DocTipo;
+    setTipo(next);
+    // Re-suggest the cadência for the new type — the user can still override it.
+    setCadencia(cadenciaSugerida(next, asset.imovel_no_nome_do_fundo));
+  }
 
   async function handleDownload() {
     if (!doc) return;
@@ -285,7 +298,7 @@ function DocumentDialog({
           <div className="space-y-1.5">
             <Label>Tipo de documento</Label>
             {isNew ? (
-              <Select value={tipo} onValueChange={(v) => setTipo(v as DocTipo)}>
+              <Select value={tipo} onValueChange={handleTipoChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -302,7 +315,16 @@ function DocumentDialog({
 
           <div className="space-y-1.5">
             <Label>Cadência</Label>
-            <Input value={cadenciaLabel(tipo, asset.imovel_no_nome_do_fundo)} disabled />
+            <Select value={cadencia} onValueChange={(v) => setCadencia(v as Cadencia)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(CADENCIA_LABELS) as Cadencia[]).map((c) => (
+                  <SelectItem key={c} value={c}>{CADENCIA_LABELS[c]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {note && (
             <div className="flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
@@ -352,7 +374,7 @@ function DocumentDialog({
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button size="sm" disabled={saving} onClick={() => onSave({ tipo, periodo, file })}>
+          <Button size="sm" disabled={saving} onClick={() => onSave({ tipo, cadencia, periodo, file })}>
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
             Salvar
           </Button>
@@ -415,7 +437,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
     onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
   });
 
-  async function handleSaveDocument(values: { tipo: DocTipo; periodo: string; file: File | null }) {
+  async function handleSaveDocument(values: { tipo: DocTipo; cadencia: Cadencia; periodo: string; file: File | null }) {
     setSaving(true);
     try {
       let docId = docState?.doc?.id;
@@ -424,11 +446,15 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
           ativo_id: asset.ativo_id,
           fundo_id: fundoId,
           tipo: values.tipo,
+          cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
         });
         docId = created.id;
-      } else if (docId && values.periodo !== (docState?.doc?.periodo_referencia ?? "")) {
-        await updateDocumento(docId, { periodo_referencia: values.periodo || undefined });
+      } else if (docId) {
+        await updateDocumento(docId, {
+          cadencia: values.cadencia,
+          periodo_referencia: values.periodo || undefined,
+        });
       }
       if (docId && values.file) {
         await uploadDocumentoFile(docId, values.file);
@@ -528,7 +554,6 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                 const st = DOC_STATUS[d.status];
                 const DocIcon = meta.icon;
                 const StatusIcon = st.icon;
-                const note = cadenciaNote(d.tipo, asset.imovel_no_nome_do_fundo);
                 return (
                   <tr
                     key={d.id}
@@ -541,9 +566,8 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                       </div>
                     </td>
                     <td className="px-3 py-2.5">
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={note ?? undefined}>
-                        {cadenciaLabel(d.tipo, asset.imovel_no_nome_do_fundo)}
-                        {d.tipo === "matricula" && <Info className="h-3 w-3" />}
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        {CADENCIA_LABELS[d.cadencia]}
                       </span>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo_referencia || "—"}</td>

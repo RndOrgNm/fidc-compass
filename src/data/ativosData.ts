@@ -21,25 +21,34 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { DocTipo, DocStatus } from "@/lib/api/documentoService";
+import type { DocTipo, DocStatus, Cadencia } from "@/lib/api/documentoService";
 
 export interface DocTypeMeta {
   label: string;
-  /** Human cadence, or "condicional" when it depends on the asset. */
-  cadencia: string;
+  /** Cadência sugerida ao criar um novo documento — o usuário pode trocar livremente depois. */
+  cadenciaSugerida: Cadencia;
   icon: LucideIcon;
   /** Default responsible area (used to pre-fill the linked prazo). */
   resp: string;
 }
 
 export const DOC_TYPES: Record<DocTipo, DocTypeMeta> = {
-  contrato_social: { label: "Contrato Social", cadencia: "Quando há alteração", icon: FileSignature, resp: "Jurídico" },
-  df: { label: "DF (Demonstrações Financeiras)", cadencia: "Anual", icon: FileBarChart2, resp: "Contábil" },
-  balancete: { label: "Balancete", cadencia: "Trimestral", icon: FileSpreadsheet, resp: "Financeiro" },
-  cronograma: { label: "Cronograma de Obra", cadencia: "Mensal", icon: CalendarRange, resp: "Engenharia" },
-  matricula: { label: "Matrícula dos Imóveis", cadencia: "condicional", icon: FileText, resp: "Jurídico" },
-  planilha_vendas: { label: "Planilha de Vendas", cadencia: "Mensal", icon: Table, resp: "Comercial" },
-  outro: { label: "Outro", cadencia: "Sem cadência definida", icon: FileQuestion, resp: "Geral" },
+  contrato_social: { label: "Contrato Social", cadenciaSugerida: "quando_houver_alteracao", icon: FileSignature, resp: "Jurídico" },
+  df: { label: "DF (Demonstrações Financeiras)", cadenciaSugerida: "anual", icon: FileBarChart2, resp: "Contábil" },
+  balancete: { label: "Balancete", cadenciaSugerida: "trimestral", icon: FileSpreadsheet, resp: "Financeiro" },
+  cronograma: { label: "Cronograma de Obra", cadenciaSugerida: "mensal", icon: CalendarRange, resp: "Engenharia" },
+  matricula: { label: "Matrícula dos Imóveis", cadenciaSugerida: "anual", icon: FileText, resp: "Jurídico" },
+  planilha_vendas: { label: "Planilha de Vendas", cadenciaSugerida: "mensal", icon: Table, resp: "Comercial" },
+  outro: { label: "Outro", cadenciaSugerida: "sem_cadencia", icon: FileQuestion, resp: "Geral" },
+};
+
+export const CADENCIA_LABELS: Record<Cadencia, string> = {
+  mensal: "Mensal",
+  trimestral: "Trimestral",
+  semestral: "Semestral",
+  anual: "Anual",
+  quando_houver_alteracao: "Quando há alteração",
+  sem_cadencia: "Sem cadência definida",
 };
 
 export interface DocStatusMeta {
@@ -56,10 +65,10 @@ export const DOC_STATUS: Record<DocStatus, DocStatusMeta> = {
   pendente: { label: "Pendente", icon: CircleDashed, chip: "bg-muted text-muted-foreground" },
 };
 
-/** Cadence label for a document type on a given asset (matrícula is conditional). */
-export function cadenciaLabel(tipo: DocTipo, imovelNoNomeDoFundo: boolean): string {
-  if (tipo === "matricula") return imovelNoNomeDoFundo ? "Anual" : "Semestral";
-  return DOC_TYPES[tipo].cadencia;
+/** Cadência sugerida ao criar um novo documento de `tipo` — editável depois; matrícula é condicional ao ativo. */
+export function cadenciaSugerida(tipo: DocTipo, imovelNoNomeDoFundo: boolean): Cadencia {
+  if (tipo === "matricula") return imovelNoNomeDoFundo ? "anual" : "semestral";
+  return DOC_TYPES[tipo].cadenciaSugerida;
 }
 
 /** Explanatory note for a conditional cadence, or null. */

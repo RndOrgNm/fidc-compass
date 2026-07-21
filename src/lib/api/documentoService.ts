@@ -13,6 +13,16 @@ export type DocTipo =
 
 export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 
+// Livre por documento (não fixa pelo tipo) — o mesmo DocTipo pode ter
+// cadências diferentes conforme o ativo/contexto.
+export type Cadencia =
+  | "mensal"
+  | "trimestral"
+  | "semestral"
+  | "anual"
+  | "quando_houver_alteracao"
+  | "sem_cadencia";
+
 // ── Response shapes ───────────────────────────────────────────────────────────
 
 export interface AtivoResponse {
@@ -44,6 +54,7 @@ export interface DocumentoResponse {
   ativo_id: string;
   fundo_id: number;
   tipo: DocTipo;
+  cadencia: Cadencia;
   periodo_referencia?: string | null;
   versao?: string | null;
   arquivo_nome?: string | null;
@@ -105,10 +116,12 @@ export interface DocumentoCreateRequest {
   ativo_id: string;
   fundo_id: number;
   tipo: DocTipo;
+  cadencia?: Cadencia; // se omitido, o backend usa a cadência sugerida do tipo
   periodo_referencia?: string;
 }
 
 export interface DocumentoUpdateRequest {
+  cadencia?: Cadencia;
   periodo_referencia?: string;
   proximo_vencimento?: string; // "YYYY-MM-DD"
 }
