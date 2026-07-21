@@ -51,6 +51,7 @@ import { documentoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
   createAtivo,
+  updateAtivo,
   createDocumento,
   updateDocumento,
   deleteDocumento,
@@ -61,6 +62,7 @@ import {
   type DocumentoResponse,
   type AtivoComDocumentosResponse,
   type AtivoCreateRequest,
+  type AtivoUpdateRequest,
 } from "@/lib/api/documentoService";
 
 export interface AtivosContentProps {
@@ -381,12 +383,23 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
   const [docState, setDocState] = useState<{ doc: DocumentoResponse | null; isNew: boolean } | null>(null);
   const [prazoPrefill, setPrazoPrefill] = useState<PrazoPrefill | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentoResponse | null>(null);
+  const [editAtivoOpen, setEditAtivoOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const docs = asset.documentos;
 
   function invalidate() {
     return queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
   }
+
+  const updateAtivoMut = useMutation({
+    mutationFn: (data: AtivoUpdateRequest) => updateAtivo(asset.ativo_id, data),
+    onSuccess: async () => {
+      await invalidate();
+      toast({ title: "Ativo atualizado" });
+      setEditAtivoOpen(false);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
+  });
 
   async function handleSaveDocument(values: { tipo: DocTipo; periodo: string; file: File | null }) {
     setSaving(true);
@@ -452,9 +465,18 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
       className="mb-4 rounded-lg border border-l-[3px] border-border bg-card/50 px-5 py-4"
       style={{ borderLeftColor: asset.cor ?? undefined }}
     >
-      <div className="mb-3">
-        <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
-        {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
+          {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
+        </div>
+        <button
+          aria-label="Editar ativo"
+          onClick={() => setEditAtivoOpen(true)}
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <SquarePen className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="mb-3">
@@ -612,7 +634,78 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EditAtivoDialog
+        asset={asset}
+        open={editAtivoOpen}
+        onOpenChange={setEditAtivoOpen}
+        onSave={(data) => updateAtivoMut.mutate(data)}
+        saving={updateAtivoMut.isPending}
+      />
     </div>
+  );
+}
+
+// ── Editar ativo dialog ───────────────────────────────────────────────────────
+function EditAtivoDialog({
+  asset,
+  open,
+  onOpenChange,
+  onSave,
+  saving,
+}: {
+  asset: AtivoComDocumentosResponse;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSave: (data: AtivoUpdateRequest) => void;
+  saving: boolean;
+}) {
+  const [nome, setNome] = useState(asset.nome);
+  const [sub, setSub] = useState(asset.sub ?? "");
+
+  useEffect(() => {
+    if (open) {
+      setNome(asset.nome);
+      setSub(asset.sub ?? "");
+    }
+  }, [open, asset]);
+
+  function handleSave() {
+    if (!nome.trim()) return;
+    onSave({ nome: nome.trim(), sub: sub.trim() || undefined });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar ativo</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Subtítulo</Label>
+            <Input
+              placeholder="ex.: SPE 171 · incorporação em 22/04/2026"
+              value={sub}
+              onChange={(e) => setSub(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button size="sm" disabled={saving || !nome.trim()} onClick={handleSave}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <SquarePen className="mr-1 h-4 w-4" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -759,24 +852,35 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   }
 
   const assets = query.data?.assets ?? [];
+  const fundo = query.data?.fundo;
 
   return (
     <div>
-      <div className="mb-4 flex items-baseline justify-between">
-        <h3 className="text-base font-semibold">Documentos por Empreendimento</h3>
-        <div className="flex items-center gap-3">
-          {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
-          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Novo ativo
-          </Button>
+      {fundName && (
+        <div className="mb-1 flex items-baseline justify-end">
+          <span className="text-xs text-muted-foreground">{fundName}</span>
         </div>
+      )}
+
+      {/* ── Documentos por Fundo ── */}
+      <div className="mb-4">
+        <h3 className="text-base font-semibold">Documentos por Fundo</h3>
+      </div>
+      {fundo && <AssetCard asset={fundo} fundoId={fundoId} />}
+
+      {/* ── Documentos por Ativos ── */}
+      <div className="mb-4 mt-9 flex items-baseline justify-between">
+        <h3 className="text-base font-semibold">Documentos por Ativos</h3>
+        <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Novo ativo
+        </Button>
       </div>
 
       {assets.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Building2 className="h-7 w-7 text-muted-foreground/60" />
           <p className="max-w-sm text-sm text-muted-foreground">
-            Sem dados de ativos disponíveis para este fundo{fundName ? ` (${fundName})` : ""}.
+            Sem ativos cadastrados para este fundo{fundName ? ` (${fundName})` : ""}.
           </p>
           <Button size="sm" onClick={() => setNovoAtivoOpen(true)}>
             <Plus className="mr-1 h-4 w-4" /> Novo ativo

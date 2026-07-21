@@ -66,6 +66,9 @@ export interface AtivoComDocumentosResponse {
 }
 
 export interface FundoDocumentosResponse {
+  /** "Documentos por Fundo" — singleton card, auto-created, not a real SPE. */
+  fundo: AtivoComDocumentosResponse;
+  /** "Documentos por Ativos" — the fund's real empreendimentos/SPEs. */
   assets: AtivoComDocumentosResponse[];
 }
 
