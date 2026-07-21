@@ -8,6 +8,7 @@ import {
   Upload,
   UploadCloud,
   FileCheck2,
+  FileText,
   CalendarClock,
   CalendarPlus,
   Calendar as CalendarIcon,
@@ -15,6 +16,10 @@ import {
   FolderX,
   Loader2,
   Building2,
+  Eye,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +31,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +58,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { DOC_TYPES, DOC_STATUS, cadenciaLabel, cadenciaNote } from "@/data/ativosData";
 import { documentoKeys } from "@/lib/queryKeys";
 import {
@@ -384,6 +397,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
   const [prazoPrefill, setPrazoPrefill] = useState<PrazoPrefill | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DocumentoResponse | null>(null);
   const [editAtivoOpen, setEditAtivoOpen] = useState(false);
+  const [viewDoc, setViewDoc] = useState<DocumentoResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const docs = asset.documentos;
 
@@ -560,6 +574,14 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                     <td className="py-2.5 pl-3">
                       <div className="flex items-center justify-end gap-0.5">
                         <button
+                          aria-label="Ver documento"
+                          onClick={() => setViewDoc(d)}
+                          disabled={!d.arquivo_nome}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
                           aria-label="Editar campos"
                           onClick={() => setDocState({ doc: d, isNew: false })}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -642,7 +664,172 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
         onSave={(data) => updateAtivoMut.mutate(data)}
         saving={updateAtivoMut.isPending}
       />
+
+      <DocumentViewerSheet
+        doc={viewDoc}
+        open={viewDoc != null}
+        onOpenChange={(o) => !o && setViewDoc(null)}
+      />
     </div>
+  );
+}
+
+// ── Ver documento (side panel) ───────────────────────────────────────────────
+// Mirrors the chatbot's "Fontes" viewer (src/pages/Agent.tsx): a right-side
+// Sheet rendering the PDF via the same pdf.js canvas component. Unlike the
+// chatbot (one static, well-known CVM PDF), each Documento here is an
+// arbitrary uploaded file — so non-PDF files fall back to a direct download
+// instead of an in-panel preview.
+function isPdfFile(filename?: string | null): boolean {
+  return !!filename && filename.toLowerCase().endsWith(".pdf");
+}
+
+function DocumentViewerSheet({
+  doc,
+  open,
+  onOpenChange,
+}: {
+  doc: DocumentoResponse | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [rawUrl, setRawUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isPdf = isPdfFile(doc?.arquivo_nome);
+
+  useEffect(() => {
+    if (!open || !doc) {
+      setPdfData(null);
+      setRawUrl(null);
+      setError(null);
+      setCurrentPage(1);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setPdfData(null);
+    setCurrentPage(1);
+
+    getDownloadUrl(doc.id)
+      .then(async ({ download_url }) => {
+        if (cancelled) return;
+        setRawUrl(download_url);
+        if (!isPdfFile(doc.arquivo_nome)) {
+          setLoading(false);
+          return;
+        }
+        const res = await fetch(download_url);
+        if (!res.ok) throw new Error(`Erro ${res.status} ao baixar o arquivo`);
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        setPdfData(buf);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setError((e as Error).message || "Não foi possível carregar o documento");
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, doc]);
+
+  const meta = doc ? DOC_TYPES[doc.tipo] : null;
+  const title = doc
+    ? `${meta?.label ?? doc.tipo}${doc.periodo_referencia ? ` · ${doc.periodo_referencia}` : ""}`
+    : "";
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
+      <SheetContent
+        side="right"
+        className="!w-[35%] !max-w-none p-0 flex flex-col [&>button]:hidden border-l !z-40"
+        hideOverlay
+      >
+        <SheetHeader className="px-6 py-4 border-b flex-shrink-0 flex-row items-center justify-between">
+          <SheetTitle className="truncate">{title}</SheetTitle>
+          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-6 w-6">
+            <X className="h-4 w-4" />
+          </Button>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-hidden bg-slate-100 p-4 flex items-center justify-center">
+          {loading && (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="text-sm">Carregando documento...</span>
+            </div>
+          )}
+          {!loading && error && (
+            <div className="flex flex-col items-center gap-2 text-destructive p-4 text-center">
+              <span className="text-sm font-medium">Não foi possível carregar o documento</span>
+              <span className="text-xs">{error}</span>
+            </div>
+          )}
+          {!loading && !error && isPdf && (
+            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
+              <PdfViewerCanvas
+                pdfData={pdfData}
+                currentPage={currentPage}
+                onTotalPages={setTotalPages}
+                className="w-full h-full min-h-[400px]"
+              />
+            </div>
+          )}
+          {!loading && !error && !isPdf && (
+            <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
+              <FileText className="h-8 w-8" />
+              <p className="max-w-xs text-sm">
+                Pré-visualização não disponível para {doc?.arquivo_nome || "este arquivo"}.
+              </p>
+              {rawUrl && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => window.open(rawUrl, "_blank", "noopener,noreferrer")}
+                >
+                  <Upload className="mr-1 h-4 w-4 rotate-180" /> Baixar arquivo
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {isPdf && !loading && !error && (
+          <SheetFooter className="px-6 py-4 border-t flex items-center justify-between flex-shrink-0">
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage} de {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </SheetFooter>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }
 

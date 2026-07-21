@@ -13,6 +13,7 @@ import {
   CalendarRange,
   FileText,
   Table,
+  FileQuestion,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -38,6 +39,7 @@ export const DOC_TYPES: Record<DocTipo, DocTypeMeta> = {
   cronograma: { label: "Cronograma de Obra", cadencia: "Mensal", icon: CalendarRange, resp: "Engenharia" },
   matricula: { label: "Matrícula dos Imóveis", cadencia: "condicional", icon: FileText, resp: "Jurídico" },
   planilha_vendas: { label: "Planilha de Vendas", cadencia: "Mensal", icon: Table, resp: "Comercial" },
+  outro: { label: "Outro", cadencia: "Sem cadência definida", icon: FileQuestion, resp: "Geral" },
 };
 
 export interface DocStatusMeta {

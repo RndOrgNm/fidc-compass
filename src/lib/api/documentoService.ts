@@ -8,7 +8,8 @@ export type DocTipo =
   | "balancete"
   | "cronograma"
   | "matricula"
-  | "planilha_vendas";
+  | "planilha_vendas"
+  | "outro";
 
 export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 
