@@ -69,6 +69,14 @@ export function CotistasContent({ fundoId, fundName }: CotistasContentProps) {
   }
 
   const data = getCotistasData(fundoId);
+  if (!data) {
+    return (
+      <p className="py-16 text-center text-sm text-muted-foreground">
+        Sem dados de cotistas disponíveis para este fundo{fundName ? ` (${fundName})` : ""}.
+      </p>
+    );
+  }
+
   const pl = plAtual ?? 0;
   const multi = data.classes.length > 1;
   const valorDe = (pct: number) => (pl > 0 ? formatBrlCompact((pl * pct) / 100) : "—");

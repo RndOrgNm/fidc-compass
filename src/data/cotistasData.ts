@@ -145,8 +145,17 @@ function buildFallback(fundoId: number): CotistaRegistroFundo {
   };
 }
 
-/** Returns the cotista register for a fund (seeded when available, else generated). */
-export function getCotistasData(fundoId: number): CotistaRegistroFundo {
+// Funds excluded from the illustrative mock entirely — real feature work is
+// underway there, so fabricated cotista names/numbers would be misleading
+// rather than illustrative.
+const MOCK_EXCLUDED: ReadonlySet<number> = new Set([
+  64089566, // FII Brasil Incorporação RL
+]);
+
+/** Returns the cotista register for a fund (seeded when available, else generated),
+ * or null when the fund is excluded from the mock. */
+export function getCotistasData(fundoId: number): CotistaRegistroFundo | null {
+  if (MOCK_EXCLUDED.has(fundoId)) return null;
   return SEEDED[fundoId] ?? buildFallback(fundoId);
 }
 
