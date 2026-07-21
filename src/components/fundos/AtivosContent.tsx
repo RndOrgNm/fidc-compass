@@ -14,6 +14,7 @@ import {
   Info,
   FolderX,
   Loader2,
+  Building2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -49,6 +51,7 @@ import { DOC_TYPES, DOC_STATUS, cadenciaLabel, cadenciaNote } from "@/data/ativo
 import { documentoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
+  createAtivo,
   createDocumento,
   updateDocumento,
   deleteDocumento,
@@ -58,6 +61,7 @@ import {
   type DocTipo,
   type DocumentoResponse,
   type AtivoComDocumentosResponse,
+  type AtivoCreateRequest,
 } from "@/lib/api/documentoService";
 
 export interface AtivosContentProps {
@@ -613,12 +617,134 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
   );
 }
 
+// ── Novo ativo dialog ─────────────────────────────────────────────────────────
+const COR_PRESETS = [
+  { label: "Verde", value: "hsl(var(--success))" },
+  { label: "Âmbar", value: "#E0A23C" },
+  { label: "Vermelho", value: "hsl(var(--destructive))" },
+  { label: "Azul", value: "#3B82F6" },
+  { label: "Roxo", value: "#8B5CF6" },
+  { label: "Neutro", value: "hsl(var(--muted-foreground))" },
+] as const;
+
+function NovoAtivoDialog({
+  fundoId,
+  open,
+  onOpenChange,
+  onSave,
+  saving,
+}: {
+  fundoId: number | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSave: (data: AtivoCreateRequest) => void;
+  saving: boolean;
+}) {
+  const [nome, setNome] = useState("");
+  const [sub, setSub] = useState("");
+  const [cor, setCor] = useState<string>(COR_PRESETS[COR_PRESETS.length - 1].value);
+  const [imovelNoNomeDoFundo, setImovelNoNomeDoFundo] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setNome("");
+      setSub("");
+      setCor(COR_PRESETS[COR_PRESETS.length - 1].value);
+      setImovelNoNomeDoFundo(false);
+    }
+  }, [open]);
+
+  function handleSave() {
+    if (fundoId == null || !nome.trim()) return;
+    onSave({
+      fundo_id: fundoId,
+      nome: nome.trim(),
+      sub: sub.trim() || undefined,
+      cor,
+      imovel_no_nome_do_fundo: imovelNoNomeDoFundo,
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Novo ativo</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input placeholder="ex.: Wish Down Town" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Subtítulo</Label>
+            <Input
+              placeholder="ex.: SPE 171 · incorporação em 22/04/2026"
+              value={sub}
+              onChange={(e) => setSub(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Cor de destaque</Label>
+            <div className="flex gap-2">
+              {COR_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  aria-label={p.label}
+                  onClick={() => setCor(p.value)}
+                  className={cn(
+                    "h-7 w-7 rounded-full border-2 transition-transform",
+                    cor === p.value ? "scale-110 border-foreground" : "border-transparent",
+                  )}
+                  style={{ background: p.value }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5">
+            <div>
+              <Label className="text-[13px]">Imóvel já em nome do fundo</Label>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Define a cadência da matrícula: anual (sim) ou semestral (não).
+              </p>
+            </div>
+            <Switch checked={imovelNoNomeDoFundo} onCheckedChange={setImovelNoNomeDoFundo} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button size="sm" disabled={saving || !nome.trim()} onClick={handleSave}>
+            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+            Criar ativo
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Content ───────────────────────────────────────────────────────────────────
 export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
+  const queryClient = useQueryClient();
+  const [novoAtivoOpen, setNovoAtivoOpen] = useState(false);
+
   const query = useQuery({
     queryKey: fundoId != null ? documentoKeys.byFundo(fundoId) : documentoKeys.all,
     queryFn: () => listDocumentosByFundo(fundoId as number),
     enabled: fundoId != null,
+  });
+
+  const createAtivoMut = useMutation({
+    mutationFn: (data: AtivoCreateRequest) => createAtivo(data),
+    onSuccess: async () => {
+      if (fundoId != null) await queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
+      toast({ title: "Ativo criado", description: "O empreendimento foi adicionado." });
+      setNovoAtivoOpen(false);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao criar ativo", description: e.message, variant: "destructive" }),
   });
 
   if (fundoId == null) {
@@ -647,24 +773,39 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   const assets = query.data?.assets ?? [];
 
-  if (assets.length === 0) {
-    return (
-      <p className="py-16 text-center text-sm text-muted-foreground">
-        Sem dados de ativos disponíveis para este fundo{fundName ? ` (${fundName})` : ""}.
-      </p>
-    );
-  }
-
   return (
     <div>
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Empreendimento</h3>
-        {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
+        <div className="flex items-center gap-3">
+          {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
+          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Novo ativo
+          </Button>
+        </div>
       </div>
 
-      {assets.map((asset) => (
-        <AssetCard key={asset.ativo_id} asset={asset} fundoId={fundoId} />
-      ))}
+      {assets.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <Building2 className="h-7 w-7 text-muted-foreground/60" />
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Sem dados de ativos disponíveis para este fundo{fundName ? ` (${fundName})` : ""}.
+          </p>
+          <Button size="sm" onClick={() => setNovoAtivoOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Novo ativo
+          </Button>
+        </div>
+      ) : (
+        assets.map((asset) => <AssetCard key={asset.ativo_id} asset={asset} fundoId={fundoId} />)
+      )}
+
+      <NovoAtivoDialog
+        fundoId={fundoId}
+        open={novoAtivoOpen}
+        onOpenChange={setNovoAtivoOpen}
+        onSave={(data) => createAtivoMut.mutate(data)}
+        saving={createAtivoMut.isPending}
+      />
     </div>
   );
 }
