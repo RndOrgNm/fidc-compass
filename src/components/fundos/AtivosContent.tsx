@@ -20,6 +20,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -121,6 +122,7 @@ function DocumentDialog({
   onSave,
   saving,
   onCriarPrazo,
+  onVerPrazo,
 }: {
   asset: AtivoComDocumentosResponse;
   doc: DocumentoResponse | null;
@@ -136,6 +138,7 @@ function DocumentDialog({
   }) => void;
   saving: boolean;
   onCriarPrazo: (prefill: PrazoPrefill) => void;
+  onVerPrazo: (obrigacaoId: string) => void;
 }) {
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
   const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
@@ -289,9 +292,21 @@ function DocumentDialog({
                     <CalendarClock className="h-4 w-4 text-muted-foreground" />
                     {doc.prazo.topico} · vence {isoToBr(doc.prazo.data_vencimento)}
                   </span>
-                  {doc.prazo.responsavel_nome && (
-                    <span className="text-[11px] text-muted-foreground">{doc.prazo.responsavel_nome}</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {doc.prazo.responsavel_nome && (
+                      <span className="text-[11px] text-muted-foreground">{doc.prazo.responsavel_nome}</span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Ver prazo na aba Prazos"
+                      title="Ver prazo na aba Prazos"
+                      onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <Button
@@ -332,12 +347,24 @@ function DocumentDialog({
 }
 
 // ── Prazo cell ────────────────────────────────────────────────────────────────
-function DocPrazoCell({ doc, onCreatePrazo }: { doc: DocumentoResponse; onCreatePrazo: () => void }) {
+function DocPrazoCell({
+  doc,
+  onCreatePrazo,
+  onVerPrazo,
+}: {
+  doc: DocumentoResponse;
+  onCreatePrazo: () => void;
+  onVerPrazo: (obrigacaoId: string) => void;
+}) {
   if (doc.prazo) {
     return (
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums text-success">
+      <button
+        onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
+        title="Ver prazo na aba Prazos"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums text-success transition-colors hover:text-success/80"
+      >
         <CalendarClock className="h-3.5 w-3.5" /> {isoToBr(doc.prazo.data_vencimento)}
-      </span>
+      </button>
     );
   }
   if (doc.status === "pendente") {
@@ -453,6 +480,12 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
     });
   }
 
+  function goToPrazo(obrigacaoId: string) {
+    navigate(`/fundos/prazos/${fundoId}`, {
+      state: { verObrigacao: { obrigacaoId } },
+    });
+  }
+
   return (
     <div
       className="mb-4 rounded-lg border border-l-[3px] border-border bg-card/50 px-5 py-4"
@@ -547,6 +580,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
                             resp: meta.resp,
                           })
                         }
+                        onVerPrazo={goToPrazo}
                       />
                     </td>
                     <td className="py-2.5 pl-3">
@@ -601,6 +635,10 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
         onCriarPrazo={(prefill) => {
           setDocState(null);
           goToNovaObrigacao(prefill);
+        }}
+        onVerPrazo={(obrigacaoId) => {
+          setDocState(null);
+          goToPrazo(obrigacaoId);
         }}
       />
 

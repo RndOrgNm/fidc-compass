@@ -17,7 +17,7 @@ async function fetchAgentConfig(): Promise<AgentConfig> {
   if (!response.ok) return { whatsapp_allowed_group_ids: "" };
   return response.json();
 }
-import type { MessageResponse, ApiSource, ConversationResponse } from "./client";
+import type { MessageResponse, ApiSource, ConversationResponse, ToolActivityEvent } from "./client";
 import type { ConversationWithMetadata } from "./ragService";
 
 interface FundsAgentQueryRequest {
@@ -122,7 +122,9 @@ export class FundsAgentService {
   async sendMessage(
     conversationId: string,
     query: string,
-    isFirstMessage: boolean = false
+    isFirstMessage: boolean = false,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onActivity?: (event: ToolActivityEvent) => void
   ): Promise<{ userMessage: MessageResponse; assistantMessage: MessageResponse }> {
     const sendTime = new Date().toISOString();
     const queryResponse = await askFundsAgent(query, conversationId);

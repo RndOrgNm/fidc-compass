@@ -7,7 +7,7 @@ import {
   conversationDeleteConversation,
   conversationGenerateTitle,
 } from "./conversationService";
-import type { MessageResponse, ApiSource, ConversationResponse } from "./client";
+import type { MessageResponse, ApiSource, ConversationResponse, ToolActivityEvent } from "./client";
 
 export interface ConversationWithMetadata extends ConversationResponse {
   lastMessageAt?: string | null;
@@ -109,7 +109,9 @@ export class RAGService {
   async sendMessage(
     conversationId: string,
     query: string,
-    isFirstMessage: boolean = false
+    isFirstMessage: boolean = false,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onActivity?: (event: ToolActivityEvent) => void
   ): Promise<{ userMessage: MessageResponse; assistantMessage: MessageResponse }> {
     const sendTime = new Date().toISOString();
     const queryResponse = await askSearchAgent(query, conversationId);

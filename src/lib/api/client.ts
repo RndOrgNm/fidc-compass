@@ -11,6 +11,16 @@ export interface ApiSource {
   [key: string]: any;
 }
 
+/** Live tool-call activity streamed during an in-progress agent turn (see /router/ask/stream). */
+export interface ToolActivityEvent {
+  type: "tool_start" | "tool_end" | "tool_error" | "progress" | "log";
+  tool?: string;
+  message?: string;
+  level?: string;
+  progress?: number;
+  total?: number | null;
+}
+
 export interface ConversationCreate {
   title: string;
   user?: string;

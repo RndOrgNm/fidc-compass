@@ -420,6 +420,32 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     enabled: fundoId != null,
   });
 
+  // Deep-link from the Ativos tab: open an already-linked obrigação for
+  // viewing/editing. Waits for the obrigações list to load since we need the
+  // full rule (topico/categoria/tipo_prazo/etc.), not just the id passed in nav state.
+  const verHandledRef = useRef(false);
+  useEffect(() => {
+    const ver = (location.state as { verObrigacao?: { obrigacaoId: string } } | null)?.verObrigacao;
+    if (!ver || verHandledRef.current || fundoId == null || !obrigacoesQuery.data) return;
+    const obrigacao = obrigacoesQuery.data.items.find((o) => o.id === ver.obrigacaoId);
+    if (!obrigacao) return;
+    verHandledRef.current = true;
+    setFormInitial({
+      id: obrigacao.id,
+      topico: obrigacao.topico,
+      descricao: obrigacao.descricao,
+      categoria: obrigacao.categoria,
+      tipo_prazo: obrigacao.tipo_prazo,
+      parametros: obrigacao.parametros,
+      antecedencia_alerta_dias: obrigacao.antecedencia_alerta_dias,
+      recorrente: obrigacao.recorrente,
+      intervalo_meses: obrigacao.intervalo_meses,
+      responsaveis: obrigacao.responsaveis,
+    });
+    setFormOpen(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, fundoId, navigate, obrigacoesQuery.data]);
+
   // Current cycle (for the agenda list)
   const query = useQuery({
     queryKey: fundoId ? prazoKeys.instancias(fundoId) : ["prazos", "noop"],

@@ -3,7 +3,14 @@ import { toast } from "@/hooks/use-toast";
 import { ragService, type ConversationWithMetadata } from "@/lib/api/ragService";
 import { fundsAgentService } from "@/lib/api/fundsAgentService";
 import { prazosAgentService } from "@/lib/api/prazosAgentService";
-import type { ApiSource } from "@/lib/api/client";
+import type { ApiSource, ToolActivityEvent } from "@/lib/api/client";
+
+export interface ToolActivityItem {
+  tool: string;
+  logs: string[];
+  progress?: { current: number; total: number };
+  status: "running" | "done" | "error";
+}
 
 export interface Message {
   message_id: string;
@@ -37,6 +44,7 @@ interface ChatContextType {
   isLoading: boolean;
   isLoadingConversations: boolean;
   streamingMessage: Message | null;
+  toolActivity: ToolActivityItem[];
   pendingMessages: Map<string, PendingMessage>;
   selectedAgent: "cvm" | "funds" | "prazos";
   setSelectedAgent: (agent: "cvm" | "funds" | "prazos") => void;
@@ -61,6 +69,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
+  const [toolActivity, setToolActivity] = useState<ToolActivityItem[]>([]);
   const [pendingMessages, setPendingMessages] = useState<Map<string, PendingMessage>>(new Map());
   const [selectedAgent, setSelectedAgentState] = useState<"cvm" | "funds" | "prazos">("cvm");
 
@@ -70,6 +79,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setCurrentConversationId(null);
     setMessages([]);
     setStreamingMessage(null);
+    setToolActivity([]);
     setIsLoading(false);
   }, []);
 
@@ -112,6 +122,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setCurrentConversationId(null);
       setMessages([]);
       setStreamingMessage(null);
+      setToolActivity([]);
       refreshConversations(agent);
     },
     [refreshConversations]
@@ -145,6 +156,34 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [selectedAgent, getService]
   );
 
+  const handleActivityEvent = useCallback((event: ToolActivityEvent) => {
+    setToolActivity((prev) => {
+      if (event.type === "tool_start") {
+        return [...prev, { tool: event.tool ?? "ferramenta", logs: [], status: "running" as const }];
+      }
+      if (!prev.length) return prev;
+      const next = [...prev];
+      const last = next[next.length - 1];
+      if (event.type === "log" && event.message) {
+        next[next.length - 1] = { ...last, logs: [...last.logs, event.message] };
+      } else if (event.type === "progress" && event.total != null) {
+        next[next.length - 1] = {
+          ...last,
+          progress: { current: event.progress ?? 0, total: event.total },
+        };
+      } else if (event.type === "tool_end") {
+        next[next.length - 1] = { ...last, status: "done" };
+      } else if (event.type === "tool_error") {
+        next[next.length - 1] = {
+          ...last,
+          status: "error",
+          logs: event.message ? [...last.logs, event.message] : last.logs,
+        };
+      }
+      return next;
+    });
+  }, []);
+
   const sendMessage = useCallback(
     async (query: string) => {
       if (!query.trim() || isLoading) return;
@@ -152,6 +191,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const service = getService(selectedAgent);
 
       setIsLoading(true);
+      setToolActivity([]);
       isSendingMessageRef.current = true;
 
       const messageId = `pending-${Date.now()}`;
@@ -195,7 +235,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const { userMessage, assistantMessage } = await service.sendMessage(
           conversationIdAtSend,
           query,
-          shouldGenerateTitle
+          shouldGenerateTitle,
+          handleActivityEvent
         );
 
         setPendingMessages((prev) => {
@@ -269,6 +310,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       } finally {
         setIsLoading(false);
+        setToolActivity([]);
         isSendingMessageRef.current = false;
       }
     },
@@ -279,6 +321,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       refreshConversations,
       selectedAgent,
       getService,
+      handleActivityEvent,
     ]
   );
 
@@ -331,6 +374,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     isLoading,
     isLoadingConversations,
     streamingMessage,
+    toolActivity,
     pendingMessages,
     selectedAgent,
     setSelectedAgent,
