@@ -109,11 +109,11 @@ export function XlsxViewerTable({
   }
 
   return (
-    <div className={`overflow-auto bg-white ${className}`}>
+    <div className={`overflow-auto bg-white text-slate-900 ${className}`}>
       <table className="min-w-full border-collapse text-sm">
         <tbody>
           {grid.map((row, i) => (
-            <tr key={i} className={i === 0 ? "bg-muted/50 font-medium" : "even:bg-muted/20"}>
+            <tr key={i} className={i === 0 ? "bg-slate-100 font-medium" : "even:bg-slate-50"}>
               {row.map((cell, j) => {
                 const span = spans.get(`${i},${j}`);
                 if (span === "skip") return null;
@@ -122,7 +122,7 @@ export function XlsxViewerTable({
                     key={j}
                     rowSpan={span?.rowSpan}
                     colSpan={span?.colSpan}
-                    className="border px-3 py-1.5 whitespace-nowrap"
+                    className="border border-slate-200 px-3 py-1.5 whitespace-nowrap"
                   >
                     {cell}
                   </td>
