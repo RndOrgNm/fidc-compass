@@ -59,6 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
+import { XlsxViewerTable } from "@/components/XlsxViewerTable";
 import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote, docLabel } from "@/data/ativosData";
 import { documentoKeys } from "@/lib/queryKeys";
 import {
@@ -648,8 +649,13 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
 // chatbot (one static, well-known CVM PDF), each Documento here is an
 // arbitrary uploaded file — so non-PDF files fall back to a direct download
 // instead of an in-panel preview.
-function isPdfFile(filename?: string | null): boolean {
-  return !!filename && filename.toLowerCase().endsWith(".pdf");
+type FileKind = "pdf" | "xlsx" | "other";
+
+function fileKindOf(filename?: string | null): FileKind {
+  const lower = (filename || "").toLowerCase();
+  if (lower.endsWith(".pdf")) return "pdf";
+  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "xlsx";
+  return "other";
 }
 
 function DocumentViewerSheet({
@@ -663,16 +669,18 @@ function DocumentViewerSheet({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
   const [rawUrl, setRawUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isPdf = isPdfFile(doc?.arquivo_nome);
+  const fileKind = fileKindOf(doc?.arquivo_nome);
+  const isPdf = fileKind === "pdf";
+  const isXlsx = fileKind === "xlsx";
 
   useEffect(() => {
     if (!open || !doc) {
-      setPdfData(null);
+      setFileData(null);
       setRawUrl(null);
       setError(null);
       setCurrentPage(1);
@@ -682,14 +690,15 @@ function DocumentViewerSheet({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    setPdfData(null);
+    setFileData(null);
     setCurrentPage(1);
+    setTotalPages(1);
 
     getDownloadUrl(doc.id)
       .then(async ({ download_url }) => {
         if (cancelled) return;
         setRawUrl(download_url);
-        if (!isPdfFile(doc.arquivo_nome)) {
+        if (fileKindOf(doc.arquivo_nome) === "other") {
           setLoading(false);
           return;
         }
@@ -697,7 +706,7 @@ function DocumentViewerSheet({
         if (!res.ok) throw new Error(`Erro ${res.status} ao baixar o arquivo`);
         const buf = await res.arrayBuffer();
         if (cancelled) return;
-        setPdfData(buf);
+        setFileData(buf);
         setLoading(false);
       })
       .catch((e) => {
@@ -746,14 +755,24 @@ function DocumentViewerSheet({
           {!loading && !error && isPdf && (
             <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
               <PdfViewerCanvas
-                pdfData={pdfData}
+                pdfData={fileData}
                 currentPage={currentPage}
                 onTotalPages={setTotalPages}
                 className="w-full h-full min-h-[400px]"
               />
             </div>
           )}
-          {!loading && !error && !isPdf && (
+          {!loading && !error && isXlsx && (
+            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
+              <XlsxViewerTable
+                fileData={fileData}
+                currentSheet={currentPage}
+                onSheetNames={(names) => setTotalPages(names.length)}
+                className="w-full h-full min-h-[400px]"
+              />
+            </div>
+          )}
+          {!loading && !error && !isPdf && !isXlsx && (
             <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
               <FileText className="h-8 w-8" />
               <p className="max-w-xs text-sm">
@@ -772,10 +791,10 @@ function DocumentViewerSheet({
           )}
         </div>
 
-        {isPdf && !loading && !error && (
+        {(isPdf || isXlsx) && !loading && !error && (
           <SheetFooter className="px-6 py-4 border-t flex items-center justify-between flex-shrink-0">
             <span className="text-sm text-muted-foreground">
-              Página {currentPage} de {totalPages}
+              {isPdf ? "Página" : "Aba"} {currentPage} de {totalPages}
             </span>
             <div className="flex gap-2">
               <Button
