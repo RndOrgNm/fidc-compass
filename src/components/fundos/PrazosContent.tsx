@@ -554,7 +554,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     const dias = (i: InstanciaResponse) =>
       i.data_vencimento ? daysFromTodayISO(i.data_vencimento) : Infinity;
     return [
-      { id: "atrasado", label: "Atrasados", items: filtered.filter((i) => i.status === "ATRASADO") },
+      { id: "atrasado", label: "Pendentes", items: filtered.filter((i) => i.status === "ATRASADO") },
       { id: "gatilho", label: "Aguardando gatilho", items: filtered.filter((i) => i.status === "AGUARDANDO_GATILHO") },
       { id: "semana", label: "Esta semana", items: filtered.filter((i) => i.status === "PENDENTE" && dias(i) <= 7) },
       { id: "mes", label: "Próximos 30 dias", items: filtered.filter((i) => i.status === "PENDENTE" && dias(i) > 7 && dias(i) <= 30) },
@@ -731,7 +731,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
                   : "border-border bg-card/50"
               )}
             >
-              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pendentes</div>
+              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Em aberto</div>
               <div className="mt-2 text-2xl font-semibold tabular-nums">{pendentes}</div>
               <div className="mt-1.5 text-[11px] text-muted-foreground">aguardando ação</div>
             </button>
@@ -748,7 +748,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
                   : "border-border bg-card/50 hover:bg-card/80"
               )}
             >
-              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Atrasados</div>
+              <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pendentes</div>
               <div className={cn("mt-2 text-2xl font-semibold tabular-nums", atrasados > 0 && "text-destructive")}>{atrasados}</div>
               <div className="mt-1.5 text-[11px] text-muted-foreground">requer atenção</div>
             </button>

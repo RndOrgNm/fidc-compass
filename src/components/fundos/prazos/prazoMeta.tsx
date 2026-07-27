@@ -40,7 +40,7 @@ export const STATUS_META: Record<
   { label: string; icon: React.ReactNode; cls: string }
 > = {
   PENDENTE: {
-    label: "Pendente",
+    label: "Em aberto",
     icon: <Clock className="h-3 w-3" />,
     cls: "bg-amber-400/15 text-amber-400",
   },
@@ -50,7 +50,7 @@ export const STATUS_META: Record<
     cls: "bg-amber-400/15 text-amber-400",
   },
   ATRASADO: {
-    label: "Atrasado",
+    label: "Pendente",
     icon: <AlertTriangle className="h-3 w-3" />,
     cls: "bg-destructive/15 text-destructive",
   },
