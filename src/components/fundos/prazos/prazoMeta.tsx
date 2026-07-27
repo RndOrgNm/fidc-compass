@@ -35,6 +35,11 @@ export const CAT_ORDER: Categoria[] = [
   "COTISTA",
 ];
 
+// Labels are intentionally decoupled from the backend PrazoStatus enum names
+// (see the docstring on PrazoStatus in funds-pipeline/src/api/models/enums.py):
+// PENDENTE shows as "Em aberto" and ATRASADO shows as "Pendente" — end-user
+// feedback that "pendente" reads as overdue in BR financial usage and "em
+// aberto" reads as not-yet-due. Keep in sync with email_digest._STATUS_LABEL.
 export const STATUS_META: Record<
   DisplayStatus,
   { label: string; icon: React.ReactNode; cls: string }
