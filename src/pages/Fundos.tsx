@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FundContextBar } from "@/components/fundos/FundContextBar";
 import { ControleDeAtivosContent } from "@/components/fundos/ControleDeAtivosContent";
 import { AtivosContent } from "@/components/fundos/AtivosContent";
-import { CotistasContent } from "@/components/fundos/CotistasContent";
+import { EmConstrucao } from "@/components/fundos/EmConstrucao";
 import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { GraficosContent } from "@/components/fundos/GraficosContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
@@ -103,7 +103,7 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="cotistas" className="mt-8">
-            <CotistasContent fundoId={resolvedId} fundName={selectedFundName} />
+            <EmConstrucao title="Cotistas" />
           </TabsContent>
 
           <TabsContent value="prazos" className="mt-8">
