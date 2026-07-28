@@ -683,6 +683,7 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
             <Input
               id="mes-referencia-input"
               type="month"
+              lang="pt-BR"
               value={mesReferencia}
               onChange={(e) => setMesReferencia(e.target.value)}
               disabled={isRunning}
