@@ -9,6 +9,13 @@ import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { Label } from "@/components/ui/label";
 import { loadIpca, type IpcaRow } from "@/lib/ibge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const SPREADSHEET_ACCEPT =
@@ -129,6 +136,11 @@ const PT_MONTHS = [
   "JUL", "AGO", "SET", "OUT", "NOV", "DEZ",
 ];
 
+const PT_MONTHS_FULL = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
 function reportFileBase(fundName: string, iso: string | null): string {
   const utc = iso
     ? (/Z|[+-]\d{2}:\d{2}$/.test(iso) ? iso : iso + "Z")
@@ -194,6 +206,13 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
+  const [mesReferenciaYear, mesReferenciaMonth] = mesReferencia.split("-");
+  const mesReferenciaYearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years: string[] = [];
+    for (let y = currentYear - 3; y <= currentYear + 1; y++) years.push(String(y));
+    return years;
+  }, []);
   const [ipcaRows, setIpcaRows] = useState<IpcaRow[]>([]);
   const [loadingIpca, setLoadingIpca] = useState(true);
   const [ipcaError, setIpcaError] = useState<string | null>(null);
@@ -677,18 +696,41 @@ export function ControleDeAtivosContent({ fundName: fundNameProp }: ControleDeAt
           )}
 
           <div className="mt-4 flex items-center gap-2">
-            <Label htmlFor="mes-referencia-input" className="text-xs text-muted-foreground whitespace-nowrap">
+            <Label className="text-xs text-muted-foreground whitespace-nowrap">
               Mês de Referência
             </Label>
-            <Input
-              id="mes-referencia-input"
-              type="month"
-              lang="pt-BR"
-              value={mesReferencia}
-              onChange={(e) => setMesReferencia(e.target.value)}
+            <Select
+              value={mesReferenciaMonth}
+              onValueChange={(month) => setMesReferencia(`${mesReferenciaYear}-${month}`)}
               disabled={isRunning}
-              className="h-8 w-40 text-sm"
-            />
+            >
+              <SelectTrigger className="h-8 w-32 text-sm" aria-label="Mês">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PT_MONTHS_FULL.map((label, idx) => (
+                  <SelectItem key={label} value={String(idx + 1).padStart(2, "0")}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={mesReferenciaYear}
+              onValueChange={(year) => setMesReferencia(`${year}-${mesReferenciaMonth}`)}
+              disabled={isRunning}
+            >
+              <SelectTrigger className="h-8 w-24 text-sm" aria-label="Ano">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mesReferenciaYearOptions.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
