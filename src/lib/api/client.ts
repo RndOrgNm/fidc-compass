@@ -13,12 +13,14 @@ export interface ApiSource {
 
 /** Live tool-call activity streamed during an in-progress agent turn (see /router/ask/stream). */
 export interface ToolActivityEvent {
-  type: "tool_start" | "tool_end" | "tool_error" | "progress" | "log";
+  type: "tool_start" | "tool_end" | "tool_error" | "progress" | "log" | "text_delta";
   tool?: string;
   message?: string;
   level?: string;
   progress?: number;
   total?: number | null;
+  /** Present when type === "text_delta" — one token/chunk of the answer being generated live. */
+  text?: string;
 }
 
 export interface ConversationCreate {

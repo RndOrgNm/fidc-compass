@@ -45,6 +45,7 @@ interface ChatContextType {
   isLoadingConversations: boolean;
   streamingMessage: Message | null;
   toolActivity: ToolActivityItem[];
+  streamingText: string;
   pendingMessages: Map<string, PendingMessage>;
   selectedAgent: "cvm" | "funds" | "prazos";
   setSelectedAgent: (agent: "cvm" | "funds" | "prazos") => void;
@@ -70,6 +71,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
   const [toolActivity, setToolActivity] = useState<ToolActivityItem[]>([]);
+  const [streamingText, setStreamingText] = useState("");
   const [pendingMessages, setPendingMessages] = useState<Map<string, PendingMessage>>(new Map());
   const [selectedAgent, setSelectedAgentState] = useState<"cvm" | "funds" | "prazos">("cvm");
 
@@ -80,6 +82,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages([]);
     setStreamingMessage(null);
     setToolActivity([]);
+    setStreamingText("");
     setIsLoading(false);
   }, []);
 
@@ -123,6 +126,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setMessages([]);
       setStreamingMessage(null);
       setToolActivity([]);
+      setStreamingText("");
       refreshConversations(agent);
     },
     [refreshConversations]
@@ -157,6 +161,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
 
   const handleActivityEvent = useCallback((event: ToolActivityEvent) => {
+    if (event.type === "text_delta") {
+      if (event.text) setStreamingText((prev) => prev + event.text);
+      return;
+    }
     setToolActivity((prev) => {
       if (event.type === "tool_start") {
         return [...prev, { tool: event.tool ?? "ferramenta", logs: [], status: "running" as const }];
@@ -192,6 +200,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       setIsLoading(true);
       setToolActivity([]);
+      setStreamingText("");
       isSendingMessageRef.current = true;
 
       const messageId = `pending-${Date.now()}`;
@@ -256,7 +265,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           return [...filtered, userMessage as Message, assistantMessage as Message];
         });
 
-        setStreamingMessage(assistantMessage as Message);
+        // Prazos already streamed the answer live via text_delta events — no
+        // need for the fake character-by-character typewriter on top of it.
+        // Other agents (no real streaming yet) still get the typewriter.
+        if (selectedAgent !== "prazos") {
+          setStreamingMessage(assistantMessage as Message);
+        }
 
         if (shouldGenerateTitle) {
           try {
@@ -311,6 +325,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       } finally {
         setIsLoading(false);
         setToolActivity([]);
+        setStreamingText("");
         isSendingMessageRef.current = false;
       }
     },
@@ -375,6 +390,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     isLoadingConversations,
     streamingMessage,
     toolActivity,
+    streamingText,
     pendingMessages,
     selectedAgent,
     setSelectedAgent,

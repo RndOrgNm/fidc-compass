@@ -28,6 +28,34 @@ import { RAG_API_BASE_URL, FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { useChat, type ToolActivityItem } from "@/contexts/ChatContext";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 
+const MARKDOWN_COMPONENTS = {
+  h2: ({node, ...props}: any) => <h2 className="text-xl font-semibold mt-6 mb-3" {...props} />,
+  h3: ({node, ...props}: any) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
+  p: ({node, ...props}: any) => <p className="mb-3" {...props} />,
+  ul: ({node, ...props}: any) => <ul className="list-disc list-outside mb-3 space-y-1 ml-6 [&_ul]:ml-6 [&_ul_ul]:ml-6" {...props} />,
+  ol: ({node, ...props}: any) => <ol className="list-decimal list-outside mb-3 space-y-1 ml-6 [&_ol]:ml-6 [&_ol_ol]:ml-6" {...props} />,
+  li: ({node, ...props}: any) => <li className="leading-relaxed pl-2" {...props} />,
+  strong: ({node, ...props}: any) => <strong className="font-semibold" {...props} />,
+  table: ({node, ...props}: any) => <table className="border-collapse border border-gray-300 my-4" {...props} />,
+  th: ({node, ...props}: any) => <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold" {...props} />,
+  td: ({node, ...props}: any) => <td className="border border-gray-300 px-4 py-2" {...props} />,
+};
+
+/** Live-growing assistant bubble for real token streaming (Prazos tab), shown
+ * in place of the bounce/ToolActivityCard once the model starts producing its
+ * answer text. Reuses the same markdown styling as a persisted message. */
+function LiveAnswerBubble({ text }: { text: string }) {
+  return (
+    <div className="flex-1 max-w-[75%] min-w-0">
+      <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3 break-words">
+        <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+          <ReactMarkdown components={MARKDOWN_COMPONENTS}>{text}</ReactMarkdown>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ToolActivityCard({ items }: { items: ToolActivityItem[] }) {
   if (!items.length) return null;
   return (
@@ -89,6 +117,7 @@ export default function Agent() {
     isLoadingConversations,
     streamingMessage,
     toolActivity,
+    streamingText,
     selectedAgent,
     setSelectedAgent,
     setCurrentConversationId,
@@ -603,7 +632,9 @@ export default function Agent() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                {toolActivity.length > 0 ? (
+                {streamingText ? (
+                  <LiveAnswerBubble text={streamingText} />
+                ) : toolActivity.length > 0 ? (
                   <ToolActivityCard items={toolActivity} />
                 ) : (
                   <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
@@ -647,20 +678,7 @@ export default function Agent() {
                       } px-4 py-3 break-words`}
                     >
                       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-                        <ReactMarkdown
-                          components={{
-                            h2: ({node, ...props}) => <h2 className="text-xl font-semibold mt-6 mb-3" {...props} />,
-                            h3: ({node, ...props}) => <h3 className="text-lg font-semibold mt-4 mb-2" {...props} />,
-                            p: ({node, ...props}) => <p className="mb-3" {...props} />,
-                            ul: ({node, ...props}) => <ul className="list-disc list-outside mb-3 space-y-1 ml-6 [&_ul]:ml-6 [&_ul_ul]:ml-6" {...props} />,
-                            ol: ({node, ...props}) => <ol className="list-decimal list-outside mb-3 space-y-1 ml-6 [&_ol]:ml-6 [&_ol_ol]:ml-6" {...props} />,
-                            li: ({node, ...props}) => <li className="leading-relaxed pl-2" {...props} />,
-                            strong: ({node, ...props}) => <strong className="font-semibold" {...props} />,
-                            table: ({node, ...props}) => <table className="border-collapse border border-gray-300 my-4" {...props} />,
-                            th: ({node, ...props}) => <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold" {...props} />,
-                            td: ({node, ...props}) => <td className="border border-gray-300 px-4 py-2" {...props} />,
-                          }}
-                        >
+                        <ReactMarkdown components={MARKDOWN_COMPONENTS}>
                           {displayContent}
                         </ReactMarkdown>
                       </div>
@@ -723,7 +741,9 @@ export default function Agent() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                {toolActivity.length > 0 ? (
+                {streamingText ? (
+                  <LiveAnswerBubble text={streamingText} />
+                ) : toolActivity.length > 0 ? (
                   <ToolActivityCard items={toolActivity} />
                 ) : (
                   <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
