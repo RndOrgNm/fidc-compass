@@ -27,7 +27,7 @@ function getPageTitle(pathname: string, override?: string): string {
   if (pathname.startsWith("/agent")) return "Agente IA";
   if (pathname.startsWith("/graficos")) return "Gráficos";
   if (pathname.startsWith("/fundos")) return "Fundos";
-  return "GIAA Compass";
+  return "EMET Compass";
 }
 
 function OrgBootstrap() {
@@ -47,7 +47,7 @@ export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
   const pageTitle = getPageTitle(location.pathname, title);
 
   useEffect(() => {
-    document.title = `${pageTitle} · GIAA Compass`;
+    document.title = `${pageTitle} · EMET Compass`;
   }, [pageTitle]);
 
   return (
