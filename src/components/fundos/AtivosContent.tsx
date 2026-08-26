@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Tags,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -81,6 +82,7 @@ import {
 } from "@/lib/api/documentoService";
 import { listClassificacoes } from "@/lib/api/classificacaoService";
 import { ClassificacaoDialog } from "@/components/classificacoes/ClassificacaoDialog";
+import { ClassificacoesSheet } from "@/components/classificacoes/ClassificacoesSheet";
 
 export interface AtivosContentProps {
   fundoId: number | null;
@@ -1094,6 +1096,7 @@ function NovoAtivoDialog({
 export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
   const [novoAtivoOpen, setNovoAtivoOpen] = useState(false);
+  const [classificacoesOpen, setClassificacoesOpen] = useState(false);
 
   const query = useQuery({
     queryKey: fundoId != null ? documentoKeys.byFundo(fundoId) : documentoKeys.all,
@@ -1140,11 +1143,12 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   return (
     <div>
-      {fundName && (
-        <div className="mb-1 flex items-baseline justify-end">
-          <span className="text-xs text-muted-foreground">{fundName}</span>
-        </div>
-      )}
+      <div className="mb-1 flex items-center justify-end gap-3">
+        {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
+        <Button size="sm" variant="ghost" onClick={() => setClassificacoesOpen(true)}>
+          <Tags className="mr-1 h-4 w-4" /> Classificações
+        </Button>
+      </div>
 
       {/* ── Documentos por Fundo ── */}
       <div className="mb-4">
@@ -1181,6 +1185,7 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
         onSave={(data) => createAtivoMut.mutate(data)}
         saving={createAtivoMut.isPending}
       />
+      <ClassificacoesSheet open={classificacoesOpen} onOpenChange={setClassificacoesOpen} />
     </div>
   );
 }

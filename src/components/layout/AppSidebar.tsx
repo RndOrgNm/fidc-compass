@@ -1,4 +1,4 @@
-import { Home, Bot, Landmark, Tags, LogOut } from "lucide-react";
+import { Home, Bot, Landmark, LogOut } from "lucide-react";
 // import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useClerk, useUser } from "@clerk/clerk-react";
@@ -22,7 +22,6 @@ const menuItems = [
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Agente IA", url: "/agent", icon: Bot },
   { title: "Fundos", url: "/fundos", icon: Landmark },
-  { title: "Classificações", url: "/classificacoes", icon: Tags },
 ];
 
 export function AppSidebar() {
