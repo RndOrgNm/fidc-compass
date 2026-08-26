@@ -29,3 +29,10 @@ export const documentoKeys = {
   /** Ativos + documentos of a fund, grouped by ativo (the Ativos tab payload). */
   byFundo: (fundoId: number) => ["documentos", "fundo", fundoId] as const,
 };
+
+export const classificacaoKeys = {
+  /** All classificação queries (broad invalidation root). */
+  all: ["classificacoes"] as const,
+  /** The catalog list, with its default documentos nested. */
+  list: (includeInactive?: boolean) => ["classificacoes", "list", !!includeInactive] as const,
+};

@@ -31,6 +31,7 @@ export interface AtivoResponse {
   nome: string;
   sub?: string | null;
   cor?: string | null;
+  classificacao_id?: string | null;
   imovel_no_nome_do_fundo: boolean;
   ordem: number;
   ativa: boolean;
@@ -75,6 +76,9 @@ export interface AtivoComDocumentosResponse {
   nome: string;
   sub?: string | null;
   cor?: string | null;
+  classificacao_id?: string | null;
+  /** Denormalizado pelo backend — evita uma 2ª chamada só para exibir o nome. */
+  classificacao_nome?: string | null;
   imovel_no_nome_do_fundo: boolean;
   documentos: DocumentoResponse[];
 }
@@ -102,6 +106,7 @@ export interface AtivoCreateRequest {
   nome: string;
   sub?: string;
   cor?: string;
+  classificacao_id?: string;
   imovel_no_nome_do_fundo?: boolean;
   ordem?: number;
 }
@@ -110,6 +115,7 @@ export interface AtivoUpdateRequest {
   nome?: string;
   sub?: string;
   cor?: string;
+  classificacao_id?: string;
   imovel_no_nome_do_fundo?: boolean;
   ordem?: number;
 }

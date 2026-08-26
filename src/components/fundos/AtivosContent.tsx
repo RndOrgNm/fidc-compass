@@ -62,7 +62,7 @@ import {
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { XlsxViewerTable } from "@/components/XlsxViewerTable";
 import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote, docLabel } from "@/data/ativosData";
-import { documentoKeys } from "@/lib/queryKeys";
+import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
   createAtivo,
@@ -79,6 +79,8 @@ import {
   type AtivoCreateRequest,
   type AtivoUpdateRequest,
 } from "@/lib/api/documentoService";
+import { listClassificacoes } from "@/lib/api/classificacaoService";
+import { ClassificacaoDialog } from "@/components/classificacoes/ClassificacaoDialog";
 
 export interface AtivosContentProps {
   fundoId: number | null;
@@ -858,6 +860,62 @@ function DocumentViewerSheet({
 }
 
 // ── Editar ativo dialog ───────────────────────────────────────────────────────
+// ── Classificação picker (Ativo dialogs) ────────────────────────────────────
+const CLASSIFICACAO_NONE = "__none__";
+const CLASSIFICACAO_CREATE = "__create__";
+
+/**
+ * Select for an Ativo's Classificação, shared by NovoAtivoDialog/EditAtivoDialog.
+ * Includes an inline "+ Nova classificação" option that opens ClassificacaoDialog
+ * without leaving the Ativo form — on create, the new item is selected immediately.
+ */
+function ClassificacaoSelect({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (classificacaoId: string | undefined) => void;
+}) {
+  const [createOpen, setCreateOpen] = useState(false);
+  const { data } = useQuery({
+    queryKey: classificacaoKeys.list(),
+    queryFn: () => listClassificacoes(),
+  });
+  const items = data?.items ?? [];
+
+  function handleChange(v: string) {
+    if (v === CLASSIFICACAO_CREATE) {
+      setCreateOpen(true);
+      return;
+    }
+    onChange(v === CLASSIFICACAO_NONE ? undefined : v);
+  }
+
+  return (
+    <>
+      <Select value={value ?? CLASSIFICACAO_NONE} onValueChange={handleChange}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={CLASSIFICACAO_NONE}>Sem classificação</SelectItem>
+          {items.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.nome}
+            </SelectItem>
+          ))}
+          <SelectItem value={CLASSIFICACAO_CREATE}>+ Nova classificação</SelectItem>
+        </SelectContent>
+      </Select>
+      <ClassificacaoDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(created) => onChange(created.id)}
+      />
+    </>
+  );
+}
+
 function EditAtivoDialog({
   asset,
   open,
@@ -873,17 +931,21 @@ function EditAtivoDialog({
 }) {
   const [nome, setNome] = useState(asset.nome);
   const [sub, setSub] = useState(asset.sub ?? "");
+  const [classificacaoId, setClassificacaoId] = useState<string | undefined>(
+    asset.classificacao_id ?? undefined
+  );
 
   useEffect(() => {
     if (open) {
       setNome(asset.nome);
       setSub(asset.sub ?? "");
+      setClassificacaoId(asset.classificacao_id ?? undefined);
     }
   }, [open, asset]);
 
   function handleSave() {
     if (!nome.trim()) return;
-    onSave({ nome: nome.trim(), sub: sub.trim() || undefined });
+    onSave({ nome: nome.trim(), sub: sub.trim() || undefined, classificacao_id: classificacaoId });
   }
 
   return (
@@ -904,6 +966,10 @@ function EditAtivoDialog({
               value={sub}
               onChange={(e) => setSub(e.target.value)}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Classificação</Label>
+            <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
           </div>
         </div>
         <DialogFooter>
@@ -946,12 +1012,14 @@ function NovoAtivoDialog({
   const [nome, setNome] = useState("");
   const [sub, setSub] = useState("");
   const [cor, setCor] = useState<string>(COR_PRESETS[COR_PRESETS.length - 1].value);
+  const [classificacaoId, setClassificacaoId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (open) {
       setNome("");
       setSub("");
       setCor(COR_PRESETS[COR_PRESETS.length - 1].value);
+      setClassificacaoId(undefined);
     }
   }, [open]);
 
@@ -962,6 +1030,7 @@ function NovoAtivoDialog({
       nome: nome.trim(),
       sub: sub.trim() || undefined,
       cor,
+      classificacao_id: classificacaoId,
     });
   }
 
@@ -983,6 +1052,10 @@ function NovoAtivoDialog({
               value={sub}
               onChange={(e) => setSub(e.target.value)}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Classificação</Label>
+            <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
           </div>
           <div className="space-y-1.5">
             <Label>Cor de destaque</Label>

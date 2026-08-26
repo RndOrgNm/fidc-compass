@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Fundos from "./pages/Fundos";
+import Classificacoes from "./pages/Classificacoes";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,15 @@ const App = () => (
                   </RequireAuth>
                 }
               />
+              <Route
+                path="/classificacoes"
+                element={
+                  <RequireAuth>
+                    <Classificacoes />
+                  </RequireAuth>
+                }
+              />
+
               {/* Legacy routes redirect to the new Fundos hub */}
               <Route path="/controle-de-ativos" element={<Navigate to="/fundos" replace />} />
               <Route path="/relatorio-teste" element={<Navigate to="/fundos" replace />} />
