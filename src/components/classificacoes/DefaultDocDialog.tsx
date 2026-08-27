@@ -79,7 +79,7 @@ export function DefaultDocDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar documento padrão" : "Novo documento padrão"}</DialogTitle>
         </DialogHeader>
@@ -102,12 +102,16 @@ export function DefaultDocDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Referência</Label>
+            <Label>Período de referência</Label>
             <Input
-              placeholder="ex.: nome/nº da unidade"
+              placeholder="ex.: 2026, 2ª alteração, 2º tri/2026"
               value={refHint}
               onChange={(e) => setRefHint(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">
+              Exemplo que aparece como sugestão no campo "Período de referência" ao criar o
+              documento — a que período ou versão ele se refere.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>Nota (opcional)</Label>

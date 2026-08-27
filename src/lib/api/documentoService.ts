@@ -332,3 +332,11 @@ export async function vincularPrazo(
   });
   return handleResponse<DocumentoResponse>(response);
 }
+
+/** Desfaz o vínculo com o prazo. A obrigação continua existindo na aba Prazos. */
+export async function desvincularPrazo(documentoId: string): Promise<DocumentoResponse> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/documentos/${documentoId}/prazo`, {
+    method: "DELETE",
+  });
+  return handleResponse<DocumentoResponse>(response);
+}

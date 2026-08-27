@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ExternalLink,
   Tags,
+  Unlink,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ import {
   deleteDocumento,
   uploadDocumentoFile,
   getDownloadUrl,
+  desvincularPrazo,
   type DocTipo,
   type Cadencia,
   type DocumentoResponse,
@@ -128,6 +130,8 @@ function DocumentDialog({
   saving,
   onCriarPrazo,
   onVerPrazo,
+  onDesvincularPrazo,
+  desvinculando,
 }: {
   asset: AtivoComDocumentosResponse;
   doc: DocumentoResponse | null;
@@ -144,6 +148,8 @@ function DocumentDialog({
   saving: boolean;
   onCriarPrazo: (prefill: PrazoPrefill) => void;
   onVerPrazo: (obrigacaoId: string) => void;
+  onDesvincularPrazo: (documentoId: string) => void;
+  desvinculando: boolean;
 }) {
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
   const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
@@ -190,7 +196,7 @@ function DocumentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isNew ? "Novo documento" : `${label} · ${asset.nome.split(" · ")[0]}`}</DialogTitle>
         </DialogHeader>
@@ -310,6 +316,21 @@ function DocumentDialog({
                       onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      aria-label="Desvincular prazo"
+                      title="Desvincular prazo (a obrigação continua na aba Prazos)"
+                      disabled={desvinculando}
+                      onClick={() => onDesvincularPrazo(doc.id)}
+                    >
+                      {desvinculando ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Unlink className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -432,6 +453,18 @@ function AssetCard({
       setDeleteAtivoConfirm(false);
     },
     onError: (e: Error) => toast({ title: "Erro ao excluir ativo", description: e.message, variant: "destructive" }),
+  });
+
+  const desvincularPrazoMut = useMutation({
+    mutationFn: (documentoId: string) => desvincularPrazo(documentoId),
+    onSuccess: async (updated) => {
+      await invalidate();
+      // Mantém o diálogo aberto no documento já atualizado (agora sem prazo).
+      setDocState((s) => (s ? { ...s, doc: updated } : s));
+      toast({ title: "Prazo desvinculado", description: "A obrigação continua na aba Prazos." });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Erro ao desvincular prazo", description: e.message, variant: "destructive" }),
   });
 
   async function handleSaveDocument(values: {
@@ -676,6 +709,8 @@ function AssetCard({
           setDocState(null);
           goToPrazo(obrigacaoId);
         }}
+        onDesvincularPrazo={(documentoId) => desvincularPrazoMut.mutate(documentoId)}
+        desvinculando={desvincularPrazoMut.isPending}
       />
 
       <AlertDialog open={deleteTarget != null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
@@ -1011,7 +1046,7 @@ function EditAtivoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar ativo</DialogTitle>
         </DialogHeader>
@@ -1097,7 +1132,7 @@ function NovoAtivoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo ativo</DialogTitle>
         </DialogHeader>
