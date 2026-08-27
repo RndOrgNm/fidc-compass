@@ -43,7 +43,6 @@ export function DefaultDocDialog({
   const [label, setLabel] = useState(initial?.label ?? "");
   const [cadenciaLabel, setCadenciaLabel] = useState(initial?.cadencia_label ?? "");
   const [refHint, setRefHint] = useState(initial?.ref_hint ?? "");
-  const [resp, setResp] = useState(initial?.resp ?? "");
   const [nota, setNota] = useState(initial?.nota ?? "");
   const queryClient = useQueryClient();
 
@@ -52,7 +51,6 @@ export function DefaultDocDialog({
       setLabel(initial?.label ?? "");
       setCadenciaLabel(initial?.cadencia_label ?? "");
       setRefHint(initial?.ref_hint ?? "");
-      setResp(initial?.resp ?? "");
       setNota(initial?.nota ?? "");
     }
   }, [open, initial]);
@@ -63,7 +61,6 @@ export function DefaultDocDialog({
         label: label.trim(),
         cadencia_label: cadenciaLabel.trim() || undefined,
         ref_hint: refHint.trim() || undefined,
-        resp: resp.trim() || undefined,
         nota: nota.trim() || undefined,
       };
       return isEdit
@@ -105,19 +102,11 @@ export function DefaultDocDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Dica de referência</Label>
+            <Label>Referência</Label>
             <Input
               placeholder="ex.: nome/nº da unidade"
               value={refHint}
               onChange={(e) => setRefHint(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Responsável</Label>
-            <Input
-              placeholder="ex.: Jurídico"
-              value={resp}
-              onChange={(e) => setResp(e.target.value)}
             />
           </div>
           <div className="space-y-1.5">

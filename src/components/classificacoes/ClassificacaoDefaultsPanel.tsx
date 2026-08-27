@@ -58,7 +58,6 @@ export function ClassificacaoDefaultsPanel({ classificacao }: { classificacao: C
                 {d.cadencia_label && (
                   <span className="ml-2 text-xs text-muted-foreground">{d.cadencia_label}</span>
                 )}
-                {d.resp && <span className="ml-2 text-xs text-muted-foreground">· {d.resp}</span>}
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button

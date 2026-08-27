@@ -18,8 +18,6 @@ export interface ClassificacaoDocumentoDefaultResponse {
   nota?: string | null;
   /** Placeholder do campo "período de referência" ao criar o documento. */
   ref_hint?: string | null;
-  /** Área responsável, texto livre. */
-  resp?: string | null;
   ordem: number;
   criado_em: string;
 }
@@ -56,7 +54,6 @@ export interface ClassificacaoDocumentoDefaultCreateRequest {
   cadencia_label?: string;
   nota?: string;
   ref_hint?: string;
-  resp?: string;
   ordem?: number;
 }
 
@@ -66,7 +63,6 @@ export interface ClassificacaoDocumentoDefaultUpdateRequest {
   cadencia_label?: string;
   nota?: string;
   ref_hint?: string;
-  resp?: string;
   ordem?: number;
 }
 
