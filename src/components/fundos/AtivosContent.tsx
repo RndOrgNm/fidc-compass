@@ -68,6 +68,7 @@ import {
   listDocumentosByFundo,
   createAtivo,
   updateAtivo,
+  deleteAtivo,
   createDocumento,
   updateDocumento,
   deleteDocumento,
@@ -389,7 +390,16 @@ function DocPrazoCell({
 }
 
 // ── Asset card ────────────────────────────────────────────────────────────────
-function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fundoId: number }) {
+function AssetCard({
+  asset,
+  fundoId,
+  isFundoSingleton,
+}: {
+  asset: AtivoComDocumentosResponse;
+  fundoId: number;
+  /** The "Documentos do Fundo" card — auto-created singleton, not user-deletable. */
+  isFundoSingleton?: boolean;
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [docState, setDocState] = useState<{ doc: DocumentoResponse | null; isNew: boolean } | null>(null);
@@ -397,6 +407,7 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
   const [editAtivoOpen, setEditAtivoOpen] = useState(false);
   const [viewDoc, setViewDoc] = useState<DocumentoResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteAtivoConfirm, setDeleteAtivoConfirm] = useState(false);
   const docs = asset.documentos;
 
   function invalidate() {
@@ -411,6 +422,16 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
       setEditAtivoOpen(false);
     },
     onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteAtivoMut = useMutation({
+    mutationFn: () => deleteAtivo(asset.ativo_id),
+    onSuccess: async () => {
+      await invalidate();
+      toast({ title: "Ativo excluído" });
+      setDeleteAtivoConfirm(false);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao excluir ativo", description: e.message, variant: "destructive" }),
   });
 
   async function handleSaveDocument(values: {
@@ -500,13 +521,24 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
           <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
           {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
         </div>
-        <button
-          aria-label="Editar ativo"
-          onClick={() => setEditAtivoOpen(true)}
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <SquarePen className="h-4 w-4" />
-        </button>
+        <div className="flex shrink-0 gap-1">
+          <button
+            aria-label="Editar ativo"
+            onClick={() => setEditAtivoOpen(true)}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <SquarePen className="h-4 w-4" />
+          </button>
+          {!isFundoSingleton && (
+            <button
+              aria-label="Excluir ativo"
+              onClick={() => setDeleteAtivoConfirm(true)}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mb-3">
@@ -675,6 +707,33 @@ function AssetCard({ asset, fundoId }: { asset: AtivoComDocumentosResponse; fund
         onSave={(data) => updateAtivoMut.mutate(data)}
         saving={updateAtivoMut.isPending}
       />
+
+      <AlertDialog open={deleteAtivoConfirm} onOpenChange={setDeleteAtivoConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{asset.nome}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O ativo será removido da lista, mas seus documentos e histórico são preservados.
+              Esta ação não pode ser desfeita pela interface.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteAtivoMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteAtivoMut.isPending}
+              onClick={() => deleteAtivoMut.mutate()}
+            >
+              {deleteAtivoMut.isPending ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1 h-4 w-4" />
+              )}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <DocumentViewerSheet
         doc={viewDoc}
@@ -1154,7 +1213,7 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
       <div className="mb-4">
         <h3 className="text-base font-semibold">Documentos por Fundo</h3>
       </div>
-      {fundo && <AssetCard asset={fundo} fundoId={fundoId} />}
+      {fundo && <AssetCard asset={fundo} fundoId={fundoId} isFundoSingleton />}
 
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 mt-9 flex items-baseline justify-between">
