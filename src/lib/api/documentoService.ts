@@ -17,6 +17,7 @@ export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 // cadências diferentes conforme o ativo/contexto.
 export type Cadencia =
   | "mensal"
+  | "bimestral"
   | "trimestral"
   | "semestral"
   | "anual"
@@ -32,7 +33,6 @@ export interface AtivoResponse {
   sub?: string | null;
   cor?: string | null;
   classificacao_id?: string | null;
-  imovel_no_nome_do_fundo: boolean;
   ordem: number;
   ativa: boolean;
   criado_em: string;
@@ -48,6 +48,9 @@ export interface LinkedPrazoInfo {
   topico: string;
   data_vencimento: string | null;
   responsavel_nome?: string | null;
+  /** Frequência da obrigação vinculada, traduzida pra Cadencia — enquanto
+   *  vinculado, é ela quem manda em DocumentoResponse.cadencia. */
+  cadencia: Cadencia;
 }
 
 export interface DocumentoResponse {
@@ -79,7 +82,6 @@ export interface AtivoComDocumentosResponse {
   classificacao_id?: string | null;
   /** Denormalizado pelo backend — evita uma 2ª chamada só para exibir o nome. */
   classificacao_nome?: string | null;
-  imovel_no_nome_do_fundo: boolean;
   documentos: DocumentoResponse[];
 }
 
@@ -107,7 +109,6 @@ export interface AtivoCreateRequest {
   sub?: string;
   cor?: string;
   classificacao_id?: string;
-  imovel_no_nome_do_fundo?: boolean;
   ordem?: number;
 }
 
@@ -116,7 +117,6 @@ export interface AtivoUpdateRequest {
   sub?: string;
   cor?: string;
   classificacao_id?: string;
-  imovel_no_nome_do_fundo?: boolean;
   ordem?: number;
 }
 

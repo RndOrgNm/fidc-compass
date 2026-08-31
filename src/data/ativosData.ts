@@ -44,6 +44,7 @@ export const DOC_TYPES: Record<DocTipo, DocTypeMeta> = {
 
 export const CADENCIA_LABELS: Record<Cadencia, string> = {
   mensal: "Mensal",
+  bimestral: "Bimestral",
   trimestral: "Trimestral",
   semestral: "Semestral",
   anual: "Anual",
@@ -65,18 +66,9 @@ export const DOC_STATUS: Record<DocStatus, DocStatusMeta> = {
   pendente: { label: "Pendente", icon: CircleDashed, chip: "bg-muted text-muted-foreground" },
 };
 
-/** Cadência sugerida ao criar um novo documento de `tipo` — editável depois; matrícula é condicional ao ativo. */
-export function cadenciaSugerida(tipo: DocTipo, imovelNoNomeDoFundo: boolean): Cadencia {
-  if (tipo === "matricula") return imovelNoNomeDoFundo ? "anual" : "semestral";
+/** Cadência sugerida ao criar um novo documento de `tipo` — editável depois. */
+export function cadenciaSugerida(tipo: DocTipo): Cadencia {
   return DOC_TYPES[tipo].cadenciaSugerida;
-}
-
-/** Explanatory note for a conditional cadence, or null. */
-export function cadenciaNote(tipo: DocTipo, imovelNoNomeDoFundo: boolean): string | null {
-  if (tipo !== "matricula") return null;
-  return imovelNoNomeDoFundo
-    ? "Imóvel já averbado em nome do fundo → atualização anual."
-    : "Imóvel ainda não está em nome do fundo → atualização semestral.";
 }
 
 /** Effective display label — the catalog label, or the custom name when tipo="outro". */

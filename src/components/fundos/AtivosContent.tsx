@@ -12,7 +12,6 @@ import {
   CalendarClock,
   CalendarPlus,
   Calendar as CalendarIcon,
-  Info,
   FolderX,
   Loader2,
   Building2,
@@ -63,7 +62,7 @@ import {
 } from "@/components/ui/select";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { XlsxViewerTable } from "@/components/XlsxViewerTable";
-import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, cadenciaNote, docLabel } from "@/data/ativosData";
+import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
 import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
 import {
   listDocumentosByFundo,
@@ -154,7 +153,7 @@ function DocumentDialog({
   const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
   const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
   const [cadencia, setCadencia] = useState<Cadencia>(
-    doc?.cadencia ?? cadenciaSugerida("balancete", asset.imovel_no_nome_do_fundo)
+    doc?.cadencia ?? cadenciaSugerida("balancete")
   );
   const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -166,14 +165,13 @@ function DocumentDialog({
       const initialTipo = doc?.tipo ?? "balancete";
       setTipo(initialTipo);
       setNomePersonalizado(doc?.nome_personalizado ?? "");
-      setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo, asset.imovel_no_nome_do_fundo));
+      setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo));
       setPeriodo(doc?.periodo_referencia ?? "");
       setFile(null);
     }
-  }, [open, doc, isNew, asset.imovel_no_nome_do_fundo]);
+  }, [open, doc, isNew]);
 
   const meta = DOC_TYPES[tipo];
-  const note = cadenciaNote(tipo, asset.imovel_no_nome_do_fundo);
   const label = docLabel(tipo, tipo === "outro" ? nomePersonalizado : undefined);
   const isOutroSemNome = tipo === "outro" && !nomePersonalizado.trim();
 
@@ -181,7 +179,7 @@ function DocumentDialog({
     const next = v as DocTipo;
     setTipo(next);
     // Re-suggest the cadência for the new type — the user can still override it.
-    setCadencia(cadenciaSugerida(next, asset.imovel_no_nome_do_fundo));
+    setCadencia(cadenciaSugerida(next));
   }
 
   async function handleDownload() {
@@ -272,7 +270,11 @@ function DocumentDialog({
 
           <div className="space-y-1.5">
             <Label>Cadência</Label>
-            <Select value={cadencia} onValueChange={(v) => setCadencia(v as Cadencia)}>
+            <Select
+              value={cadencia}
+              onValueChange={(v) => setCadencia(v as Cadencia)}
+              disabled={!!doc?.prazo}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -282,13 +284,12 @@ function DocumentDialog({
                 ))}
               </SelectContent>
             </Select>
+            {doc?.prazo && (
+              <p className="text-[11px] text-muted-foreground">
+                Definida pela Frequência do prazo vinculado — desvincule para editar aqui.
+              </p>
+            )}
           </div>
-          {note && (
-            <div className="flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
-              <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {note}
-            </div>
-          )}
-
           <div className="space-y-1.5">
             <Label>Período de referência</Label>
             <Input placeholder="ex.: 2º tri/2026" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
