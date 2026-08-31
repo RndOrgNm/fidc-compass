@@ -1245,14 +1245,8 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
         </Button>
       </div>
 
-      {/* ── Documentos por Fundo ── */}
-      <div className="mb-4">
-        <h3 className="text-base font-semibold">Documentos por Fundo</h3>
-      </div>
-      {fundo && <AssetCard asset={fundo} fundoId={fundoId} isFundoSingleton />}
-
       {/* ── Documentos por Ativos ── */}
-      <div className="mb-4 mt-9 flex items-baseline justify-between">
+      <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>
         <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
           <Plus className="mr-1 h-4 w-4" /> Novo ativo
@@ -1272,6 +1266,12 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
       ) : (
         assets.map((asset) => <AssetCard key={asset.ativo_id} asset={asset} fundoId={fundoId} />)
       )}
+
+      {/* ── Documentos por Fundo ── */}
+      <div className="mb-4 mt-9">
+        <h3 className="text-base font-semibold">Documentos por Fundo</h3>
+      </div>
+      {fundo && <AssetCard asset={fundo} fundoId={fundoId} isFundoSingleton />}
 
       <NovoAtivoDialog
         fundoId={fundoId}
