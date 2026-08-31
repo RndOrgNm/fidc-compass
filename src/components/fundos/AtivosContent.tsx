@@ -416,11 +416,13 @@ function AssetCard({
   asset,
   fundoId,
   isFundoSingleton,
+  onOpenClassificacoes,
 }: {
   asset: AtivoComDocumentosResponse;
   fundoId: number;
   /** The "Documentos do Fundo" card — auto-created singleton, not user-deletable. */
   isFundoSingleton?: boolean;
+  onOpenClassificacoes: () => void;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -551,9 +553,16 @@ function AssetCard({
       style={{ borderLeftColor: asset.cor ?? undefined }}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
-        <div>
-          <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
-          {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
+        <div className="flex items-start gap-2">
+          <div>
+            <div className="text-sm font-semibold text-foreground">{asset.nome}</div>
+            {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
+          </div>
+          {asset.classificacao_nome && (
+            <span className="mt-0.5 inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {asset.classificacao_nome}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 gap-1">
           <button
@@ -562,6 +571,14 @@ function AssetCard({
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <SquarePen className="h-4 w-4" />
+          </button>
+          <button
+            aria-label="Classificações"
+            title="Classificações"
+            onClick={onOpenClassificacoes}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Tags className="h-4 w-4" />
           </button>
           {!isFundoSingleton && (
             <button
@@ -1238,13 +1255,6 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   return (
     <div>
-      <div className="mb-1 flex items-center justify-end gap-3">
-        {fundName && <span className="text-xs text-muted-foreground">{fundName}</span>}
-        <Button size="sm" variant="ghost" onClick={() => setClassificacoesOpen(true)}>
-          <Tags className="mr-1 h-4 w-4" /> Classificações
-        </Button>
-      </div>
-
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>
@@ -1264,14 +1274,28 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
           </Button>
         </div>
       ) : (
-        assets.map((asset) => <AssetCard key={asset.ativo_id} asset={asset} fundoId={fundoId} />)
+        assets.map((asset) => (
+          <AssetCard
+            key={asset.ativo_id}
+            asset={asset}
+            fundoId={fundoId}
+            onOpenClassificacoes={() => setClassificacoesOpen(true)}
+          />
+        ))
       )}
 
       {/* ── Documentos por Fundo ── */}
       <div className="mb-4 mt-9">
         <h3 className="text-base font-semibold">Documentos por Fundo</h3>
       </div>
-      {fundo && <AssetCard asset={fundo} fundoId={fundoId} isFundoSingleton />}
+      {fundo && (
+        <AssetCard
+          asset={fundo}
+          fundoId={fundoId}
+          isFundoSingleton
+          onOpenClassificacoes={() => setClassificacoesOpen(true)}
+        />
+      )}
 
       <NovoAtivoDialog
         fundoId={fundoId}
