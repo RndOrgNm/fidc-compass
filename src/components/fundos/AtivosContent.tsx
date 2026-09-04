@@ -1260,9 +1260,11 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>
-        <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
-          <Plus className="mr-1 h-4 w-4" /> Novo ativo
-        </Button>
+        {assets.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Novo ativo
+          </Button>
+        )}
       </div>
 
       {assets.length === 0 ? (
