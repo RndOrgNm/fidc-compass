@@ -559,7 +559,18 @@ function AssetCard({
             {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
           </div>
           {asset.classificacao_nome && (
-            <span className="mt-0.5 inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span
+              className="mt-0.5 inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              style={
+                asset.cor
+                  ? {
+                      borderColor: asset.cor,
+                      color: asset.cor,
+                      backgroundColor: `color-mix(in srgb, ${asset.cor} 12%, transparent)`,
+                    }
+                  : undefined
+              }
+            >
               {asset.classificacao_nome}
             </span>
           )}
