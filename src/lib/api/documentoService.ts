@@ -55,8 +55,10 @@ export interface LinkedPrazoInfo {
 
 export interface DocumentoResponse {
   id: string;
-  ativo_id: string;
-  fundo_id: number;
+  /** Exactly one owner is set: gestora_id alone, or fundo_id (ativo_id optional within it). */
+  ativo_id?: string | null;
+  fundo_id?: number | null;
+  gestora_id?: string | null;
   tipo: DocTipo;
   /** Label livre — só usado (e obrigatório) quando tipo="outro". */
   nome_personalizado?: string | null;
@@ -123,8 +125,10 @@ export interface AtivoUpdateRequest {
 }
 
 export interface DocumentoCreateRequest {
-  ativo_id: string;
-  fundo_id: number;
+  /** Exactly one owner: gestora_id alone, or ativo_id+fundo_id together. */
+  ativo_id?: string;
+  fundo_id?: number;
+  gestora_id?: string;
   tipo: DocTipo;
   nome_personalizado?: string; // obrigatório quando tipo="outro"
   cadencia?: Cadencia; // se omitido, o backend usa a cadência sugerida do tipo

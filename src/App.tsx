@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Fundos from "./pages/Fundos";
+import Gestora from "./pages/Gestora";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,14 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Fundos />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/gestora"
+                element={
+                  <RequireAuth>
+                    <Gestora />
                   </RequireAuth>
                 }
               />
