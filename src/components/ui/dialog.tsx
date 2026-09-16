@@ -19,7 +19,11 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-y-0 left-64 right-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      // inset-0, não "left-64" (largura do sidebar expandido no desktop): esse valor fixo
+      // não acompanha o sidebar recolhido (ícone, 3.5rem) nem o mobile (off-canvas, Sheet à
+      // parte) — sobrava uma faixa à esquerda sem escurecer e clicável por trás do diálogo
+      // nesses dois casos. Cobrir a viewport inteira funciona nos três estados do sidebar.
+      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
