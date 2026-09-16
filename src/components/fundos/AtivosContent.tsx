@@ -61,6 +61,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { XlsxViewerTable } from "@/components/XlsxViewerTable";
 import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
@@ -671,7 +672,19 @@ function AssetCard({
                   >
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-2 text-[13px] text-foreground">
-                        <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DocIcon className="h-4 w-4 shrink-0 cursor-help text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-[280px]">
+                              <p className="font-medium">{meta.label}</p>
+                              <p className="text-muted-foreground">
+                                {d.observacao?.trim() ? d.observacao : "Sem observação registrada."}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         {label}
                       </div>
                     </td>
