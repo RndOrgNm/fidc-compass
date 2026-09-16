@@ -53,6 +53,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -142,6 +143,7 @@ function DocumentDialog({
     nomePersonalizado: string;
     cadencia: Cadencia;
     periodo: string;
+    observacao: string;
     file: File | null;
   }) => void;
   saving: boolean;
@@ -156,6 +158,7 @@ function DocumentDialog({
     doc?.cadencia ?? cadenciaSugerida("balancete")
   );
   const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
+  const [observacao, setObservacao] = useState(doc?.observacao ?? "");
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,6 +170,7 @@ function DocumentDialog({
       setNomePersonalizado(doc?.nome_personalizado ?? "");
       setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo));
       setPeriodo(doc?.periodo_referencia ?? "");
+      setObservacao(doc?.observacao ?? "");
       setFile(null);
     }
   }, [open, doc, isNew]);
@@ -295,6 +299,20 @@ function DocumentDialog({
             <Input placeholder="ex.: 2º tri/2026" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="documento-observacao">
+              Observação <span className="text-muted-foreground font-normal">(opcional)</span>
+            </Label>
+            <Textarea
+              id="documento-observacao"
+              placeholder="Alguma observação sobre este documento…"
+              rows={3}
+              className="resize-none"
+              value={observacao}
+              onChange={(e) => setObservacao(e.target.value)}
+            />
+          </div>
+
           {!isNew && doc && (
             <div className="space-y-1.5">
               <Label>Vincular a um prazo</Label>
@@ -362,7 +380,9 @@ function DocumentDialog({
           <Button
             size="sm"
             disabled={saving || isOutroSemNome}
-            onClick={() => onSave({ tipo, nomePersonalizado: nomePersonalizado.trim(), cadencia, periodo, file })}
+            onClick={() =>
+              onSave({ tipo, nomePersonalizado: nomePersonalizado.trim(), cadencia, periodo, observacao, file })
+            }
           >
             {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
             Salvar
@@ -475,6 +495,7 @@ function AssetCard({
     nomePersonalizado: string;
     cadencia: Cadencia;
     periodo: string;
+    observacao: string;
     file: File | null;
   }) {
     setSaving(true);
@@ -488,6 +509,7 @@ function AssetCard({
           nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
+          observacao: values.observacao.trim() || undefined,
         });
         docId = created.id;
       } else if (docId) {
@@ -495,6 +517,7 @@ function AssetCard({
           nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
+          observacao: values.observacao.trim() || undefined,
         });
       }
       if (docId && values.file) {

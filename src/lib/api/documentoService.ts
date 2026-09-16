@@ -62,6 +62,8 @@ export interface DocumentoResponse {
   nome_personalizado?: string | null;
   cadencia: Cadencia;
   periodo_referencia?: string | null;
+  /** Texto livre, qualquer tipo de documento. */
+  observacao?: string | null;
   versao?: string | null;
   arquivo_nome?: string | null;
   arquivo_tamanho?: number | null;
@@ -127,6 +129,7 @@ export interface DocumentoCreateRequest {
   nome_personalizado?: string; // obrigatório quando tipo="outro"
   cadencia?: Cadencia; // se omitido, o backend usa a cadência sugerida do tipo
   periodo_referencia?: string;
+  observacao?: string;
 }
 
 export interface DocumentoUpdateRequest {
@@ -134,6 +137,7 @@ export interface DocumentoUpdateRequest {
   cadencia?: Cadencia;
   periodo_referencia?: string;
   proximo_vencimento?: string; // "YYYY-MM-DD"
+  observacao?: string;
 }
 
 export interface ConfirmUploadRequest {
