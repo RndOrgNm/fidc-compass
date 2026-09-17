@@ -80,6 +80,7 @@ import {
   uploadDocumentoFile,
   getDownloadUrl,
   desvincularPrazo,
+  updateFundDocumentosMeta,
   type DocTipo,
   type Cadencia,
   type DocumentoResponse,
@@ -468,13 +469,16 @@ function AssetCard({
   }
 
   const updateAtivoMut = useMutation({
-    mutationFn: (data: AtivoUpdateRequest) => updateAtivo(asset.ativo_id, data),
+    mutationFn: (data: AtivoUpdateRequest) =>
+      isFundoSingleton
+        ? updateFundDocumentosMeta(fundoId, { documentos_nome: data.nome, documentos_sub: data.sub })
+        : updateAtivo(asset.ativo_id, data),
     onSuccess: async () => {
       await invalidate();
-      toast({ title: "Ativo atualizado" });
+      toast({ title: isFundoSingleton ? "Card atualizado" : "Ativo atualizado" });
       setEditAtivoOpen(false);
     },
-    onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" }),
   });
 
   const deleteAtivoMut = useMutation({
@@ -512,7 +516,9 @@ function AssetCard({
       let docId = docState?.doc?.id;
       if (docState?.isNew) {
         const created = await createDocumento({
-          ativo_id: asset.ativo_id,
+          // O card "Documentos do Fundo" não tem Ativo por trás (T11/D9) —
+          // `asset.ativo_id` ali é só uma chave sintética, não um id real.
+          ativo_id: isFundoSingleton ? undefined : asset.ativo_id,
           fundo_id: fundoId,
           tipo: values.tipo,
           nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
@@ -817,6 +823,7 @@ function AssetCard({
         onOpenChange={setEditAtivoOpen}
         onSave={(data) => updateAtivoMut.mutate(data)}
         saving={updateAtivoMut.isPending}
+        showClassificacao={!isFundoSingleton}
       />
 
       <AlertDialog open={deleteAtivoConfirm} onOpenChange={setDeleteAtivoConfirm}>
@@ -1094,12 +1101,15 @@ function EditAtivoDialog({
   onOpenChange,
   onSave,
   saving,
+  showClassificacao = true,
 }: {
   asset: AtivoComDocumentosResponse;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSave: (data: AtivoUpdateRequest) => void;
   saving: boolean;
+  /** false for the "Documentos do Fundo" card — Fund não tem classificação. */
+  showClassificacao?: boolean;
 }) {
   const [nome, setNome] = useState(asset.nome);
   const [sub, setSub] = useState(asset.sub ?? "");
@@ -1117,7 +1127,11 @@ function EditAtivoDialog({
 
   function handleSave() {
     if (!nome.trim()) return;
-    onSave({ nome: nome.trim(), sub: sub.trim() || undefined, classificacao_id: classificacaoId });
+    onSave({
+      nome: nome.trim(),
+      sub: sub.trim() || undefined,
+      ...(showClassificacao ? { classificacao_id: classificacaoId } : {}),
+    });
   }
 
   return (
@@ -1139,10 +1153,12 @@ function EditAtivoDialog({
               onChange={(e) => setSub(e.target.value)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label>Classificação</Label>
-            <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
-          </div>
+          {showClassificacao && (
+            <div className="space-y-1.5">
+              <Label>Classificação</Label>
+              <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>

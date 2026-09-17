@@ -223,6 +223,28 @@ export async function deleteAtivo(id: string): Promise<void> {
   await handleResponse<void>(response);
 }
 
+// ── Card "Documentos do Fundo" — nome/sub vivem no Fund, não num Ativo ────────
+// (T11/D9: o singleton `Ativo` virtual foi aposentado). Chama o endpoint
+// genérico de Fund em vez de reviver `lib/api/fundService.ts`, que é código
+// legado da era Pipeline (schema desatualizado, sem consumidor vivo — D7).
+
+export interface FundDocumentosMetaUpdateRequest {
+  documentos_nome?: string;
+  documentos_sub?: string;
+}
+
+export async function updateFundDocumentosMeta(
+  fundoId: number,
+  data: FundDocumentosMetaUpdateRequest
+): Promise<void> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/funds/${fundoId}`, {
+    method: "PUT",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  });
+  await handleResponse<unknown>(response);
+}
+
 // ── Documentos — leitura agrupada + CRUD ───────────────────────────────────────
 
 export async function listDocumentosByFundo(
