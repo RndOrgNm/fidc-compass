@@ -108,14 +108,14 @@ export function AlertsBell() {
 
   const verDetalhes = (a: AlertaResponse) => {
     setOpen(false);
-    navigate(`/fundos/prazos/${a.fundo_id}`);
+    navigate(a.fundo_id != null ? `/fundos/prazos/${a.fundo_id}` : "/gestora/prazos");
   };
 
   const verAssignment = async (n: AssignmentNotifResponse) => {
     await markAssignmentRead(n.id).catch(() => {});
     queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
     setOpen(false);
-    navigate(`/fundos/prazos/${n.fundo_id}`);
+    navigate(n.fundo_id != null ? `/fundos/prazos/${n.fundo_id}` : "/gestora/prazos");
   };
 
   const isLoading = alertaQuery.isLoading || assignmentQuery.isLoading;
@@ -211,7 +211,7 @@ export function AlertsBell() {
                           <div className="truncate text-sm font-medium">{a.topico}</div>
                           <div className="mt-0.5 flex items-center justify-between gap-2">
                             <div className="min-w-0 truncate text-[12px] text-muted-foreground">
-                              {fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`}
+                              {a.fundo_id != null ? (fundNameById.get(a.fundo_id) ?? `Fundo ${a.fundo_id}`) : "Gestora"}
                               {a.responsaveis?.length > 0 && <> · {a.responsaveis.map((r) => r.nome).join(", ")}</>}
                             </div>
                             <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", st.cls)}>

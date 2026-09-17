@@ -34,6 +34,7 @@ import {
   type TipoPrazo,
   type ResponsavelInfo,
   type ObrigacaoResponse,
+  type PrazoOwner,
 } from "@/lib/api/prazoService";
 import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
 import { CAT_META, CAT_ORDER, TIPO_LABEL } from "./prazoMeta";
@@ -161,14 +162,14 @@ export interface ObrigacaoFormInitial {
 }
 
 interface Props {
-  fundoId: number;
+  owner: PrazoOwner;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: ObrigacaoFormInitial;
   onCreated?: (obrigacao: ObrigacaoResponse, ciclo: string) => void;
 }
 
-export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCreated }: Props) {
+export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCreated }: Props) {
   const { user } = useUser();
   const { members, isLoaded: membersLoaded } = useTeamMembers();
   const queryClient = useQueryClient();
@@ -264,7 +265,7 @@ export function ObrigacaoFormDialog({ fundoId, open, onOpenChange, initial, onCr
         });
       }
       return createObrigacao({
-        fundo_id: fundoId,
+        ...owner,
         topico: values.topico,
         descricao: values.descricao || undefined,
         categoria: values.categoria,

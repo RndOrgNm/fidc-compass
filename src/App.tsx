@@ -99,6 +99,14 @@ const App = () => (
                   </RequireAuth>
                 }
               />
+              <Route
+                path="/gestora/:tab"
+                element={
+                  <RequireAuth>
+                    <Gestora />
+                  </RequireAuth>
+                }
+              />
               {/* Legacy routes redirect to the new Fundos hub */}
               <Route path="/controle-de-ativos" element={<Navigate to="/fundos" replace />} />
               <Route path="/relatorio-teste" element={<Navigate to="/fundos" replace />} />

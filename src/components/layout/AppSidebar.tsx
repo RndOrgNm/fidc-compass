@@ -82,6 +82,7 @@ export function AppSidebar() {
                   // item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/fundos" ? location.pathname.startsWith("/fundos") :
+                  item.url === "/gestora" ? location.pathname.startsWith("/gestora") :
                   location.pathname === item.url;
                 // Special handling for Agente IA to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {

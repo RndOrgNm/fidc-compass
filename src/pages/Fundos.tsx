@@ -107,7 +107,12 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="prazos" className="mt-8">
-            <PrazosContent fundoId={resolvedId} fundName={selectedFundName} />
+            <PrazosContent
+              owner={resolvedId != null ? { fundo_id: resolvedId } : null}
+              ownerName={selectedFundName}
+              emptyOwnerMessage="Selecione um fundo para ver suas obrigações."
+              emptyStateHint="deste fundo"
+            />
           </TabsContent>
 
           <TabsContent value="graficos" className="mt-8">

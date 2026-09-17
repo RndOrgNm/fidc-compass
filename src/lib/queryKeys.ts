@@ -1,14 +1,21 @@
 // Centralized TanStack Query keys for the prazos/alertas domain.
 // Mutations in the Prazos tab and the global bell invalidate these.
 
+import type { PrazoOwner } from "./api/prazoService";
+
+/** `PrazoOwner` as a stable, serializable key segment — a fund or the Gestora. */
+function ownerKeyPart(owner: PrazoOwner): readonly [string, number | string] {
+  return owner.fundo_id != null ? (["fundo", owner.fundo_id] as const) : (["gestora", owner.gestora_id] as const);
+}
+
 export const prazoKeys = {
   /** All prazo-related queries (broad invalidation root). */
   all: ["prazos"] as const,
-  /** Instances of a fund for a cycle (the Prazos tab payload). */
-  instancias: (fundoId: number, ciclo?: string) =>
-    ["prazos", "instancias", fundoId, ciclo ?? "atual"] as const,
-  /** Obligations (rules) of a fund. */
-  obrigacoes: (fundoId: number) => ["prazos", "obrigacoes", fundoId] as const,
+  /** Instances of a fund/Gestora for a cycle (the Prazos tab payload). */
+  instancias: (owner: PrazoOwner, ciclo?: string) =>
+    ["prazos", "instancias", ...ownerKeyPart(owner), ciclo ?? "atual"] as const,
+  /** Obligations (rules) of a fund/Gestora. */
+  obrigacoes: (owner: PrazoOwner) => ["prazos", "obrigacoes", ...ownerKeyPart(owner)] as const,
 };
 
 export const alertaKeys = {
