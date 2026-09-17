@@ -66,6 +66,9 @@ import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import { XlsxViewerTable } from "@/components/XlsxViewerTable";
 import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
 import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
+import { usePagedList } from "@/hooks/usePagedList";
+import { DocumentPager } from "@/components/fundos/DocumentPager";
+import { DocumentSortControl } from "@/components/fundos/DocumentSortControl";
 import {
   listDocumentosByFundo,
   createAtivo,
@@ -83,6 +86,8 @@ import {
   type AtivoComDocumentosResponse,
   type AtivoCreateRequest,
   type AtivoUpdateRequest,
+  type DocumentoOrderBy,
+  type OrderDir,
 } from "@/lib/api/documentoService";
 import { listClassificacoes } from "@/lib/api/classificacaoService";
 import { ClassificacaoDialog } from "@/components/classificacoes/ClassificacaoDialog";
@@ -92,6 +97,8 @@ export interface AtivosContentProps {
   fundoId: number | null;
   fundName?: string;
 }
+
+const DOCS_PAGE_SIZE = 5;
 
 // ── Date helpers (API: "YYYY-MM-DD" ↔ UI: "dd/mm/aaaa") ────────────────────────
 
@@ -454,6 +461,7 @@ function AssetCard({
   const [saving, setSaving] = useState(false);
   const [deleteAtivoConfirm, setDeleteAtivoConfirm] = useState(false);
   const docs = asset.documentos;
+  const { page, setPage, totalPages, pageItems: pagedDocs } = usePagedList(docs, DOCS_PAGE_SIZE);
 
   function invalidate() {
     return queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
@@ -659,7 +667,7 @@ function AssetCard({
               </tr>
             </thead>
             <tbody>
-              {docs.map((d) => {
+              {pagedDocs.map((d) => {
                 const meta = DOC_TYPES[d.tipo];
                 const st = DOC_STATUS[d.status];
                 const DocIcon = meta.icon;
@@ -757,6 +765,7 @@ function AssetCard({
               })}
             </tbody>
           </table>
+          <DocumentPager page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       )}
 
@@ -1258,10 +1267,14 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
   const [novoAtivoOpen, setNovoAtivoOpen] = useState(false);
   const [classificacoesOpen, setClassificacoesOpen] = useState(false);
+  const [orderBy, setOrderBy] = useState<DocumentoOrderBy | undefined>(undefined);
+  const [orderDir, setOrderDir] = useState<OrderDir>("asc");
 
   const query = useQuery({
-    queryKey: fundoId != null ? documentoKeys.byFundo(fundoId) : documentoKeys.all,
-    queryFn: () => listDocumentosByFundo(fundoId as number),
+    queryKey: fundoId != null
+      ? [...documentoKeys.byFundo(fundoId), orderBy, orderDir]
+      : documentoKeys.all,
+    queryFn: () => listDocumentosByFundo(fundoId as number, orderBy, orderDir),
     enabled: fundoId != null,
   });
 
@@ -1304,6 +1317,17 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   return (
     <div>
+      <div className="mb-4 flex items-center justify-end">
+        <DocumentSortControl
+          orderBy={orderBy}
+          orderDir={orderDir}
+          onChange={(nextOrderBy, nextOrderDir) => {
+            setOrderBy(nextOrderBy);
+            setOrderDir(nextOrderDir);
+          }}
+        />
+      </div>
+
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>

@@ -13,6 +13,9 @@ export type DocTipo =
 
 export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 
+export type DocumentoOrderBy = "nome" | "data_criacao" | "status" | "cadencia";
+export type OrderDir = "asc" | "desc";
+
 // Livre por documento (não fixa pelo tipo) — o mesmo DocTipo pode ter
 // cadências diferentes conforme o ativo/contexto.
 export type Cadencia =
@@ -222,8 +225,16 @@ export async function deleteAtivo(id: string): Promise<void> {
 
 // ── Documentos — leitura agrupada + CRUD ───────────────────────────────────────
 
-export async function listDocumentosByFundo(fundoId: number): Promise<FundoDocumentosResponse> {
-  const url = `${FUNDS_API_BASE_URL}/fundos/${fundoId}/documentos`;
+export async function listDocumentosByFundo(
+  fundoId: number,
+  orderBy?: DocumentoOrderBy,
+  orderDir: OrderDir = "asc"
+): Promise<FundoDocumentosResponse> {
+  const params = new URLSearchParams();
+  if (orderBy) params.set("order_by", orderBy);
+  if (orderBy) params.set("order_dir", orderDir);
+  const qs = params.toString();
+  const url = `${FUNDS_API_BASE_URL}/fundos/${fundoId}/documentos${qs ? `?${qs}` : ""}`;
   return handleResponse<FundoDocumentosResponse>(await fetch(url));
 }
 

@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { DOC_TYPES, docLabel } from "@/data/ativosData";
+import { usePagedList } from "@/hooks/usePagedList";
+import { DocumentPager } from "@/components/fundos/DocumentPager";
+import { DocumentSortControl } from "@/components/fundos/DocumentSortControl";
 import {
   listGestoras,
   listDocumentosByGestora,
@@ -33,7 +36,11 @@ import {
   getDownloadUrl,
   type DocTipo,
   type DocumentoResponse,
+  type DocumentoOrderBy,
+  type OrderDir,
 } from "@/lib/api/documentoService";
+
+const DOCS_PAGE_SIZE = 5;
 
 function formatBytes(n?: number | null): string {
   if (!n) return "";
@@ -44,13 +51,15 @@ function formatBytes(n?: number | null): string {
 
 export function GestoraDocumentsContent() {
   const queryClient = useQueryClient();
+  const [orderBy, setOrderBy] = useState<DocumentoOrderBy | undefined>(undefined);
+  const [orderDir, setOrderDir] = useState<OrderDir>("asc");
 
   const gestorasQuery = useQuery({ queryKey: ["gestoras"], queryFn: listGestoras });
   const gestora = gestorasQuery.data?.items[0];
 
   const documentosQuery = useQuery({
-    queryKey: ["gestora-documentos", gestora?.id],
-    queryFn: () => listDocumentosByGestora(gestora!.id),
+    queryKey: ["gestora-documentos", gestora?.id, orderBy, orderDir],
+    queryFn: () => listDocumentosByGestora(gestora!.id, orderBy, orderDir),
     enabled: !!gestora,
   });
 
@@ -109,14 +118,15 @@ export function GestoraDocumentsContent() {
     }
   }
 
+  const documentos = documentosQuery.data?.documentos ?? [];
+  const { page, setPage, totalPages, pageItems: pagedDocumentos } = usePagedList(documentos, DOCS_PAGE_SIZE);
+
   if (gestorasQuery.isLoading) {
     return <div className="py-8 text-center text-sm text-muted-foreground">Carregando…</div>;
   }
   if (!gestora) {
     return <div className="py-8 text-center text-sm text-muted-foreground">Nenhuma Gestora cadastrada.</div>;
   }
-
-  const documentos = documentosQuery.data?.documentos ?? [];
 
   return (
     <div>
@@ -127,9 +137,19 @@ export function GestoraDocumentsContent() {
             Documentos da Gestora — não associados a nenhum fundo específico.
           </p>
         </div>
-        <Button size="sm" onClick={() => setDocState({ doc: null, isNew: true })}>
-          <Plus className="mr-1 h-4 w-4" /> Novo documento
-        </Button>
+        <div className="flex items-center gap-2">
+          <DocumentSortControl
+            orderBy={orderBy}
+            orderDir={orderDir}
+            onChange={(nextOrderBy, nextOrderDir) => {
+              setOrderBy(nextOrderBy);
+              setOrderDir(nextOrderDir);
+            }}
+          />
+          <Button size="sm" onClick={() => setDocState({ doc: null, isNew: true })}>
+            <Plus className="mr-1 h-4 w-4" /> Novo documento
+          </Button>
+        </div>
       </div>
 
       {documentos.length === 0 ? (
@@ -153,7 +173,7 @@ export function GestoraDocumentsContent() {
               </tr>
             </thead>
             <tbody>
-              {documentos.map((d) => {
+              {pagedDocumentos.map((d) => {
                 const meta = DOC_TYPES[d.tipo];
                 const DocIcon = meta.icon;
                 const label = docLabel(d.tipo, d.nome_personalizado);
@@ -209,6 +229,7 @@ export function GestoraDocumentsContent() {
               })}
             </tbody>
           </table>
+          <DocumentPager page={page} totalPages={totalPages} onChange={setPage} />
         </div>
       )}
 
