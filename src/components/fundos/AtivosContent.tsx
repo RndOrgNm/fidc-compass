@@ -68,7 +68,7 @@ import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } fr
 import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
 import { usePagedList } from "@/hooks/usePagedList";
 import { DocumentPager } from "@/components/fundos/DocumentPager";
-import { DocumentSortControl } from "@/components/fundos/DocumentSortControl";
+import { DocumentSortableHeader } from "@/components/fundos/DocumentSortableHeader";
 import {
   listDocumentosByFundo,
   createAtivo,
@@ -446,12 +446,19 @@ function AssetCard({
   fundoId,
   isFundoSingleton,
   onOpenClassificacoes,
+  orderBy,
+  orderDir,
+  onSortChange,
 }: {
   asset: AtivoComDocumentosResponse;
   fundoId: number;
   /** The "Documentos do Fundo" card — auto-created singleton, not user-deletable. */
   isFundoSingleton?: boolean;
   onOpenClassificacoes: () => void;
+  /** Ordenação é global (um único fetch por fundo) — não por card. */
+  orderBy: DocumentoOrderBy | undefined;
+  orderDir: OrderDir;
+  onSortChange: (orderBy: DocumentoOrderBy | undefined, orderDir: OrderDir) => void;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -661,11 +668,20 @@ function AssetCard({
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                <th className="pb-2 pr-3 text-left font-medium">Documento</th>
-                <th className="pb-2 px-3 text-left font-medium">Cadência</th>
+                <DocumentSortableHeader
+                  field="nome" label="Documento" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
+                  className="pb-2 pr-3 text-left font-medium"
+                />
+                <DocumentSortableHeader
+                  field="cadencia" label="Cadência" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
+                  className="pb-2 px-3 text-left font-medium"
+                />
                 <th className="pb-2 px-3 text-left font-medium">Referência</th>
                 <th className="pb-2 px-3 text-left font-medium">Última atualização</th>
-                <th className="pb-2 px-3 text-left font-medium">Status</th>
+                <DocumentSortableHeader
+                  field="status" label="Status" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
+                  className="pb-2 px-3 text-left font-medium"
+                />
                 <th className="pb-2 px-3 text-left font-medium">Prazo</th>
                 <th className="pb-2 pl-3 text-right font-medium">
                   <span className="sr-only">Ações</span>
@@ -1331,19 +1347,13 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const assets = query.data?.assets ?? [];
   const fundo = query.data?.fundo;
 
+  function handleSortChange(nextOrderBy: DocumentoOrderBy | undefined, nextOrderDir: OrderDir) {
+    setOrderBy(nextOrderBy);
+    setOrderDir(nextOrderDir);
+  }
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-end">
-        <DocumentSortControl
-          orderBy={orderBy}
-          orderDir={orderDir}
-          onChange={(nextOrderBy, nextOrderDir) => {
-            setOrderBy(nextOrderBy);
-            setOrderDir(nextOrderDir);
-          }}
-        />
-      </div>
-
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>
@@ -1371,6 +1381,9 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
             asset={asset}
             fundoId={fundoId}
             onOpenClassificacoes={() => setClassificacoesOpen(true)}
+            orderBy={orderBy}
+            orderDir={orderDir}
+            onSortChange={handleSortChange}
           />
         ))
       )}
@@ -1385,6 +1398,9 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
           fundoId={fundoId}
           isFundoSingleton
           onOpenClassificacoes={() => setClassificacoesOpen(true)}
+          orderBy={orderBy}
+          orderDir={orderDir}
+          onSortChange={handleSortChange}
         />
       )}
 

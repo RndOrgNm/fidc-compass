@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { DOC_TYPES, docLabel } from "@/data/ativosData";
 import { usePagedList } from "@/hooks/usePagedList";
 import { DocumentPager } from "@/components/fundos/DocumentPager";
-import { DocumentSortControl } from "@/components/fundos/DocumentSortControl";
+import { DocumentSortableHeader } from "@/components/fundos/DocumentSortableHeader";
 import {
   listGestoras,
   listDocumentosByGestora,
@@ -138,14 +138,6 @@ export function GestoraDocumentsContent() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DocumentSortControl
-            orderBy={orderBy}
-            orderDir={orderDir}
-            onChange={(nextOrderBy, nextOrderDir) => {
-              setOrderBy(nextOrderBy);
-              setOrderDir(nextOrderDir);
-            }}
-          />
           <Button size="sm" onClick={() => setDocState({ doc: null, isNew: true })}>
             <Plus className="mr-1 h-4 w-4" /> Novo documento
           </Button>
@@ -164,9 +156,17 @@ export function GestoraDocumentsContent() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-border bg-card/40 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">Documento</th>
+                <DocumentSortableHeader
+                  field="nome" label="Documento" orderBy={orderBy} orderDir={orderDir}
+                  onChange={(o, d) => { setOrderBy(o); setOrderDir(d); }}
+                  className="px-3 py-2 text-left font-medium"
+                />
                 <th className="px-3 py-2 text-left font-medium">Arquivo</th>
-                <th className="px-3 py-2 text-left font-medium">Criado em</th>
+                <DocumentSortableHeader
+                  field="data_criacao" label="Criado em" orderBy={orderBy} orderDir={orderDir}
+                  onChange={(o, d) => { setOrderBy(o); setOrderDir(d); }}
+                  className="px-3 py-2 text-left font-medium"
+                />
                 <th className="px-3 py-2 text-right font-medium">
                   <span className="sr-only">Ações</span>
                 </th>
