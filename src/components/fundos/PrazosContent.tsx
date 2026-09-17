@@ -601,10 +601,13 @@ export function PrazosContent({ owner, ownerName, emptyOwnerMessage, emptyStateH
     mutationFn: ({ documentoId, obrigacaoId }: { documentoId: string; obrigacaoId: string }) =>
       vincularPrazo(documentoId, obrigacaoId),
     onSuccess: () => {
-      // Só o deep-link vindo da aba Ativos (fundo) liga um documento a um prazo;
-      // a Gestora não tem essa origem hoje, então `owner.fundo_id` nunca é
-      // exercitado nesse caso — a checagem é só pra não invalidar a query errada.
-      if (owner?.fundo_id != null) queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(owner.fundo_id) });
+      // O deep-link documento→prazo pode vir da aba Ativos (fundo) ou de
+      // Documentos da Gestora — invalida só a query do dono certo.
+      if (owner?.fundo_id != null) {
+        queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(owner.fundo_id) });
+      } else if (owner?.gestora_id != null) {
+        queryClient.invalidateQueries({ queryKey: documentoKeys.byGestora(owner.gestora_id) });
+      }
     },
     onError: (e: Error) =>
       toast({ title: "Prazo criado, mas não vinculado ao documento", description: e.message, variant: "destructive" }),

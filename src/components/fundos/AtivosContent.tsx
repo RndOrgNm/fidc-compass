@@ -1,27 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   SquarePen,
   Trash2,
-  Upload,
-  UploadCloud,
-  FileCheck2,
-  FileText,
-  CalendarClock,
-  CalendarPlus,
-  Calendar as CalendarIcon,
-  FolderX,
   Loader2,
   Building2,
-  Eye,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
   Tags,
-  Unlink,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,13 +19,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +32,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -61,14 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
-import { XlsxViewerTable } from "@/components/XlsxViewerTable";
-import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
+import { docLabel } from "@/data/ativosData";
 import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
-import { usePagedList } from "@/hooks/usePagedList";
-import { DocumentPager } from "@/components/fundos/DocumentPager";
-import { DocumentSortableHeader } from "@/components/fundos/DocumentSortableHeader";
+import { DocumentTable } from "@/components/fundos/DocumentTable";
+import { DocumentDialog, type PrazoPrefill } from "@/components/fundos/DocumentDialog";
+import { DocumentViewerSheet } from "@/components/fundos/DocumentViewerSheet";
 import {
   listDocumentosByFundo,
   createAtivo,
@@ -78,7 +53,6 @@ import {
   updateDocumento,
   deleteDocumento,
   uploadDocumentoFile,
-  getDownloadUrl,
   desvincularPrazo,
   updateFundDocumentosMeta,
   type DocTipo,
@@ -97,347 +71,6 @@ import { ClassificacoesSheet } from "@/components/classificacoes/ClassificacoesS
 export interface AtivosContentProps {
   fundoId: number | null;
   fundName?: string;
-}
-
-const DOCS_PAGE_SIZE = 5;
-
-// ── Date helpers (API: "YYYY-MM-DD" ↔ UI: "dd/mm/aaaa") ────────────────────────
-
-function isoToBr(iso?: string | null): string | null {
-  if (!iso) return null;
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return null;
-  return `${d}/${m}/${y}`;
-}
-
-function formatBytes(bytes?: number | null): string {
-  if (bytes == null) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-// "Criar prazo" no longer opens an in-place dialog — it navigates to the
-// Prazos tab's real "Nova Obrigação" form (richer: categoria, tipo_prazo,
-// recorrência, real Clerk responsáveis), prefilled from the document, and
-// links the resulting obrigação back to the document once saved (see
-// PrazosContent's `novaObrigacao` deep-link + `handleCreated`).
-interface PrazoPrefill {
-  documentoId: string;
-  topico: string;
-  resp: string;
-}
-
-// ── Document (upload / edit fields) dialog ────────────────────────────────────
-function DocumentDialog({
-  asset,
-  doc,
-  isNew,
-  open,
-  onOpenChange,
-  onSave,
-  saving,
-  onCriarPrazo,
-  onVerPrazo,
-  onDesvincularPrazo,
-  desvinculando,
-}: {
-  asset: AtivoComDocumentosResponse;
-  doc: DocumentoResponse | null;
-  isNew: boolean;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onSave: (values: {
-    tipo: DocTipo;
-    nomePersonalizado: string;
-    cadencia: Cadencia;
-    periodo: string;
-    observacao: string;
-    file: File | null;
-  }) => void;
-  saving: boolean;
-  onCriarPrazo: (prefill: PrazoPrefill) => void;
-  onVerPrazo: (obrigacaoId: string) => void;
-  onDesvincularPrazo: (documentoId: string) => void;
-  desvinculando: boolean;
-}) {
-  const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
-  const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
-  const [cadencia, setCadencia] = useState<Cadencia>(
-    doc?.cadencia ?? cadenciaSugerida("balancete")
-  );
-  const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
-  const [observacao, setObservacao] = useState(doc?.observacao ?? "");
-  const [file, setFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Re-seed local state whenever a different document opens the dialog.
-  useEffect(() => {
-    if (open) {
-      const initialTipo = doc?.tipo ?? "balancete";
-      setTipo(initialTipo);
-      setNomePersonalizado(doc?.nome_personalizado ?? "");
-      setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo));
-      setPeriodo(doc?.periodo_referencia ?? "");
-      setObservacao(doc?.observacao ?? "");
-      setFile(null);
-    }
-  }, [open, doc, isNew]);
-
-  const meta = DOC_TYPES[tipo];
-  const label = docLabel(tipo, tipo === "outro" ? nomePersonalizado : undefined);
-  const isOutroSemNome = tipo === "outro" && !nomePersonalizado.trim();
-
-  function handleTipoChange(v: string) {
-    const next = v as DocTipo;
-    setTipo(next);
-    // Re-suggest the cadência for the new type — the user can still override it.
-    setCadencia(cadenciaSugerida(next));
-  }
-
-  async function handleDownload() {
-    if (!doc) return;
-    try {
-      const { download_url } = await getDownloadUrl(doc.id);
-      window.open(download_url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast({ title: "Erro ao baixar", description: (e as Error).message, variant: "destructive" });
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isNew ? "Novo documento" : `${label} · ${asset.nome.split(" · ")[0]}`}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 py-1">
-          {doc?.arquivo_nome && (
-            <div className="flex items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5">
-              <FileCheck2 className="h-5 w-5 shrink-0 text-success" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium">{doc.arquivo_nome}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {formatBytes(doc.arquivo_tamanho)} · vigente desde {isoToBr(doc.vigente_desde)}
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Baixar" onClick={handleDownload}>
-                <Upload className="h-4 w-4 rotate-180" />
-              </Button>
-            </div>
-          )}
-
-          <div
-            className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border py-7 text-center"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const dropped = e.dataTransfer.files?.[0];
-              if (dropped) setFile(dropped);
-            }}
-          >
-            <UploadCloud className="h-6 w-6 text-muted-foreground" />
-            <p className="text-[13px] font-medium">
-              {file ? file.name : doc?.arquivo_nome ? "Enviar nova versão" : "Enviar arquivo"}
-            </p>
-            <span className="text-[11px] text-muted-foreground">Arraste ou clique para selecionar · PDF, XLSX, DOCX</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.xlsx,.xls,.docx,.doc"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Tipo de documento</Label>
-            {isNew ? (
-              <Select value={tipo} onValueChange={handleTipoChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(DOC_TYPES) as DocTipo[]).map((k) => (
-                    <SelectItem key={k} value={k}>{DOC_TYPES[k].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={meta.label} disabled />
-            )}
-          </div>
-
-          {tipo === "outro" && (
-            <div className="space-y-1.5">
-              <Label>Nome do documento</Label>
-              <Input
-                placeholder="ex.: Apólice de Seguro Fiança"
-                value={nomePersonalizado}
-                onChange={(e) => setNomePersonalizado(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label>Cadência</Label>
-            <Select
-              value={cadencia}
-              onValueChange={(v) => setCadencia(v as Cadencia)}
-              disabled={!!doc?.prazo}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(CADENCIA_LABELS) as Cadencia[]).map((c) => (
-                  <SelectItem key={c} value={c}>{CADENCIA_LABELS[c]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {doc?.prazo && (
-              <p className="text-[11px] text-muted-foreground">
-                Definida pela Frequência do prazo vinculado — desvincule para editar aqui.
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Período de referência</Label>
-            <Input placeholder="ex.: 2º tri/2026" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="documento-observacao">
-              Observação <span className="text-muted-foreground font-normal">(opcional)</span>
-            </Label>
-            <Textarea
-              id="documento-observacao"
-              placeholder="Alguma observação sobre este documento…"
-              rows={3}
-              className="resize-none"
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-            />
-          </div>
-
-          {!isNew && doc && (
-            <div className="space-y-1.5">
-              <Label>Vincular a um prazo</Label>
-              {doc.prazo ? (
-                <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                  <span className="flex items-center gap-1.5 text-[13px]">
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                    {doc.prazo.topico} · vence {isoToBr(doc.prazo.data_vencimento)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {doc.prazo.responsavel_nome && (
-                      <span className="text-[11px] text-muted-foreground">{doc.prazo.responsavel_nome}</span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      aria-label="Ver prazo na aba Prazos"
-                      title="Ver prazo na aba Prazos"
-                      onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      aria-label="Desvincular prazo"
-                      title="Desvincular prazo (a obrigação continua na aba Prazos)"
-                      disabled={desvinculando}
-                      onClick={() => onDesvincularPrazo(doc.id)}
-                    >
-                      {desvinculando ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Unlink className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() =>
-                    onCriarPrazo({
-                      documentoId: doc.id,
-                      topico: `${label} — ${asset.nome.split(" · ")[0]}`,
-                      resp: meta.resp,
-                    })
-                  }
-                >
-                  <CalendarPlus className="mr-1 h-4 w-4" /> Criar prazo
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button
-            size="sm"
-            disabled={saving || isOutroSemNome}
-            onClick={() =>
-              onSave({ tipo, nomePersonalizado: nomePersonalizado.trim(), cadencia, periodo, observacao, file })
-            }
-          >
-            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
-            Salvar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Prazo cell ────────────────────────────────────────────────────────────────
-function DocPrazoCell({
-  doc,
-  onCreatePrazo,
-  onVerPrazo,
-}: {
-  doc: DocumentoResponse;
-  onCreatePrazo: () => void;
-  onVerPrazo: (obrigacaoId: string) => void;
-}) {
-  if (doc.prazo) {
-    return (
-      <button
-        onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
-        title="Ver prazo na aba Prazos"
-        className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums text-success transition-colors hover:text-success/80"
-      >
-        <CalendarClock className="h-3.5 w-3.5" /> {isoToBr(doc.prazo.data_vencimento)}
-      </button>
-    );
-  }
-  if (doc.status === "pendente") {
-    return (
-      <button
-        onClick={onCreatePrazo}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-primary transition-colors hover:text-primary/80"
-      >
-        <CalendarPlus className="h-3.5 w-3.5" /> Criar prazo
-      </button>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] text-muted-foreground">
-      <CalendarIcon className="h-3.5 w-3.5" /> Sem prazo vinculado
-    </span>
-  );
 }
 
 // ── Asset card ────────────────────────────────────────────────────────────────
@@ -469,7 +102,7 @@ function AssetCard({
   const [saving, setSaving] = useState(false);
   const [deleteAtivoConfirm, setDeleteAtivoConfirm] = useState(false);
   const docs = asset.documentos;
-  const { page, setPage, totalPages, pageItems: pagedDocs } = usePagedList(docs, DOCS_PAGE_SIZE);
+  const contextName = asset.nome.split(" · ")[0];
 
   function invalidate() {
     return queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
@@ -656,146 +289,22 @@ function AssetCard({
         </Button>
       </div>
 
-      {docs.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center">
-          <FolderX className="h-7 w-7 text-muted-foreground/60" />
-          <p className="max-w-sm text-[13px] text-muted-foreground">
-            Nenhum documento configurado para este ativo ainda. Clique em "Novo documento" para começar.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                <DocumentSortableHeader
-                  field="nome" label="Documento" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
-                  className="pb-2 pr-3 text-left font-medium"
-                />
-                <DocumentSortableHeader
-                  field="cadencia" label="Cadência" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
-                  className="pb-2 px-3 text-left font-medium"
-                />
-                <th className="pb-2 px-3 text-left font-medium">Referência</th>
-                <th className="pb-2 px-3 text-left font-medium">Última atualização</th>
-                <DocumentSortableHeader
-                  field="status" label="Status" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
-                  className="pb-2 px-3 text-left font-medium"
-                />
-                <DocumentSortableHeader
-                  field={undefined} label="Prazo" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
-                  className="pb-2 px-3 text-left font-medium"
-                />
-                <th className="pb-2 pl-3 text-right font-medium">
-                  <span className="sr-only">Ações</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedDocs.map((d) => {
-                const meta = DOC_TYPES[d.tipo];
-                const st = DOC_STATUS[d.status];
-                const DocIcon = meta.icon;
-                const StatusIcon = st.icon;
-                const label = docLabel(d.tipo, d.nome_personalizado);
-                return (
-                  <tr
-                    key={d.id}
-                    className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-card/40"
-                  >
-                    <td className="py-2.5 pr-3">
-                      <div className="flex items-center gap-2 text-[13px] text-foreground">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <DocIcon className="h-4 w-4 shrink-0 cursor-help text-muted-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[280px]">
-                              <p className="font-medium">{meta.label}</p>
-                              <p className="text-muted-foreground">
-                                {d.observacao?.trim() ? d.observacao : "Sem observação registrada."}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        {label}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        {CADENCIA_LABELS[d.cadencia]}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo_referencia || "—"}</td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                      {d.vigente_desde ? (
-                        `vigente desde ${isoToBr(d.vigente_desde)}`
-                      ) : (
-                        <span className="italic text-muted-foreground/70">nenhum arquivo enviado</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-[3px] text-[10px] font-medium", st.chip)}>
-                        <StatusIcon className="h-3 w-3" /> {st.label}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <DocPrazoCell
-                        doc={d}
-                        onCreatePrazo={() =>
-                          goToNovaObrigacao({
-                            documentoId: d.id,
-                            topico: `${label} — ${asset.nome.split(" · ")[0]}`,
-                            resp: meta.resp,
-                          })
-                        }
-                        onVerPrazo={goToPrazo}
-                      />
-                    </td>
-                    <td className="py-2.5 pl-3">
-                      <div className="flex items-center justify-end gap-0.5">
-                        <button
-                          aria-label="Ver documento"
-                          onClick={() => setViewDoc(d)}
-                          disabled={!d.arquivo_nome}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Editar campos"
-                          onClick={() => setDocState({ doc: d, isNew: false })}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <SquarePen className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Enviar novo"
-                          onClick={() => setDocState({ doc: d, isNew: false })}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10"
-                        >
-                          <Upload className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Excluir"
-                          onClick={() => setDeleteTarget(d)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <DocumentPager page={page} totalPages={totalPages} onChange={setPage} />
-        </div>
-      )}
+      <DocumentTable
+        docs={docs}
+        contextName={contextName}
+        orderBy={orderBy}
+        orderDir={orderDir}
+        onSortChange={onSortChange}
+        onView={setViewDoc}
+        onEdit={(d) => setDocState({ doc: d, isNew: false })}
+        onDelete={setDeleteTarget}
+        onCreatePrazo={goToNovaObrigacao}
+        onVerPrazo={goToPrazo}
+        emptyMessage='Nenhum documento configurado para este ativo ainda. Clique em "Novo documento" para começar.'
+      />
 
       <DocumentDialog
-        asset={asset}
+        contextName={contextName}
         doc={docState?.doc ?? null}
         isNew={docState?.isNew ?? false}
         open={docState != null}
@@ -878,182 +387,6 @@ function AssetCard({
         onOpenChange={(o) => !o && setViewDoc(null)}
       />
     </div>
-  );
-}
-
-// ── Ver documento (side panel) ───────────────────────────────────────────────
-// Mirrors the chatbot's "Fontes" viewer (src/pages/Agent.tsx): a right-side
-// Sheet rendering the PDF via the same pdf.js canvas component. Unlike the
-// chatbot (one static, well-known CVM PDF), each Documento here is an
-// arbitrary uploaded file — so non-PDF files fall back to a direct download
-// instead of an in-panel preview.
-type FileKind = "pdf" | "xlsx" | "other";
-
-function fileKindOf(filename?: string | null): FileKind {
-  const lower = (filename || "").toLowerCase();
-  if (lower.endsWith(".pdf")) return "pdf";
-  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "xlsx";
-  return "other";
-}
-
-function DocumentViewerSheet({
-  doc,
-  open,
-  onOpenChange,
-}: {
-  doc: DocumentoResponse | null;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
-  const [rawUrl, setRawUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fileKind = fileKindOf(doc?.arquivo_nome);
-  const isPdf = fileKind === "pdf";
-  const isXlsx = fileKind === "xlsx";
-
-  useEffect(() => {
-    if (!open || !doc) {
-      setFileData(null);
-      setRawUrl(null);
-      setError(null);
-      setCurrentPage(1);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setFileData(null);
-    setCurrentPage(1);
-    setTotalPages(1);
-
-    getDownloadUrl(doc.id)
-      .then(async ({ download_url }) => {
-        if (cancelled) return;
-        setRawUrl(download_url);
-        if (fileKindOf(doc.arquivo_nome) === "other") {
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(download_url);
-        if (!res.ok) throw new Error(`Erro ${res.status} ao baixar o arquivo`);
-        const buf = await res.arrayBuffer();
-        if (cancelled) return;
-        setFileData(buf);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError((e as Error).message || "Não foi possível carregar o documento");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, doc]);
-
-  const title = doc
-    ? `${docLabel(doc.tipo, doc.nome_personalizado)}${doc.periodo_referencia ? ` · ${doc.periodo_referencia}` : ""}`
-    : "";
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
-      <SheetContent
-        side="right"
-        className="!w-[35%] !max-w-none p-0 flex flex-col [&>button]:hidden border-l !z-40"
-        hideOverlay
-      >
-        <SheetHeader className="px-6 py-4 border-b flex-shrink-0 flex-row items-center justify-between">
-          <SheetTitle className="truncate">{title}</SheetTitle>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-6 w-6">
-            <X className="h-4 w-4" />
-          </Button>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-hidden bg-slate-100 p-4 flex items-center justify-center">
-          {loading && (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Carregando documento...</span>
-            </div>
-          )}
-          {!loading && error && (
-            <div className="flex flex-col items-center gap-2 text-destructive p-4 text-center">
-              <span className="text-sm font-medium">Não foi possível carregar o documento</span>
-              <span className="text-xs">{error}</span>
-            </div>
-          )}
-          {!loading && !error && isPdf && (
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
-              <PdfViewerCanvas
-                pdfData={fileData}
-                currentPage={currentPage}
-                onTotalPages={setTotalPages}
-                className="w-full h-full min-h-[400px]"
-              />
-            </div>
-          )}
-          {!loading && !error && isXlsx && (
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
-              <XlsxViewerTable
-                fileData={fileData}
-                currentSheet={currentPage}
-                onSheetNames={(names) => setTotalPages(names.length)}
-                className="w-full h-full min-h-[400px]"
-              />
-            </div>
-          )}
-          {!loading && !error && !isPdf && !isXlsx && (
-            <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
-              <FileText className="h-8 w-8" />
-              <p className="max-w-xs text-sm">
-                Pré-visualização não disponível para {doc?.arquivo_nome || "este arquivo"}.
-              </p>
-              {rawUrl && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(rawUrl, "_blank", "noopener,noreferrer")}
-                >
-                  <Upload className="mr-1 h-4 w-4 rotate-180" /> Baixar arquivo
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {(isPdf || isXlsx) && !loading && !error && (
-          <SheetFooter className="px-6 py-4 border-t flex items-center justify-between flex-shrink-0">
-            <span className="text-sm text-muted-foreground">
-              {isPdf ? "Página" : "Aba"} {currentPage} de {totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Próxima <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </SheetFooter>
-        )}
-      </SheetContent>
-    </Sheet>
   );
 }
 

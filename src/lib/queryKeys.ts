@@ -35,6 +35,8 @@ export const documentoKeys = {
   all: ["documentos"] as const,
   /** Ativos + documentos of a fund, grouped by ativo (the Ativos tab payload). */
   byFundo: (fundoId: number) => ["documentos", "fundo", fundoId] as const,
+  /** Flat documento list of the Gestora (the Gestora Documentos tab payload). */
+  byGestora: (gestoraId: string) => ["documentos", "gestora", gestoraId] as const,
 };
 
 export const classificacaoKeys = {
