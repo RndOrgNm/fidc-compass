@@ -7,6 +7,10 @@ import type { DocumentoOrderBy, OrderDir } from "@/lib/api/documentoService";
  * A `<th>` whose label doubles as the sort control — click cycles
  * asc → desc → padrão (prazo mais próximo) for that column, replacing the
  * standalone `DocumentSortControl` dropdown.
+ *
+ * `field=undefined` represents the padrão itself (ex.: a coluna "Prazo") —
+ * nesse caso o clique só alterna asc/desc, sem um 3º estado pra "resetar"
+ * pra (já é o padrão).
  */
 export function DocumentSortableHeader({
   field,
@@ -16,7 +20,7 @@ export function DocumentSortableHeader({
   onChange,
   className,
 }: {
-  field: DocumentoOrderBy;
+  field: DocumentoOrderBy | undefined;
   label: string;
   orderBy: DocumentoOrderBy | undefined;
   orderDir: OrderDir;
@@ -28,7 +32,7 @@ export function DocumentSortableHeader({
   function handleClick() {
     if (!active) onChange(field, "asc");
     else if (orderDir === "asc") onChange(field, "desc");
-    else onChange(undefined, "asc"); // 3º clique: volta pro padrão (prazo mais próximo)
+    else onChange(undefined, "asc"); // 3º clique (ou 2º, se field=undefined): volta pro padrão
   }
 
   return (

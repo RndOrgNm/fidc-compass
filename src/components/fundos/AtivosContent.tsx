@@ -682,7 +682,10 @@ function AssetCard({
                   field="status" label="Status" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
                   className="pb-2 px-3 text-left font-medium"
                 />
-                <th className="pb-2 px-3 text-left font-medium">Prazo</th>
+                <DocumentSortableHeader
+                  field={undefined} label="Prazo" orderBy={orderBy} orderDir={orderDir} onChange={onSortChange}
+                  className="pb-2 px-3 text-left font-medium"
+                />
                 <th className="pb-2 pl-3 text-right font-medium">
                   <span className="sr-only">Ações</span>
                 </th>
