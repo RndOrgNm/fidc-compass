@@ -1,4 +1,4 @@
-import { Home, Bot, Landmark, LogOut } from "lucide-react";
+import { Home, Bot, Landmark, Briefcase, LogOut } from "lucide-react";
 // import { GitBranch } from "lucide-react"; // Pipeline — re-enable with Pipeline menu item
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useClerk, useUser } from "@clerk/clerk-react";
@@ -22,6 +22,7 @@ const menuItems = [
   // { title: "Pipeline", url: "/pipeline", icon: GitBranch }, // hidden for now — re-enable later
   { title: "Agente IA", url: "/agent", icon: Bot },
   { title: "Fundos", url: "/fundos", icon: Landmark },
+  { title: "Gestora", url: "/gestora", icon: Briefcase },
 ];
 
 export function AppSidebar() {
@@ -81,6 +82,7 @@ export function AppSidebar() {
                   // item.url === "/pipeline" ? location.pathname.startsWith("/pipeline") :
                   item.url === "/agent" ? location.pathname.startsWith("/agent") :
                   item.url === "/fundos" ? location.pathname.startsWith("/fundos") :
+                  item.url === "/gestora" ? location.pathname.startsWith("/gestora") :
                   location.pathname === item.url;
                 // Special handling for Agente IA to reset Agent page
                 const handleChatbotClick = (e: React.MouseEvent) => {

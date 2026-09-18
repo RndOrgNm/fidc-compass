@@ -17,6 +17,10 @@ export type PrazoStatus =
   | "AGUARDANDO_GATILHO"
   | "CONCLUIDO";
 
+// ── Owner (exclusive arc: um fundo OU a Gestora, nunca os dois) ────────────────
+
+export type PrazoOwner = { fundo_id: number; gestora_id?: undefined } | { fundo_id?: undefined; gestora_id: string };
+
 // ── Response shapes ───────────────────────────────────────────────────────────
 
 export interface ResponsavelInfo {
@@ -27,7 +31,8 @@ export interface ResponsavelInfo {
 
 export interface ObrigacaoResponse {
   id: string;
-  fundo_id: number;
+  fundo_id: number | null;
+  gestora_id: string | null;
   topico: string;
   categoria: Categoria;
   tipo_prazo: TipoPrazo;
@@ -53,7 +58,8 @@ export interface ObrigacaoListResponse {
 export interface InstanciaResponse {
   id: string;
   obrigacao_id: string;
-  fundo_id: number;
+  fundo_id: number | null;
+  gestora_id: string | null;
   topico: string;
   categoria: Categoria;
   tipo_prazo: TipoPrazo;
@@ -98,7 +104,8 @@ export interface ReconcileResponse {
 export interface AssignmentNotifResponse {
   id: string;
   obrigacao_id: string;
-  fundo_id: number;
+  fundo_id: number | null;
+  gestora_id: string | null;
   topico: string;
   assigned_by_nome: string;
   criado_em: string;
@@ -113,8 +120,7 @@ export interface AssignmentNotifListResponse {
 
 // ── Request shapes ────────────────────────────────────────────────────────────
 
-export interface ObrigacaoCreateRequest {
-  fundo_id: number;
+export type ObrigacaoCreateRequest = PrazoOwner & {
   topico: string;
   categoria: Categoria;
   tipo_prazo: TipoPrazo;
@@ -127,7 +133,7 @@ export interface ObrigacaoCreateRequest {
   descricao?: string;
   responsaveis: ResponsavelInfo[];
   ciclo_inicial?: string; // "YYYY-MM"; defaults to current month on the server
-}
+};
 
 export interface ObrigacaoUpdateRequest {
   topico?: string;
@@ -167,10 +173,18 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 
 // ── Obrigações ────────────────────────────────────────────────────────────────
 
+function ownerParams(owner: PrazoOwner): URLSearchParams {
+  return new URLSearchParams(
+    owner.fundo_id != null
+      ? { fundo_id: String(owner.fundo_id) }
+      : { gestora_id: owner.gestora_id }
+  );
+}
+
 export async function listObrigacoes(
-  fundoId: number
+  owner: PrazoOwner
 ): Promise<ObrigacaoListResponse> {
-  const url = `${FUNDS_API_BASE_URL}/prazos/obrigacoes?fundo_id=${fundoId}`;
+  const url = `${FUNDS_API_BASE_URL}/prazos/obrigacoes?${ownerParams(owner).toString()}`;
   return handleResponse<ObrigacaoListResponse>(await fetch(url));
 }
 
@@ -207,10 +221,10 @@ export async function deleteObrigacao(id: string): Promise<void> {
 // ── Instâncias ────────────────────────────────────────────────────────────────
 
 export async function listInstancias(
-  fundoId: number,
+  owner: PrazoOwner,
   ciclo?: string
 ): Promise<InstanciaListResponse> {
-  const params = new URLSearchParams({ fundo_id: String(fundoId) });
+  const params = ownerParams(owner);
   if (ciclo) params.set("ciclo", ciclo);
   const url = `${FUNDS_API_BASE_URL}/prazos/instancias?${params.toString()}`;
   return handleResponse<InstanciaListResponse>(await fetch(url));

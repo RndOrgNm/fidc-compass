@@ -48,6 +48,7 @@ import {
   type Categoria,
   type InstanciaResponse,
   type ObrigacaoResponse,
+  type PrazoOwner,
 } from "@/lib/api/prazoService";
 import { vincularPrazo } from "@/lib/api/documentoService";
 import { prazoKeys, alertaKeys, documentoKeys } from "@/lib/queryKeys";
@@ -373,11 +374,16 @@ function PrazoItem({
 // ── PrazosContent ─────────────────────────────────────────────────────────────
 
 export interface PrazosContentProps {
-  fundoId: number | null;
-  fundName?: string;
+  owner: PrazoOwner | null;
+  /** Nome exibido em exports (PDF/Excel) — nome do fundo, ou o da Gestora. */
+  ownerName?: string;
+  /** Mostrado no lugar da tela quando `owner` é `null` (ex.: nenhum fundo selecionado ainda). */
+  emptyOwnerMessage: string;
+  /** Completa "Crie a primeira obrigação recorrente ___." — ex.: "deste fundo", "da Gestora". */
+  emptyStateHint: string;
 }
 
-export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
+export function PrazosContent({ owner, ownerName, emptyOwnerMessage, emptyStateHint }: PrazosContentProps) {
   const { user } = useUser();
   const queryClient = useQueryClient();
 
@@ -404,20 +410,20 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     const nova = (
       location.state as { novaObrigacao?: { prefill?: ObrigacaoFormInitial; documentoId?: string } } | null
     )?.novaObrigacao;
-    if (nova && !novaHandledRef.current && fundoId != null) {
+    if (nova && !novaHandledRef.current && owner != null) {
       novaHandledRef.current = true;
       setFormInitial(nova.prefill);
       setLinkDocumentoId(nova.documentoId ?? null);
       setFormOpen(true);
       navigate(location.pathname, { replace: true, state: null });
     }
-  }, [location.state, location.pathname, fundoId, navigate]);
+  }, [location.state, location.pathname, owner, navigate]);
 
   // Whether any obligation rules exist for this fund (drives isEmpty — independent of cycle)
   const obrigacoesQuery = useQuery({
-    queryKey: fundoId ? prazoKeys.obrigacoes(fundoId) : ["prazos", "noop-ob"],
-    queryFn: () => listObrigacoes(fundoId as number),
-    enabled: fundoId != null,
+    queryKey: owner ? prazoKeys.obrigacoes(owner) : ["prazos", "noop-ob"],
+    queryFn: () => listObrigacoes(owner as PrazoOwner),
+    enabled: owner != null,
   });
 
   // Deep-link from the Ativos tab: open an already-linked obrigação for
@@ -426,7 +432,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const verHandledRef = useRef(false);
   useEffect(() => {
     const ver = (location.state as { verObrigacao?: { obrigacaoId: string } } | null)?.verObrigacao;
-    if (!ver || verHandledRef.current || fundoId == null || !obrigacoesQuery.data) return;
+    if (!ver || verHandledRef.current || owner == null || !obrigacoesQuery.data) return;
     const obrigacao = obrigacoesQuery.data.items.find((o) => o.id === ver.obrigacaoId);
     if (!obrigacao) return;
     verHandledRef.current = true;
@@ -444,13 +450,13 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     });
     setFormOpen(true);
     navigate(location.pathname, { replace: true, state: null });
-  }, [location.state, location.pathname, fundoId, navigate, obrigacoesQuery.data]);
+  }, [location.state, location.pathname, owner, navigate, obrigacoesQuery.data]);
 
   // Current cycle (for the agenda list)
   const query = useQuery({
-    queryKey: fundoId ? prazoKeys.instancias(fundoId) : ["prazos", "noop"],
-    queryFn: () => listInstancias(fundoId as number),
-    enabled: fundoId != null,
+    queryKey: owner ? prazoKeys.instancias(owner) : ["prazos", "noop"],
+    queryFn: () => listInstancias(owner as PrazoOwner),
+    enabled: owner != null,
   });
 
   const instancias = query.data?.items ?? [];
@@ -461,9 +467,9 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const isCurrentCiclo = calCiclo === currentCiclo;
 
   const calQuery = useQuery({
-    queryKey: fundoId ? prazoKeys.instancias(fundoId, calCiclo) : ["prazos", "noop-cal"],
-    queryFn: () => listInstancias(fundoId as number, calCiclo),
-    enabled: fundoId != null && !isCurrentCiclo,
+    queryKey: owner ? prazoKeys.instancias(owner, calCiclo) : ["prazos", "noop-cal"],
+    queryFn: () => listInstancias(owner as PrazoOwner, calCiclo),
+    enabled: owner != null && !isCurrentCiclo,
   });
 
   // Also fetch the NEXT cycle so cross-month tasks (e.g. "15 days before 10th business day
@@ -472,9 +478,9 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   const calCicloNext = `${nextCalDate.getFullYear()}-${String(nextCalDate.getMonth() + 1).padStart(2, "0")}`;
 
   const calQueryNext = useQuery({
-    queryKey: fundoId ? prazoKeys.instancias(fundoId, calCicloNext) : ["prazos", "noop-cal-next"],
-    queryFn: () => listInstancias(fundoId as number, calCicloNext),
-    enabled: fundoId != null,
+    queryKey: owner ? prazoKeys.instancias(owner, calCicloNext) : ["prazos", "noop-cal-next"],
+    queryFn: () => listInstancias(owner as PrazoOwner, calCicloNext),
+    enabled: owner != null,
   });
 
   const calInstancias = [
@@ -595,7 +601,13 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
     mutationFn: ({ documentoId, obrigacaoId }: { documentoId: string; obrigacaoId: string }) =>
       vincularPrazo(documentoId, obrigacaoId),
     onSuccess: () => {
-      if (fundoId != null) queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
+      // O deep-link documento→prazo pode vir da aba Ativos (fundo) ou de
+      // Documentos da Gestora — invalida só a query do dono certo.
+      if (owner?.fundo_id != null) {
+        queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(owner.fundo_id) });
+      } else if (owner?.gestora_id != null) {
+        queryClient.invalidateQueries({ queryKey: documentoKeys.byGestora(owner.gestora_id) });
+      }
     },
     onError: (e: Error) =>
       toast({ title: "Prazo criado, mas não vinculado ao documento", description: e.message, variant: "destructive" }),
@@ -627,10 +639,10 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
   };
 
   const ciclo = instancias[0]?.ciclo ?? new Date().toISOString().slice(0, 7);
-  const safeName = (fundName || "fundo").replace(/[^\w-]+/g, "_");
+  const safeName = (ownerName || "fundo").replace(/[^\w-]+/g, "_");
 
   const doExportPdf = () =>
-    exportPrazosPdf(filtered, `prazos_${safeName}_${ciclo}`, fundName || "Fundo", ciclo).catch((e) =>
+    exportPrazosPdf(filtered, `prazos_${safeName}_${ciclo}`, ownerName || "Fundo", ciclo).catch((e) =>
       toast({ title: "Erro ao exportar PDF", description: String(e), variant: "destructive" })
     );
   const doExportExcel = () =>
@@ -638,12 +650,12 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
       toast({ title: "Erro ao exportar Excel", description: String(e), variant: "destructive" })
     );
 
-  // ── States: no fund / loading / error ───────────────────────────────────────
+  // ── States: no owner / loading / error ──────────────────────────────────────
 
-  if (fundoId == null) {
+  if (owner == null) {
     return (
       <p className="py-16 text-center text-sm text-muted-foreground">
-        Selecione um fundo para ver suas obrigações.
+        {emptyOwnerMessage}
       </p>
     );
   }
@@ -693,7 +705,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
           <CalendarClock className="mx-auto h-8 w-8 text-muted-foreground/60" />
           <p className="mt-3 text-sm font-medium">Nenhuma obrigação cadastrada</p>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            Crie a primeira obrigação recorrente deste fundo.
+            Crie a primeira obrigação recorrente {emptyStateHint}.
           </p>
           <Button size="sm" className="mt-4" onClick={openCreate}>
             <Plus className="mr-1 h-4 w-4" /> Criar obrigação
@@ -840,7 +852,7 @@ export function PrazosContent({ fundoId, fundName }: PrazosContentProps) {
 
       {/* Create / edit dialog */}
       <ObrigacaoFormDialog
-        fundoId={fundoId}
+        owner={owner}
         open={formOpen}
         onOpenChange={setFormOpen}
         initial={formInitial}

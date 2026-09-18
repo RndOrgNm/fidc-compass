@@ -1,27 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   SquarePen,
   Trash2,
-  Upload,
-  UploadCloud,
-  FileCheck2,
-  FileText,
-  CalendarClock,
-  CalendarPlus,
-  Calendar as CalendarIcon,
-  FolderX,
   Loader2,
   Building2,
-  Eye,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
   Tags,
-  Unlink,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,13 +19,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,10 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
-import { XlsxViewerTable } from "@/components/XlsxViewerTable";
-import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
+import { docLabel } from "@/data/ativosData";
 import { documentoKeys, classificacaoKeys } from "@/lib/queryKeys";
+import { DocumentTable } from "@/components/fundos/DocumentTable";
+import { DocumentDialog, type PrazoPrefill } from "@/components/fundos/DocumentDialog";
+import { DocumentViewerSheet } from "@/components/fundos/DocumentViewerSheet";
 import {
   listDocumentosByFundo,
   createAtivo,
@@ -73,14 +53,16 @@ import {
   updateDocumento,
   deleteDocumento,
   uploadDocumentoFile,
-  getDownloadUrl,
   desvincularPrazo,
+  updateFundDocumentosMeta,
   type DocTipo,
   type Cadencia,
   type DocumentoResponse,
   type AtivoComDocumentosResponse,
   type AtivoCreateRequest,
   type AtivoUpdateRequest,
+  type DocumentoOrderBy,
+  type OrderDir,
 } from "@/lib/api/documentoService";
 import { listClassificacoes } from "@/lib/api/classificacaoService";
 import { ClassificacaoDialog } from "@/components/classificacoes/ClassificacaoDialog";
@@ -91,338 +73,25 @@ export interface AtivosContentProps {
   fundName?: string;
 }
 
-// ── Date helpers (API: "YYYY-MM-DD" ↔ UI: "dd/mm/aaaa") ────────────────────────
-
-function isoToBr(iso?: string | null): string | null {
-  if (!iso) return null;
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return null;
-  return `${d}/${m}/${y}`;
-}
-
-function formatBytes(bytes?: number | null): string {
-  if (bytes == null) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-// "Criar prazo" no longer opens an in-place dialog — it navigates to the
-// Prazos tab's real "Nova Obrigação" form (richer: categoria, tipo_prazo,
-// recorrência, real Clerk responsáveis), prefilled from the document, and
-// links the resulting obrigação back to the document once saved (see
-// PrazosContent's `novaObrigacao` deep-link + `handleCreated`).
-interface PrazoPrefill {
-  documentoId: string;
-  topico: string;
-  resp: string;
-}
-
-// ── Document (upload / edit fields) dialog ────────────────────────────────────
-function DocumentDialog({
-  asset,
-  doc,
-  isNew,
-  open,
-  onOpenChange,
-  onSave,
-  saving,
-  onCriarPrazo,
-  onVerPrazo,
-  onDesvincularPrazo,
-  desvinculando,
-}: {
-  asset: AtivoComDocumentosResponse;
-  doc: DocumentoResponse | null;
-  isNew: boolean;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onSave: (values: {
-    tipo: DocTipo;
-    nomePersonalizado: string;
-    cadencia: Cadencia;
-    periodo: string;
-    file: File | null;
-  }) => void;
-  saving: boolean;
-  onCriarPrazo: (prefill: PrazoPrefill) => void;
-  onVerPrazo: (obrigacaoId: string) => void;
-  onDesvincularPrazo: (documentoId: string) => void;
-  desvinculando: boolean;
-}) {
-  const [tipo, setTipo] = useState<DocTipo>(doc?.tipo ?? "balancete");
-  const [nomePersonalizado, setNomePersonalizado] = useState(doc?.nome_personalizado ?? "");
-  const [cadencia, setCadencia] = useState<Cadencia>(
-    doc?.cadencia ?? cadenciaSugerida("balancete")
-  );
-  const [periodo, setPeriodo] = useState(doc?.periodo_referencia ?? "");
-  const [file, setFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Re-seed local state whenever a different document opens the dialog.
-  useEffect(() => {
-    if (open) {
-      const initialTipo = doc?.tipo ?? "balancete";
-      setTipo(initialTipo);
-      setNomePersonalizado(doc?.nome_personalizado ?? "");
-      setCadencia(doc?.cadencia ?? cadenciaSugerida(initialTipo));
-      setPeriodo(doc?.periodo_referencia ?? "");
-      setFile(null);
-    }
-  }, [open, doc, isNew]);
-
-  const meta = DOC_TYPES[tipo];
-  const label = docLabel(tipo, tipo === "outro" ? nomePersonalizado : undefined);
-  const isOutroSemNome = tipo === "outro" && !nomePersonalizado.trim();
-
-  function handleTipoChange(v: string) {
-    const next = v as DocTipo;
-    setTipo(next);
-    // Re-suggest the cadência for the new type — the user can still override it.
-    setCadencia(cadenciaSugerida(next));
-  }
-
-  async function handleDownload() {
-    if (!doc) return;
-    try {
-      const { download_url } = await getDownloadUrl(doc.id);
-      window.open(download_url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast({ title: "Erro ao baixar", description: (e as Error).message, variant: "destructive" });
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isNew ? "Novo documento" : `${label} · ${asset.nome.split(" · ")[0]}`}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4 py-1">
-          {doc?.arquivo_nome && (
-            <div className="flex items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5">
-              <FileCheck2 className="h-5 w-5 shrink-0 text-success" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium">{doc.arquivo_nome}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {formatBytes(doc.arquivo_tamanho)} · vigente desde {isoToBr(doc.vigente_desde)}
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Baixar" onClick={handleDownload}>
-                <Upload className="h-4 w-4 rotate-180" />
-              </Button>
-            </div>
-          )}
-
-          <div
-            className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border py-7 text-center"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const dropped = e.dataTransfer.files?.[0];
-              if (dropped) setFile(dropped);
-            }}
-          >
-            <UploadCloud className="h-6 w-6 text-muted-foreground" />
-            <p className="text-[13px] font-medium">
-              {file ? file.name : doc?.arquivo_nome ? "Enviar nova versão" : "Enviar arquivo"}
-            </p>
-            <span className="text-[11px] text-muted-foreground">Arraste ou clique para selecionar · PDF, XLSX, DOCX</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.xlsx,.xls,.docx,.doc"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Tipo de documento</Label>
-            {isNew ? (
-              <Select value={tipo} onValueChange={handleTipoChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(DOC_TYPES) as DocTipo[]).map((k) => (
-                    <SelectItem key={k} value={k}>{DOC_TYPES[k].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input value={meta.label} disabled />
-            )}
-          </div>
-
-          {tipo === "outro" && (
-            <div className="space-y-1.5">
-              <Label>Nome do documento</Label>
-              <Input
-                placeholder="ex.: Apólice de Seguro Fiança"
-                value={nomePersonalizado}
-                onChange={(e) => setNomePersonalizado(e.target.value)}
-              />
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label>Cadência</Label>
-            <Select
-              value={cadencia}
-              onValueChange={(v) => setCadencia(v as Cadencia)}
-              disabled={!!doc?.prazo}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(CADENCIA_LABELS) as Cadencia[]).map((c) => (
-                  <SelectItem key={c} value={c}>{CADENCIA_LABELS[c]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {doc?.prazo && (
-              <p className="text-[11px] text-muted-foreground">
-                Definida pela Frequência do prazo vinculado — desvincule para editar aqui.
-              </p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Período de referência</Label>
-            <Input placeholder="ex.: 2º tri/2026" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
-          </div>
-
-          {!isNew && doc && (
-            <div className="space-y-1.5">
-              <Label>Vincular a um prazo</Label>
-              {doc.prazo ? (
-                <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-                  <span className="flex items-center gap-1.5 text-[13px]">
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                    {doc.prazo.topico} · vence {isoToBr(doc.prazo.data_vencimento)}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {doc.prazo.responsavel_nome && (
-                      <span className="text-[11px] text-muted-foreground">{doc.prazo.responsavel_nome}</span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      aria-label="Ver prazo na aba Prazos"
-                      title="Ver prazo na aba Prazos"
-                      onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      aria-label="Desvincular prazo"
-                      title="Desvincular prazo (a obrigação continua na aba Prazos)"
-                      disabled={desvinculando}
-                      onClick={() => onDesvincularPrazo(doc.id)}
-                    >
-                      {desvinculando ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Unlink className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() =>
-                    onCriarPrazo({
-                      documentoId: doc.id,
-                      topico: `${label} — ${asset.nome.split(" · ")[0]}`,
-                      resp: meta.resp,
-                    })
-                  }
-                >
-                  <CalendarPlus className="mr-1 h-4 w-4" /> Criar prazo
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button
-            size="sm"
-            disabled={saving || isOutroSemNome}
-            onClick={() => onSave({ tipo, nomePersonalizado: nomePersonalizado.trim(), cadencia, periodo, file })}
-          >
-            {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
-            Salvar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Prazo cell ────────────────────────────────────────────────────────────────
-function DocPrazoCell({
-  doc,
-  onCreatePrazo,
-  onVerPrazo,
-}: {
-  doc: DocumentoResponse;
-  onCreatePrazo: () => void;
-  onVerPrazo: (obrigacaoId: string) => void;
-}) {
-  if (doc.prazo) {
-    return (
-      <button
-        onClick={() => onVerPrazo(doc.prazo!.obrigacao_id)}
-        title="Ver prazo na aba Prazos"
-        className="inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[12px] tabular-nums text-success transition-colors hover:text-success/80"
-      >
-        <CalendarClock className="h-3.5 w-3.5" /> {isoToBr(doc.prazo.data_vencimento)}
-      </button>
-    );
-  }
-  if (doc.status === "pendente") {
-    return (
-      <button
-        onClick={onCreatePrazo}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-primary transition-colors hover:text-primary/80"
-      >
-        <CalendarPlus className="h-3.5 w-3.5" /> Criar prazo
-      </button>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] text-muted-foreground">
-      <CalendarIcon className="h-3.5 w-3.5" /> Sem prazo vinculado
-    </span>
-  );
-}
-
 // ── Asset card ────────────────────────────────────────────────────────────────
 function AssetCard({
   asset,
   fundoId,
   isFundoSingleton,
   onOpenClassificacoes,
+  orderBy,
+  orderDir,
+  onSortChange,
 }: {
   asset: AtivoComDocumentosResponse;
   fundoId: number;
   /** The "Documentos do Fundo" card — auto-created singleton, not user-deletable. */
   isFundoSingleton?: boolean;
   onOpenClassificacoes: () => void;
+  /** Ordenação é global (um único fetch por fundo) — não por card. */
+  orderBy: DocumentoOrderBy | undefined;
+  orderDir: OrderDir;
+  onSortChange: (orderBy: DocumentoOrderBy | undefined, orderDir: OrderDir) => void;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -433,19 +102,23 @@ function AssetCard({
   const [saving, setSaving] = useState(false);
   const [deleteAtivoConfirm, setDeleteAtivoConfirm] = useState(false);
   const docs = asset.documentos;
+  const contextName = asset.nome.split(" · ")[0];
 
   function invalidate() {
     return queryClient.invalidateQueries({ queryKey: documentoKeys.byFundo(fundoId) });
   }
 
   const updateAtivoMut = useMutation({
-    mutationFn: (data: AtivoUpdateRequest) => updateAtivo(asset.ativo_id, data),
+    mutationFn: (data: AtivoUpdateRequest) =>
+      isFundoSingleton
+        ? updateFundDocumentosMeta(fundoId, { documentos_nome: data.nome, documentos_sub: data.sub })
+        : updateAtivo(asset.ativo_id, data),
     onSuccess: async () => {
       await invalidate();
-      toast({ title: "Ativo atualizado" });
+      toast({ title: isFundoSingleton ? "Card atualizado" : "Ativo atualizado" });
       setEditAtivoOpen(false);
     },
-    onError: (e: Error) => toast({ title: "Erro ao atualizar ativo", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" }),
   });
 
   const deleteAtivoMut = useMutation({
@@ -475,6 +148,7 @@ function AssetCard({
     nomePersonalizado: string;
     cadencia: Cadencia;
     periodo: string;
+    observacao: string;
     file: File | null;
   }) {
     setSaving(true);
@@ -482,12 +156,15 @@ function AssetCard({
       let docId = docState?.doc?.id;
       if (docState?.isNew) {
         const created = await createDocumento({
-          ativo_id: asset.ativo_id,
+          // O card "Documentos do Fundo" não tem Ativo por trás (T11/D9) —
+          // `asset.ativo_id` ali é só uma chave sintética, não um id real.
+          ativo_id: isFundoSingleton ? undefined : asset.ativo_id,
           fundo_id: fundoId,
           tipo: values.tipo,
           nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
+          observacao: values.observacao.trim() || undefined,
         });
         docId = created.id;
       } else if (docId) {
@@ -495,6 +172,7 @@ function AssetCard({
           nome_personalizado: values.tipo === "outro" ? values.nomePersonalizado : undefined,
           cadencia: values.cadencia,
           periodo_referencia: values.periodo || undefined,
+          observacao: values.observacao.trim() || undefined,
         });
       }
       if (docId && values.file) {
@@ -559,7 +237,18 @@ function AssetCard({
             {asset.sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{asset.sub}</div>}
           </div>
           {asset.classificacao_nome && (
-            <span className="mt-0.5 inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span
+              className="mt-0.5 inline-flex items-center rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              style={
+                asset.cor
+                  ? {
+                      borderColor: asset.cor,
+                      color: asset.cor,
+                      backgroundColor: `color-mix(in srgb, ${asset.cor} 12%, transparent)`,
+                    }
+                  : undefined
+              }
+            >
               {asset.classificacao_nome}
             </span>
           )}
@@ -600,121 +289,22 @@ function AssetCard({
         </Button>
       </div>
 
-      {docs.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center">
-          <FolderX className="h-7 w-7 text-muted-foreground/60" />
-          <p className="max-w-sm text-[13px] text-muted-foreground">
-            Nenhum documento configurado para este ativo ainda. Clique em "Novo documento" para começar.
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                <th className="pb-2 pr-3 text-left font-medium">Documento</th>
-                <th className="pb-2 px-3 text-left font-medium">Cadência</th>
-                <th className="pb-2 px-3 text-left font-medium">Referência</th>
-                <th className="pb-2 px-3 text-left font-medium">Última atualização</th>
-                <th className="pb-2 px-3 text-left font-medium">Status</th>
-                <th className="pb-2 px-3 text-left font-medium">Prazo</th>
-                <th className="pb-2 pl-3 text-right font-medium">
-                  <span className="sr-only">Ações</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs.map((d) => {
-                const meta = DOC_TYPES[d.tipo];
-                const st = DOC_STATUS[d.status];
-                const DocIcon = meta.icon;
-                const StatusIcon = st.icon;
-                const label = docLabel(d.tipo, d.nome_personalizado);
-                return (
-                  <tr
-                    key={d.id}
-                    className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-card/40"
-                  >
-                    <td className="py-2.5 pr-3">
-                      <div className="flex items-center gap-2 text-[13px] text-foreground">
-                        <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        {label}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        {CADENCIA_LABELS[d.cadencia]}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo_referencia || "—"}</td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                      {d.vigente_desde ? (
-                        `vigente desde ${isoToBr(d.vigente_desde)}`
-                      ) : (
-                        <span className="italic text-muted-foreground/70">nenhum arquivo enviado</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <span className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-[3px] text-[10px] font-medium", st.chip)}>
-                        <StatusIcon className="h-3 w-3" /> {st.label}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <DocPrazoCell
-                        doc={d}
-                        onCreatePrazo={() =>
-                          goToNovaObrigacao({
-                            documentoId: d.id,
-                            topico: `${label} — ${asset.nome.split(" · ")[0]}`,
-                            resp: meta.resp,
-                          })
-                        }
-                        onVerPrazo={goToPrazo}
-                      />
-                    </td>
-                    <td className="py-2.5 pl-3">
-                      <div className="flex items-center justify-end gap-0.5">
-                        <button
-                          aria-label="Ver documento"
-                          onClick={() => setViewDoc(d)}
-                          disabled={!d.arquivo_nome}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Editar campos"
-                          onClick={() => setDocState({ doc: d, isNew: false })}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        >
-                          <SquarePen className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Enviar novo"
-                          onClick={() => setDocState({ doc: d, isNew: false })}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10"
-                        >
-                          <Upload className="h-4 w-4" />
-                        </button>
-                        <button
-                          aria-label="Excluir"
-                          onClick={() => setDeleteTarget(d)}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DocumentTable
+        docs={docs}
+        contextName={contextName}
+        orderBy={orderBy}
+        orderDir={orderDir}
+        onSortChange={onSortChange}
+        onView={setViewDoc}
+        onEdit={(d) => setDocState({ doc: d, isNew: false })}
+        onDelete={setDeleteTarget}
+        onCreatePrazo={goToNovaObrigacao}
+        onVerPrazo={goToPrazo}
+        emptyMessage='Nenhum documento configurado para este ativo ainda. Clique em "Novo documento" para começar.'
+      />
 
       <DocumentDialog
-        asset={asset}
+        contextName={contextName}
         doc={docState?.doc ?? null}
         isNew={docState?.isNew ?? false}
         open={docState != null}
@@ -761,6 +351,7 @@ function AssetCard({
         onOpenChange={setEditAtivoOpen}
         onSave={(data) => updateAtivoMut.mutate(data)}
         saving={updateAtivoMut.isPending}
+        showClassificacao={!isFundoSingleton}
       />
 
       <AlertDialog open={deleteAtivoConfirm} onOpenChange={setDeleteAtivoConfirm}>
@@ -796,182 +387,6 @@ function AssetCard({
         onOpenChange={(o) => !o && setViewDoc(null)}
       />
     </div>
-  );
-}
-
-// ── Ver documento (side panel) ───────────────────────────────────────────────
-// Mirrors the chatbot's "Fontes" viewer (src/pages/Agent.tsx): a right-side
-// Sheet rendering the PDF via the same pdf.js canvas component. Unlike the
-// chatbot (one static, well-known CVM PDF), each Documento here is an
-// arbitrary uploaded file — so non-PDF files fall back to a direct download
-// instead of an in-panel preview.
-type FileKind = "pdf" | "xlsx" | "other";
-
-function fileKindOf(filename?: string | null): FileKind {
-  const lower = (filename || "").toLowerCase();
-  if (lower.endsWith(".pdf")) return "pdf";
-  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) return "xlsx";
-  return "other";
-}
-
-function DocumentViewerSheet({
-  doc,
-  open,
-  onOpenChange,
-}: {
-  doc: DocumentoResponse | null;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
-  const [rawUrl, setRawUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fileKind = fileKindOf(doc?.arquivo_nome);
-  const isPdf = fileKind === "pdf";
-  const isXlsx = fileKind === "xlsx";
-
-  useEffect(() => {
-    if (!open || !doc) {
-      setFileData(null);
-      setRawUrl(null);
-      setError(null);
-      setCurrentPage(1);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setFileData(null);
-    setCurrentPage(1);
-    setTotalPages(1);
-
-    getDownloadUrl(doc.id)
-      .then(async ({ download_url }) => {
-        if (cancelled) return;
-        setRawUrl(download_url);
-        if (fileKindOf(doc.arquivo_nome) === "other") {
-          setLoading(false);
-          return;
-        }
-        const res = await fetch(download_url);
-        if (!res.ok) throw new Error(`Erro ${res.status} ao baixar o arquivo`);
-        const buf = await res.arrayBuffer();
-        if (cancelled) return;
-        setFileData(buf);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setError((e as Error).message || "Não foi possível carregar o documento");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, doc]);
-
-  const title = doc
-    ? `${docLabel(doc.tipo, doc.nome_personalizado)}${doc.periodo_referencia ? ` · ${doc.periodo_referencia}` : ""}`
-    : "";
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
-      <SheetContent
-        side="right"
-        className="!w-[35%] !max-w-none p-0 flex flex-col [&>button]:hidden border-l !z-40"
-        hideOverlay
-      >
-        <SheetHeader className="px-6 py-4 border-b flex-shrink-0 flex-row items-center justify-between">
-          <SheetTitle className="truncate">{title}</SheetTitle>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-6 w-6">
-            <X className="h-4 w-4" />
-          </Button>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-hidden bg-slate-100 p-4 flex items-center justify-center">
-          {loading && (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Carregando documento...</span>
-            </div>
-          )}
-          {!loading && error && (
-            <div className="flex flex-col items-center gap-2 text-destructive p-4 text-center">
-              <span className="text-sm font-medium">Não foi possível carregar o documento</span>
-              <span className="text-xs">{error}</span>
-            </div>
-          )}
-          {!loading && !error && isPdf && (
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
-              <PdfViewerCanvas
-                pdfData={fileData}
-                currentPage={currentPage}
-                onTotalPages={setTotalPages}
-                className="w-full h-full min-h-[400px]"
-              />
-            </div>
-          )}
-          {!loading && !error && isXlsx && (
-            <div className="w-full h-full bg-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center">
-              <XlsxViewerTable
-                fileData={fileData}
-                currentSheet={currentPage}
-                onSheetNames={(names) => setTotalPages(names.length)}
-                className="w-full h-full min-h-[400px]"
-              />
-            </div>
-          )}
-          {!loading && !error && !isPdf && !isXlsx && (
-            <div className="flex flex-col items-center gap-3 text-center text-muted-foreground">
-              <FileText className="h-8 w-8" />
-              <p className="max-w-xs text-sm">
-                Pré-visualização não disponível para {doc?.arquivo_nome || "este arquivo"}.
-              </p>
-              {rawUrl && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => window.open(rawUrl, "_blank", "noopener,noreferrer")}
-                >
-                  <Upload className="mr-1 h-4 w-4 rotate-180" /> Baixar arquivo
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {(isPdf || isXlsx) && !loading && !error && (
-          <SheetFooter className="px-6 py-4 border-t flex items-center justify-between flex-shrink-0">
-            <span className="text-sm text-muted-foreground">
-              {isPdf ? "Página" : "Aba"} {currentPage} de {totalPages}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Próxima <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </SheetFooter>
-        )}
-      </SheetContent>
-    </Sheet>
   );
 }
 
@@ -1038,12 +453,15 @@ function EditAtivoDialog({
   onOpenChange,
   onSave,
   saving,
+  showClassificacao = true,
 }: {
   asset: AtivoComDocumentosResponse;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSave: (data: AtivoUpdateRequest) => void;
   saving: boolean;
+  /** false for the "Documentos do Fundo" card — Fund não tem classificação. */
+  showClassificacao?: boolean;
 }) {
   const [nome, setNome] = useState(asset.nome);
   const [sub, setSub] = useState(asset.sub ?? "");
@@ -1061,7 +479,11 @@ function EditAtivoDialog({
 
   function handleSave() {
     if (!nome.trim()) return;
-    onSave({ nome: nome.trim(), sub: sub.trim() || undefined, classificacao_id: classificacaoId });
+    onSave({
+      nome: nome.trim(),
+      sub: sub.trim() || undefined,
+      ...(showClassificacao ? { classificacao_id: classificacaoId } : {}),
+    });
   }
 
   return (
@@ -1083,10 +505,12 @@ function EditAtivoDialog({
               onChange={(e) => setSub(e.target.value)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label>Classificação</Label>
-            <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
-          </div>
+          {showClassificacao && (
+            <div className="space-y-1.5">
+              <Label>Classificação</Label>
+              <ClassificacaoSelect value={classificacaoId} onChange={setClassificacaoId} />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
@@ -1211,10 +635,14 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
   const [novoAtivoOpen, setNovoAtivoOpen] = useState(false);
   const [classificacoesOpen, setClassificacoesOpen] = useState(false);
+  const [orderBy, setOrderBy] = useState<DocumentoOrderBy | undefined>(undefined);
+  const [orderDir, setOrderDir] = useState<OrderDir>("asc");
 
   const query = useQuery({
-    queryKey: fundoId != null ? documentoKeys.byFundo(fundoId) : documentoKeys.all,
-    queryFn: () => listDocumentosByFundo(fundoId as number),
+    queryKey: fundoId != null
+      ? [...documentoKeys.byFundo(fundoId), orderBy, orderDir]
+      : documentoKeys.all,
+    queryFn: () => listDocumentosByFundo(fundoId as number, orderBy, orderDir),
     enabled: fundoId != null,
   });
 
@@ -1255,14 +683,21 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const assets = query.data?.assets ?? [];
   const fundo = query.data?.fundo;
 
+  function handleSortChange(nextOrderBy: DocumentoOrderBy | undefined, nextOrderDir: OrderDir) {
+    setOrderBy(nextOrderBy);
+    setOrderDir(nextOrderDir);
+  }
+
   return (
     <div>
       {/* ── Documentos por Ativos ── */}
       <div className="mb-4 flex items-baseline justify-between">
         <h3 className="text-base font-semibold">Documentos por Ativos</h3>
-        <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
-          <Plus className="mr-1 h-4 w-4" /> Novo ativo
-        </Button>
+        {assets.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" /> Novo ativo
+          </Button>
+        )}
       </div>
 
       {assets.length === 0 ? (
@@ -1282,6 +717,9 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
             asset={asset}
             fundoId={fundoId}
             onOpenClassificacoes={() => setClassificacoesOpen(true)}
+            orderBy={orderBy}
+            orderDir={orderDir}
+            onSortChange={handleSortChange}
           />
         ))
       )}
@@ -1296,6 +734,9 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
           fundoId={fundoId}
           isFundoSingleton
           onOpenClassificacoes={() => setClassificacoesOpen(true)}
+          orderBy={orderBy}
+          orderDir={orderDir}
+          onSortChange={handleSortChange}
         />
       )}
 

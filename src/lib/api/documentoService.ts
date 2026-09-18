@@ -13,6 +13,9 @@ export type DocTipo =
 
 export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 
+export type DocumentoOrderBy = "nome" | "data_criacao" | "status" | "cadencia";
+export type OrderDir = "asc" | "desc";
+
 // Livre por documento (não fixa pelo tipo) — o mesmo DocTipo pode ter
 // cadências diferentes conforme o ativo/contexto.
 export type Cadencia =
@@ -55,13 +58,17 @@ export interface LinkedPrazoInfo {
 
 export interface DocumentoResponse {
   id: string;
-  ativo_id: string;
-  fundo_id: number;
+  /** Exactly one owner is set: gestora_id alone, or fundo_id (ativo_id optional within it). */
+  ativo_id?: string | null;
+  fundo_id?: number | null;
+  gestora_id?: string | null;
   tipo: DocTipo;
   /** Label livre — só usado (e obrigatório) quando tipo="outro". */
   nome_personalizado?: string | null;
   cadencia: Cadencia;
   periodo_referencia?: string | null;
+  /** Texto livre, qualquer tipo de documento. */
+  observacao?: string | null;
   versao?: string | null;
   arquivo_nome?: string | null;
   arquivo_tamanho?: number | null;
@@ -121,12 +128,15 @@ export interface AtivoUpdateRequest {
 }
 
 export interface DocumentoCreateRequest {
-  ativo_id: string;
-  fundo_id: number;
+  /** Exactly one owner: gestora_id alone, or ativo_id+fundo_id together. */
+  ativo_id?: string;
+  fundo_id?: number;
+  gestora_id?: string;
   tipo: DocTipo;
   nome_personalizado?: string; // obrigatório quando tipo="outro"
   cadencia?: Cadencia; // se omitido, o backend usa a cadência sugerida do tipo
   periodo_referencia?: string;
+  observacao?: string;
 }
 
 export interface DocumentoUpdateRequest {
@@ -134,6 +144,7 @@ export interface DocumentoUpdateRequest {
   cadencia?: Cadencia;
   periodo_referencia?: string;
   proximo_vencimento?: string; // "YYYY-MM-DD"
+  observacao?: string;
 }
 
 export interface ConfirmUploadRequest {
@@ -212,10 +223,40 @@ export async function deleteAtivo(id: string): Promise<void> {
   await handleResponse<void>(response);
 }
 
+// ── Card "Documentos do Fundo" — nome/sub vivem no Fund, não num Ativo ────────
+// (T11/D9: o singleton `Ativo` virtual foi aposentado). Chama o endpoint
+// genérico de Fund em vez de reviver `lib/api/fundService.ts`, que é código
+// legado da era Pipeline (schema desatualizado, sem consumidor vivo — D7).
+
+export interface FundDocumentosMetaUpdateRequest {
+  documentos_nome?: string;
+  documentos_sub?: string;
+}
+
+export async function updateFundDocumentosMeta(
+  fundoId: number,
+  data: FundDocumentosMetaUpdateRequest
+): Promise<void> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/funds/${fundoId}`, {
+    method: "PUT",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  });
+  await handleResponse<unknown>(response);
+}
+
 // ── Documentos — leitura agrupada + CRUD ───────────────────────────────────────
 
-export async function listDocumentosByFundo(fundoId: number): Promise<FundoDocumentosResponse> {
-  const url = `${FUNDS_API_BASE_URL}/fundos/${fundoId}/documentos`;
+export async function listDocumentosByFundo(
+  fundoId: number,
+  orderBy?: DocumentoOrderBy,
+  orderDir: OrderDir = "asc"
+): Promise<FundoDocumentosResponse> {
+  const params = new URLSearchParams();
+  if (orderBy) params.set("order_by", orderBy);
+  if (orderBy) params.set("order_dir", orderDir);
+  const qs = params.toString();
+  const url = `${FUNDS_API_BASE_URL}/fundos/${fundoId}/documentos${qs ? `?${qs}` : ""}`;
   return handleResponse<FundoDocumentosResponse>(await fetch(url));
 }
 

@@ -1,3 +1,12 @@
+// DEPRECATED (SPEC07-document-improvements, T16). Not reachable from the live
+// app: the "Controle de Ativos" tab was removed from src/pages/Fundos.tsx, and
+// the /controle-de-ativos + /relatorio-teste routes redirect to /fundos. Its
+// core action (POST /report, via WORKER_URL below) was disabled (501) in T4
+// of this same spec: it built a PDF hardcoded to a fund that no longer exists
+// in the system. To reactivate: restore /report in data_fidc/report/api.py
+// (layout code is at data_fidc/deprecated/pdf_builder.py), move this file
+// back to src/components/fundos/, and re-add the "controle" tab in
+// src/pages/Fundos.tsx.
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useReportJob, type ConfigPayload } from "@/contexts/ReportJobContext";
 import {
