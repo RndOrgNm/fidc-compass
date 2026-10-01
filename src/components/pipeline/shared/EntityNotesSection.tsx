@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@clerk/clerk-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
 import { listNotes, createNote, type EntityType } from "@/lib/api/noteService";
 import { useToast } from "@/hooks/use-toast";
+
+// Mesma cadeia de fallback de ObrigacaoFormDialog/PrazosContent: nome completo,
+// depois primeiro+último nome, depois o e-mail — sempre algo identificável.
+function currentUserName(user: ReturnType<typeof useUser>["user"]): string | undefined {
+  return (
+    user?.fullName ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+    user?.primaryEmailAddress?.emailAddress ||
+    undefined
+  );
+}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString("pt-BR", {
@@ -30,6 +42,7 @@ export function EntityNotesSection({
 }: EntityNotesSectionProps) {
   const [content, setContent] = useState("");
   const { toast } = useToast();
+  const { user } = useUser();
   const queryClient = useQueryClient();
   const queryKey = ["entity-notes", entityType, entityId];
 
@@ -41,7 +54,12 @@ export function EntityNotesSection({
 
   const mutation = useMutation({
     mutationFn: () =>
-      createNote({ entity_type: entityType, entity_id: entityId, content }),
+      createNote({
+        entity_type: entityType,
+        entity_id: entityId,
+        content,
+        created_by: currentUserName(user),
+      }),
     onSuccess: () => {
       setContent("");
       queryClient.invalidateQueries({ queryKey });

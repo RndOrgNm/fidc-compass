@@ -689,8 +689,8 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   // Fundo first, then each real ativo — one selector instead of stacking every
   // asset's full document panel on screen at once (REQ9).
   const options = [
-    ...(fundo ? [{ id: fundo.ativo_id, label: FUNDO_OPTION_LABEL }] : []),
-    ...assets.map((a) => ({ id: a.ativo_id, label: a.nome })),
+    ...(fundo ? [{ id: fundo.ativo_id, label: FUNDO_OPTION_LABEL, sub: undefined as string | null | undefined }] : []),
+    ...assets.map((a) => ({ id: a.ativo_id, label: a.nome, sub: a.sub })),
   ];
   // Self-correcting: an id left over from a different fundo (or never set)
   // just isn't in `options`, so this falls back to the first one — no effect
@@ -707,21 +707,34 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="shrink-0 text-base font-semibold">Documentos</h3>
-          {options.length > 0 && (
-            <Select value={effectiveId} onValueChange={setSelectedId}>
-              <SelectTrigger className="h-8 w-[220px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((o) => (
-                  <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+        {options.length > 0 ? (
+          <Select value={effectiveId} onValueChange={setSelectedId}>
+            <SelectTrigger className="flex h-auto w-auto min-w-72 items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5 hover:bg-accent [&>span]:line-clamp-none">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Building2 className="h-4 w-4" />
+              </span>
+              <SelectValue>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="truncate text-[15px] font-semibold leading-tight tracking-tight">
+                    {options.find((o) => o.id === effectiveId)?.label}
+                  </p>
+                  {options.find((o) => o.id === effectiveId)?.sub && (
+                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                      {options.find((o) => o.id === effectiveId)?.sub}
+                    </p>
+                  )}
+                </div>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((o) => (
+                <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <h3 className="text-base font-semibold">Documentos</h3>
+        )}
         <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
           <Plus className="mr-1 h-4 w-4" /> Novo ativo
         </Button>

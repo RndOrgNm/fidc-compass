@@ -1,16 +1,24 @@
+import { useState } from "react";
 import {
   CalendarClock,
   CalendarPlus,
   Calendar as CalendarIcon,
   Eye,
   FolderX,
+  MessageSquare,
   SquarePen,
   Trash2,
-  Upload,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EntityNotesSection } from "@/components/pipeline/shared/EntityNotesSection";
 import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, docLabel } from "@/data/ativosData";
 import { usePagedList } from "@/hooks/usePagedList";
 import { DocumentPager } from "@/components/fundos/DocumentPager";
@@ -104,6 +112,7 @@ export function DocumentTable({
   emptyMessage: string;
 }) {
   const { page, setPage, totalPages, pageItems: pagedDocs } = usePagedList(docs, pageSize);
+  const [notesDoc, setNotesDoc] = useState<DocumentoResponse | null>(null);
 
   if (docs.length === 0) {
     return (
@@ -221,11 +230,11 @@ export function DocumentTable({
                       <SquarePen className="h-4 w-4" />
                     </button>
                     <button
-                      aria-label="Enviar novo"
-                      onClick={() => onEdit(d)}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10"
+                      aria-label="Notas"
+                      onClick={() => setNotesDoc(d)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
-                      <Upload className="h-4 w-4" />
+                      <MessageSquare className="h-4 w-4" />
                     </button>
                     <button
                       aria-label="Excluir"
@@ -242,6 +251,23 @@ export function DocumentTable({
         </tbody>
       </table>
       <DocumentPager page={page} totalPages={totalPages} onChange={setPage} />
+
+      <Dialog open={notesDoc != null} onOpenChange={(o) => !o && setNotesDoc(null)}>
+        <DialogContent className="sm:max-w-md flex max-h-[80vh] flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Notas · {notesDoc ? docLabel(notesDoc.tipo, notesDoc.nome_personalizado) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {notesDoc && (
+            <EntityNotesSection
+              entityType="documento"
+              entityId={notesDoc.id}
+              enabled={notesDoc != null}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
