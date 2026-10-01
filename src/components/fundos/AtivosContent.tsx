@@ -8,6 +8,8 @@ import {
   Loader2,
   Building2,
   Tags,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -208,7 +210,7 @@ function AssetCard({
           documentoId: prefill.documentoId,
           prefill: {
             topico: prefill.topico,
-            descricao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
+            observacao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
             categoria: "REGULATORIO",
             tipo_prazo: "DIA_FIXO",
             parametros: {},
@@ -630,6 +632,88 @@ function NovoAtivoDialog({
   );
 }
 
+const FUNDO_OPTION_LABEL = "Documentos do Fundo";
+
+type AtivoOption = { id: string; label: string; sub?: string | null };
+
+/**
+ * Trigger + painel próprios (não o `Select` do shadcn/Radix) — mesmo padrão
+ * de `FundContextBar`: o `Select.Value` do Radix duplica visualmente ícone +
+ * texto rico passado como children (um bug conhecido do componente com
+ * conteúdo não-textual), então conteúdo rico aqui usa sempre este formato.
+ */
+function AtivoSelector({
+  options,
+  selectedId,
+  onSelect,
+}: {
+  options: AtivoOption[];
+  selectedId: string | undefined;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.id === selectedId) ?? options[0] ?? null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        disabled={options.length === 0}
+        className={cn(
+          "flex min-w-72 items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5",
+          "hover:bg-accent transition-colors",
+          "disabled:pointer-events-none disabled:opacity-50",
+        )}
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <Building2 className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1 text-left">
+          <p className="truncate text-[15px] font-semibold leading-tight tracking-tight">
+            {selected?.label ?? "Selecionar"}
+          </p>
+          {selected?.sub && (
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{selected.sub}</p>
+          )}
+        </div>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open && options.length > 0 && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-[320px] max-h-80 overflow-y-auto rounded-lg border border-border bg-[#10141a] shadow-[0_20px_40px_-12px_rgba(3,6,12,0.7)] p-1.5">
+            {options.map((o) => {
+              const active = o.id === selectedId;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(o.id);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors",
+                    active ? "bg-primary/12" : "hover:bg-accent",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[13.5px] font-medium">{o.label}</p>
+                    {o.sub && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{o.sub}</p>}
+                  </div>
+                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Content ───────────────────────────────────────────────────────────────────
 export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
@@ -637,6 +721,7 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const [classificacoesOpen, setClassificacoesOpen] = useState(false);
   const [orderBy, setOrderBy] = useState<DocumentoOrderBy | undefined>(undefined);
   const [orderDir, setOrderDir] = useState<OrderDir>("asc");
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
 
   const query = useQuery({
     queryKey: fundoId != null
@@ -683,6 +768,19 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const assets = query.data?.assets ?? [];
   const fundo = query.data?.fundo;
 
+  // Fundo first, then each real ativo — one selector instead of stacking every
+  // asset's full document panel on screen at once (REQ9).
+  const options = [
+    ...(fundo ? [{ id: fundo.ativo_id, label: FUNDO_OPTION_LABEL, sub: undefined as string | null | undefined }] : []),
+    ...assets.map((a) => ({ id: a.ativo_id, label: a.nome, sub: a.sub })),
+  ];
+  // Self-correcting: an id left over from a different fundo (or never set)
+  // just isn't in `options`, so this falls back to the first one — no effect
+  // needed to reset state when `fundoId` changes.
+  const effectiveId = options.some((o) => o.id === selectedId) ? selectedId : options[0]?.id;
+  const isFundoSelected = effectiveId != null && effectiveId === fundo?.ativo_id;
+  const selectedAsset = isFundoSelected ? fundo : assets.find((a) => a.ativo_id === effectiveId);
+
   function handleSortChange(nextOrderBy: DocumentoOrderBy | undefined, nextOrderDir: OrderDir) {
     setOrderBy(nextOrderBy);
     setOrderDir(nextOrderDir);
@@ -690,17 +788,29 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   return (
     <div>
-      {/* ── Documentos por Ativos ── */}
-      <div className="mb-4 flex items-baseline justify-between">
-        <h3 className="text-base font-semibold">Documentos por Ativos</h3>
-        {assets.length > 0 && (
-          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Novo ativo
-          </Button>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {options.length > 0 ? (
+          <AtivoSelector options={options} selectedId={effectiveId} onSelect={setSelectedId} />
+        ) : (
+          <h3 className="text-base font-semibold">Documentos</h3>
         )}
+        <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Novo ativo
+        </Button>
       </div>
 
-      {assets.length === 0 ? (
+      {selectedAsset ? (
+        <AssetCard
+          key={selectedAsset.ativo_id}
+          asset={selectedAsset}
+          fundoId={fundoId}
+          isFundoSingleton={isFundoSelected}
+          onOpenClassificacoes={() => setClassificacoesOpen(true)}
+          orderBy={orderBy}
+          orderDir={orderDir}
+          onSortChange={handleSortChange}
+        />
+      ) : (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Building2 className="h-7 w-7 text-muted-foreground/60" />
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -710,34 +820,6 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
             <Plus className="mr-1 h-4 w-4" /> Novo ativo
           </Button>
         </div>
-      ) : (
-        assets.map((asset) => (
-          <AssetCard
-            key={asset.ativo_id}
-            asset={asset}
-            fundoId={fundoId}
-            onOpenClassificacoes={() => setClassificacoesOpen(true)}
-            orderBy={orderBy}
-            orderDir={orderDir}
-            onSortChange={handleSortChange}
-          />
-        ))
-      )}
-
-      {/* ── Documentos por Fundo ── */}
-      <div className="mb-4 mt-9">
-        <h3 className="text-base font-semibold">Documentos por Fundo</h3>
-      </div>
-      {fundo && (
-        <AssetCard
-          asset={fundo}
-          fundoId={fundoId}
-          isFundoSingleton
-          onOpenClassificacoes={() => setClassificacoesOpen(true)}
-          orderBy={orderBy}
-          orderDir={orderDir}
-          onSortChange={handleSortChange}
-        />
       )}
 
       <NovoAtivoDialog

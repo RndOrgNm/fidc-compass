@@ -91,7 +91,7 @@ const optInt = (min: number, max: number) =>
 const schema = z
   .object({
     topico: z.string().trim().min(1, "Informe o tópico"),
-    descricao: z.string().trim().optional(),
+    observacao: z.string().trim().optional(),
     categoria: z.enum(["REGULATORIO", "OPERACIONAL", "RECEBIVEL", "COTISTA"]),
     tipo_prazo: z.enum([
       "DIA_FIXO",
@@ -151,7 +151,7 @@ function buildParametros(v: FormValues): Record<string, number> {
 export interface ObrigacaoFormInitial {
   id?: string;
   topico: string;
-  descricao?: string | null;
+  observacao?: string | null;
   categoria: Categoria;
   tipo_prazo: TipoPrazo;
   parametros: Record<string, number>;
@@ -187,7 +187,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
     resolver: zodResolver(schema),
     defaultValues: {
       topico: "",
-      descricao: "",
+      observacao: "",
       categoria: "REGULATORIO",
       tipo_prazo: "DIA_FIXO",
       antecedencia_alerta_dias: 7,
@@ -204,7 +204,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
     if (!open) return;
     reset({
       topico: initial?.topico ?? "",
-      descricao: initial?.descricao ?? "",
+      observacao: initial?.observacao ?? "",
       categoria: initial?.categoria ?? "REGULATORIO",
       tipo_prazo: initial?.tipo_prazo ?? "DIA_FIXO",
       antecedencia_alerta_dias: initial?.antecedencia_alerta_dias ?? 7,
@@ -252,7 +252,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
       if (isEdit && initial?.id) {
         return updateObrigacao(initial.id, {
           topico: values.topico,
-          descricao: values.descricao || undefined,
+          observacao: values.observacao || undefined,
           categoria: values.categoria,
           tipo_prazo: values.tipo_prazo,
           parametros,
@@ -267,7 +267,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
       return createObrigacao({
         ...owner,
         topico: values.topico,
-        descricao: values.descricao || undefined,
+        observacao: values.observacao || undefined,
         categoria: values.categoria,
         tipo_prazo: values.tipo_prazo,
         parametros,
@@ -345,13 +345,13 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="descricao">Descrição <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+            <Label htmlFor="observacao">Observação <span className="text-muted-foreground font-normal">(opcional)</span></Label>
             <Textarea
-              id="descricao"
+              id="observacao"
               placeholder="Detalhes adicionais sobre a obrigação…"
               rows={2}
               className="resize-none"
-              {...register("descricao")}
+              {...register("observacao")}
             />
           </div>
 

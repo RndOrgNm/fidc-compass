@@ -43,7 +43,7 @@ export interface ObrigacaoResponse {
   intervalo_meses: number;
   criado_por: string | null;
   criado_em: string;
-  descricao?: string | null;
+  observacao?: string | null;
   responsaveis: ResponsavelInfo[];
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
@@ -73,7 +73,7 @@ export interface InstanciaResponse {
   status: PrazoStatus;
   concluido_por: string | null;
   concluido_em: string | null;
-  descricao?: string | null;
+  observacao?: string | null;
   responsaveis: ResponsavelInfo[];
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
@@ -130,7 +130,7 @@ export type ObrigacaoCreateRequest = PrazoOwner & {
   intervalo_meses?: number;
   criado_por?: string;
   criado_por_nome?: string;
-  descricao?: string;
+  observacao?: string;
   responsaveis: ResponsavelInfo[];
   ciclo_inicial?: string; // "YYYY-MM"; defaults to current month on the server
 };
@@ -143,7 +143,7 @@ export interface ObrigacaoUpdateRequest {
   antecedencia_alerta_dias?: number;
   recorrente?: boolean;
   intervalo_meses?: number;
-  descricao?: string;
+  observacao?: string;
   responsaveis?: ResponsavelInfo[];
   atualizado_por?: string;
   atualizado_por_nome?: string;
