@@ -1,12 +1,12 @@
 import type { InstanciaResponse } from "@/lib/api/prazoService";
 import { CAT_META, TIPO_LABEL, STATUS_META, displayStatus, formatVencBr } from "./prazoMeta";
 
-const HEADERS = ["Tópico", "Descrição", "Responsável", "Categoria", "Tipo", "Vencimento", "Status"];
+const HEADERS = ["Tópico", "Observação", "Responsável", "Categoria", "Tipo", "Vencimento", "Status"];
 
 function toRows(instancias: InstanciaResponse[]): string[][] {
   return instancias.map((i) => [
     i.topico,
-    i.descricao ?? "",
+    i.observacao ?? "",
     (i.responsaveis ?? []).map((r) => r.nome).join(", "),
     CAT_META[i.categoria].label,
     TIPO_LABEL[i.tipo_prazo],

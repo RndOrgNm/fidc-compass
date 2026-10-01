@@ -208,7 +208,7 @@ function AssetCard({
           documentoId: prefill.documentoId,
           prefill: {
             topico: prefill.topico,
-            descricao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
+            observacao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
             categoria: "REGULATORIO",
             tipo_prazo: "DIA_FIXO",
             parametros: {},
@@ -630,6 +630,8 @@ function NovoAtivoDialog({
   );
 }
 
+const FUNDO_OPTION_LABEL = "Documentos do Fundo";
+
 // ── Content ───────────────────────────────────────────────────────────────────
 export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
@@ -637,6 +639,7 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const [classificacoesOpen, setClassificacoesOpen] = useState(false);
   const [orderBy, setOrderBy] = useState<DocumentoOrderBy | undefined>(undefined);
   const [orderDir, setOrderDir] = useState<OrderDir>("asc");
+  const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
 
   const query = useQuery({
     queryKey: fundoId != null
@@ -683,6 +686,19 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const assets = query.data?.assets ?? [];
   const fundo = query.data?.fundo;
 
+  // Fundo first, then each real ativo — one selector instead of stacking every
+  // asset's full document panel on screen at once (REQ9).
+  const options = [
+    ...(fundo ? [{ id: fundo.ativo_id, label: FUNDO_OPTION_LABEL }] : []),
+    ...assets.map((a) => ({ id: a.ativo_id, label: a.nome })),
+  ];
+  // Self-correcting: an id left over from a different fundo (or never set)
+  // just isn't in `options`, so this falls back to the first one — no effect
+  // needed to reset state when `fundoId` changes.
+  const effectiveId = options.some((o) => o.id === selectedId) ? selectedId : options[0]?.id;
+  const isFundoSelected = effectiveId != null && effectiveId === fundo?.ativo_id;
+  const selectedAsset = isFundoSelected ? fundo : assets.find((a) => a.ativo_id === effectiveId);
+
   function handleSortChange(nextOrderBy: DocumentoOrderBy | undefined, nextOrderDir: OrderDir) {
     setOrderBy(nextOrderBy);
     setOrderDir(nextOrderDir);
@@ -690,17 +706,39 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
 
   return (
     <div>
-      {/* ── Documentos por Ativos ── */}
-      <div className="mb-4 flex items-baseline justify-between">
-        <h3 className="text-base font-semibold">Documentos por Ativos</h3>
-        {assets.length > 0 && (
-          <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Novo ativo
-          </Button>
-        )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="shrink-0 text-base font-semibold">Documentos</h3>
+          {options.length > 0 && (
+            <Select value={effectiveId} onValueChange={setSelectedId}>
+              <SelectTrigger className="h-8 w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setNovoAtivoOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" /> Novo ativo
+        </Button>
       </div>
 
-      {assets.length === 0 ? (
+      {selectedAsset ? (
+        <AssetCard
+          key={selectedAsset.ativo_id}
+          asset={selectedAsset}
+          fundoId={fundoId}
+          isFundoSingleton={isFundoSelected}
+          onOpenClassificacoes={() => setClassificacoesOpen(true)}
+          orderBy={orderBy}
+          orderDir={orderDir}
+          onSortChange={handleSortChange}
+        />
+      ) : (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <Building2 className="h-7 w-7 text-muted-foreground/60" />
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -710,34 +748,6 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
             <Plus className="mr-1 h-4 w-4" /> Novo ativo
           </Button>
         </div>
-      ) : (
-        assets.map((asset) => (
-          <AssetCard
-            key={asset.ativo_id}
-            asset={asset}
-            fundoId={fundoId}
-            onOpenClassificacoes={() => setClassificacoesOpen(true)}
-            orderBy={orderBy}
-            orderDir={orderDir}
-            onSortChange={handleSortChange}
-          />
-        ))
-      )}
-
-      {/* ── Documentos por Fundo ── */}
-      <div className="mb-4 mt-9">
-        <h3 className="text-base font-semibold">Documentos por Fundo</h3>
-      </div>
-      {fundo && (
-        <AssetCard
-          asset={fundo}
-          fundoId={fundoId}
-          isFundoSingleton
-          onOpenClassificacoes={() => setClassificacoesOpen(true)}
-          orderBy={orderBy}
-          orderDir={orderDir}
-          onSortChange={handleSortChange}
-        />
       )}
 
       <NovoAtivoDialog

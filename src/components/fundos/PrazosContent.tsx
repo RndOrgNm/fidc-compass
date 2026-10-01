@@ -14,11 +14,19 @@ import {
   RotateCcw,
   Loader2,
   CalendarClock,
+  MessageSquare,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { EntityNotesSection } from "@/components/pipeline/shared/EntityNotesSection";
 import {
   Select,
   SelectContent,
@@ -225,6 +233,7 @@ function PrazoItem({
   const cat = CAT_META[inst.categoria];
   const st = STATUS_META[displayStatus(inst)];
   const [eventoDate, setEventoDate] = useState(inst.data_evento_gatilho ?? "");
+  const [notesOpen, setNotesOpen] = useState(false);
 
   const venc = inst.data_vencimento;
   const dd = venc ? Number(venc.split("-")[2]) : null;
@@ -264,8 +273,8 @@ function PrazoItem({
           </span>
         </div>
 
-        {inst.descricao && (
-          <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{inst.descricao}</p>
+        {inst.observacao && (
+          <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{inst.observacao}</p>
         )}
 
         {inst.responsaveis?.length > 0 && (
@@ -349,6 +358,16 @@ function PrazoItem({
             size="icon"
             variant="ghost"
             className="h-7 w-7 text-muted-foreground"
+            aria-label="Notas"
+            disabled={busy}
+            onClick={() => setNotesOpen(true)}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 text-muted-foreground"
             aria-label="Editar"
             disabled={busy}
             onClick={() => onEditar(inst)}
@@ -367,6 +386,19 @@ function PrazoItem({
           </Button>
         </div>
       </div>
+
+      <Dialog open={notesOpen} onOpenChange={setNotesOpen}>
+        <DialogContent className="sm:max-w-md flex max-h-[80vh] flex-col">
+          <DialogHeader>
+            <DialogTitle>Notas · {inst.topico}</DialogTitle>
+          </DialogHeader>
+          <EntityNotesSection
+            entityType="instancia_obrigacao"
+            entityId={inst.id}
+            enabled={notesOpen}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -439,7 +471,7 @@ export function PrazosContent({ owner, ownerName, emptyOwnerMessage, emptyStateH
     setFormInitial({
       id: obrigacao.id,
       topico: obrigacao.topico,
-      descricao: obrigacao.descricao,
+      observacao: obrigacao.observacao,
       categoria: obrigacao.categoria,
       tipo_prazo: obrigacao.tipo_prazo,
       parametros: obrigacao.parametros,
@@ -626,7 +658,7 @@ export function PrazosContent({ owner, ownerName, emptyOwnerMessage, emptyStateH
     setFormInitial({
       id: i.obrigacao_id,
       topico: i.topico,
-      descricao: i.descricao,
+      observacao: i.observacao,
       categoria: i.categoria,
       tipo_prazo: i.tipo_prazo,
       parametros: i.parametros,

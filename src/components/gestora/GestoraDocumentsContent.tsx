@@ -130,7 +130,7 @@ export function GestoraDocumentsContent() {
           documentoId: prefill.documentoId,
           prefill: {
             topico: prefill.topico,
-            descricao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
+            observacao: prefill.resp ? `Responsável sugerido: ${prefill.resp}` : undefined,
             categoria: "REGULATORIO",
             tipo_prazo: "DIA_FIXO",
             parametros: {},
