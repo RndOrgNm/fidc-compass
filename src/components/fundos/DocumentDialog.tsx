@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DOC_TYPES, CADENCIA_LABELS, cadenciaSugerida, docLabel } from "@/data/ativosData";
+import { EntityNotesSection } from "@/components/pipeline/shared/EntityNotesSection";
 import {
   getDownloadUrl,
   type DocTipo,
@@ -264,6 +265,13 @@ export function DocumentDialog({
               onChange={(e) => setObservacao(e.target.value)}
             />
           </div>
+
+          {!isNew && doc && (
+            <div className="space-y-1.5">
+              <Label>Comentários</Label>
+              <EntityNotesSection entityType="documento" entityId={doc.id} enabled={open} />
+            </div>
+          )}
 
           {!isNew && doc && (
             <div className="space-y-1.5">

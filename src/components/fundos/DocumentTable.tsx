@@ -22,7 +22,7 @@ import {
   type OrderDir,
 } from "@/lib/api/documentoService";
 
-const DOCS_PAGE_SIZE = 5;
+const DOCS_PAGE_SIZE = 10;
 
 function isoToBr(iso?: string | null): string | null {
   if (!iso) return null;

@@ -1,6 +1,6 @@
 import { FUNDS_API_BASE_URL } from "./config";
 
-export type EntityType = "cedente" | "fund" | "recebivel";
+export type EntityType = "cedente" | "fund" | "recebivel" | "documento" | "instancia_obrigacao";
 
 export interface NoteResponse {
   id: string;
