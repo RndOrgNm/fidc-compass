@@ -8,6 +8,8 @@ import {
   Loader2,
   Building2,
   Tags,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -632,6 +634,86 @@ function NovoAtivoDialog({
 
 const FUNDO_OPTION_LABEL = "Documentos do Fundo";
 
+type AtivoOption = { id: string; label: string; sub?: string | null };
+
+/**
+ * Trigger + painel próprios (não o `Select` do shadcn/Radix) — mesmo padrão
+ * de `FundContextBar`: o `Select.Value` do Radix duplica visualmente ícone +
+ * texto rico passado como children (um bug conhecido do componente com
+ * conteúdo não-textual), então conteúdo rico aqui usa sempre este formato.
+ */
+function AtivoSelector({
+  options,
+  selectedId,
+  onSelect,
+}: {
+  options: AtivoOption[];
+  selectedId: string | undefined;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.id === selectedId) ?? options[0] ?? null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        disabled={options.length === 0}
+        className={cn(
+          "flex min-w-72 items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5",
+          "hover:bg-accent transition-colors",
+          "disabled:pointer-events-none disabled:opacity-50",
+        )}
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <Building2 className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1 text-left">
+          <p className="truncate text-[15px] font-semibold leading-tight tracking-tight">
+            {selected?.label ?? "Selecionar"}
+          </p>
+          {selected?.sub && (
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{selected.sub}</p>
+          )}
+        </div>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open && options.length > 0 && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-[320px] max-h-80 overflow-y-auto rounded-lg border border-border bg-[#10141a] shadow-[0_20px_40px_-12px_rgba(3,6,12,0.7)] p-1.5">
+            {options.map((o) => {
+              const active = o.id === selectedId;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(o.id);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2.5 rounded-md px-3 py-2.5 text-left transition-colors",
+                    active ? "bg-primary/12" : "hover:bg-accent",
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-[13.5px] font-medium">{o.label}</p>
+                    {o.sub && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{o.sub}</p>}
+                  </div>
+                  {active && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── Content ───────────────────────────────────────────────────────────────────
 export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
   const queryClient = useQueryClient();
@@ -708,30 +790,7 @@ export function AtivosContent({ fundoId, fundName }: AtivosContentProps) {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         {options.length > 0 ? (
-          <Select value={effectiveId} onValueChange={setSelectedId}>
-            <SelectTrigger className="flex h-auto w-auto min-w-72 items-center gap-3 rounded-lg border border-border bg-card/50 px-3.5 py-2.5 hover:bg-accent [&>span]:line-clamp-none">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <Building2 className="h-4 w-4" />
-              </span>
-              <SelectValue>
-                <div className="min-w-0 flex-1 text-left">
-                  <p className="truncate text-[15px] font-semibold leading-tight tracking-tight">
-                    {options.find((o) => o.id === effectiveId)?.label}
-                  </p>
-                  {options.find((o) => o.id === effectiveId)?.sub && (
-                    <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                      {options.find((o) => o.id === effectiveId)?.sub}
-                    </p>
-                  )}
-                </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((o) => (
-                <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <AtivoSelector options={options} selectedId={effectiveId} onSelect={setSelectedId} />
         ) : (
           <h3 className="text-base font-semibold">Documentos</h3>
         )}
