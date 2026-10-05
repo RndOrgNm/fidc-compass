@@ -214,15 +214,21 @@ export function EntityNotesSection({
                   className="group border rounded-md p-3 text-sm space-y-1"
                 >
                   <p className="whitespace-pre-wrap">{note.content}</p>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{formatDate(note.created_at)}</span>
-                      {note.updated_at && <span>(editada)</span>}
-                      {note.created_by && (
-                        <span className="font-medium">{note.created_by}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <span>{formatDate(note.created_at)}</span>
+                        {note.created_by && (
+                          <span className="font-medium">{note.created_by}</span>
+                        )}
+                      </div>
+                      {note.updated_at && (
+                        <span className="italic">
+                          editada em {formatDate(note.updated_at)}
+                        </span>
                       )}
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         size="icon"
                         variant="ghost"
