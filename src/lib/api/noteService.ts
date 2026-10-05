@@ -9,6 +9,7 @@ export interface NoteResponse {
   content: string;
   created_by: string | null;
   created_at: string;
+  updated_at: string | null;
 }
 
 export interface NoteListResponse {
@@ -21,6 +22,10 @@ export interface NoteCreateRequest {
   entity_id: string;
   content: string;
   created_by?: string;
+}
+
+export interface NoteUpdateRequest {
+  content: string;
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -66,4 +71,33 @@ export async function createNote(
     body: JSON.stringify(data),
   });
   return handleResponse<NoteResponse>(response);
+}
+
+export async function updateNote(
+  noteId: string,
+  data: NoteUpdateRequest
+): Promise<NoteResponse> {
+  const url = `${FUNDS_API_BASE_URL}/notes/${noteId}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<NoteResponse>(response);
+}
+
+export async function deleteNote(noteId: string): Promise<void> {
+  const url = `${FUNDS_API_BASE_URL}/notes/${noteId}`;
+  const response = await fetch(url, { method: "DELETE" });
+  if (!response.ok) {
+    let errorMessage = "An error occurred";
+    try {
+      const errorData = await response.json();
+      errorMessage =
+        typeof errorData.detail === "string" ? errorData.detail : errorMessage;
+    } catch {
+      errorMessage = response.statusText || `HTTP ${response.status}`;
+    }
+    throw new Error(errorMessage);
+  }
 }
