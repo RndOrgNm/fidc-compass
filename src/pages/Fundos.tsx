@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Users, CalendarClock, LineChart, Building2 } from "lucide-react";
+import { Users, CalendarClock, LineChart, Building2, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FundContextBar } from "@/components/fundos/FundContextBar";
@@ -8,10 +8,11 @@ import { AtivosContent } from "@/components/fundos/AtivosContent";
 import { EmConstrucao } from "@/components/fundos/EmConstrucao";
 import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { GraficosContent } from "@/components/fundos/GraficosContent";
+import { PropostasContent } from "@/components/fundos/propostas/PropostasContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
-const VALID_TABS = ["ativos", "prazos", "cotistas", "graficos"];
+const VALID_TABS = ["ativos", "prazos", "propostas", "cotistas", "graficos"];
 
 function fundDisplayName(f: HomeFundRow): string {
   return (f.apelido?.trim() || f.nome).trim() || "—";
@@ -71,6 +72,13 @@ export default function Fundos() {
               Prazos
             </TabsTrigger>
             <TabsTrigger
+              value="propostas"
+              className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+            >
+              <Sparkles className="h-4 w-4" />
+              Propostas
+            </TabsTrigger>
+            <TabsTrigger
               value="cotistas"
               className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-4 py-3 text-sm font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
@@ -101,6 +109,12 @@ export default function Fundos() {
               emptyOwnerMessage="Selecione um fundo para ver suas obrigações."
               emptyStateHint="deste fundo"
             />
+          </TabsContent>
+
+          <TabsContent value="propostas" className="mt-8">
+            {/* No proposal source exists yet — empty on purpose until a
+                backend produces document/prazo proposals to feed here. */}
+            <PropostasContent documentoProposals={[]} prazoProposals={[]} />
           </TabsContent>
 
           <TabsContent value="graficos" className="mt-8">
