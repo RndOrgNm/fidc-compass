@@ -1,0 +1,58 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+
+import { PropostaRejectForm } from "./PropostaRejectForm";
+
+describe("PropostaRejectForm", () => {
+  it("disables the confirm button until a reason is picked", async () => {
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={() => {}} />);
+
+    const confirmButton = screen.getByRole("button", { name: /confirmar rejeição/i });
+    expect(confirmButton).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Período incorreto" }));
+
+    expect(confirmButton).toBeEnabled();
+  });
+
+  it("calls onConfirm with the selected reason", async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={onConfirm} />);
+
+    await user.click(screen.getByRole("button", { name: "Ativo errado" }));
+    await user.click(screen.getByRole("button", { name: /confirmar rejeição/i }));
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith("Ativo errado");
+  });
+
+  it("calls onCancel and never onConfirm when cancelled", async () => {
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={onCancel} onConfirm={onConfirm} />);
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("only one reason chip is active at a time", async () => {
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={() => {}} />);
+
+    const docErrado = screen.getByRole("button", { name: "Documento errado" });
+    const periodoIncorreto = screen.getByRole("button", { name: "Período incorreto" });
+
+    await user.click(docErrado);
+    expect(docErrado.className).toContain("border-border/80");
+
+    await user.click(periodoIncorreto);
+    expect(periodoIncorreto.className).toContain("border-border/80");
+    expect(docErrado.className).not.toContain("border-border/80");
+  });
+});

@@ -3,14 +3,19 @@ import {
   CalendarClock,
   CalendarPlus,
   Calendar as CalendarIcon,
+  Check,
   Eye,
   FolderX,
   MessageSquare,
+  Paperclip,
   SquarePen,
   Trash2,
+  Undo2,
+  X,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import {
   Dialog,
@@ -23,12 +28,29 @@ import { DOC_TYPES, DOC_STATUS, CADENCIA_LABELS, docLabel } from "@/data/ativosD
 import { usePagedList } from "@/hooks/usePagedList";
 import { DocumentPager } from "@/components/fundos/DocumentPager";
 import { DocumentSortableHeader } from "@/components/fundos/DocumentSortableHeader";
+import { PropostaRejectForm } from "@/components/fundos/propostas/PropostaRejectForm";
 import type { PrazoPrefill } from "@/components/fundos/DocumentDialog";
+import type { PropostaDecisao, PropostaDocumento } from "@/types/propostas";
 import {
   type DocumentoResponse,
   type DocumentoOrderBy,
   type OrderDir,
 } from "@/lib/api/documentoService";
+
+/**
+ * Optional "proposal mode" for a single row — the agent proposes linking
+ * `proposta.arquivo` to the document `proposta.documentoId`. Absent, the
+ * table behaves exactly as before; present, it highlights that one row and
+ * swaps its file/actions cells for the proposal's state, with an
+ * approve/reject footer below the table.
+ */
+export interface DocumentTableProposal {
+  proposta: PropostaDocumento;
+  decision: PropostaDecisao | null;
+  onApprove: () => void;
+  onReject: (motivo: string) => void;
+  onUndo: () => void;
+}
 
 const DOCS_PAGE_SIZE = 10;
 
@@ -96,6 +118,7 @@ export function DocumentTable({
   onCreatePrazo,
   onVerPrazo,
   emptyMessage,
+  proposal,
 }: {
   docs: DocumentoResponse[];
   /** Nome curto do dono — prefixo do tópico ao criar um prazo a partir de uma linha. */
@@ -110,9 +133,11 @@ export function DocumentTable({
   onCreatePrazo: (prefill: PrazoPrefill) => void;
   onVerPrazo: (obrigacaoId: string) => void;
   emptyMessage: string;
+  proposal?: DocumentTableProposal;
 }) {
   const { page, setPage, totalPages, pageItems: pagedDocs } = usePagedList(docs, pageSize);
   const [notesDoc, setNotesDoc] = useState<DocumentoResponse | null>(null);
+  const [rejecting, setRejecting] = useState(false);
 
   if (docs.length === 0) {
     return (
@@ -158,10 +183,15 @@ export function DocumentTable({
             const DocIcon = meta.icon;
             const StatusIcon = st.icon;
             const label = docLabel(d.tipo, d.nome_personalizado);
+            const rowProposal = proposal?.proposta.documentoId === d.id ? proposal : undefined;
+            const pending = rowProposal && !rowProposal.decision;
             return (
               <tr
                 key={d.id}
-                className="border-b border-border/50 transition-colors last:border-b-0 hover:bg-card/40"
+                className={cn(
+                  "border-b border-border/50 transition-colors last:border-b-0 hover:bg-card/40",
+                  pending && "bg-primary/5 hover:bg-primary/5",
+                )}
               >
                 <td className="py-2.5 pr-3">
                   <TooltipProvider delayDuration={200}>
@@ -188,7 +218,11 @@ export function DocumentTable({
                 </td>
                 <td className="px-3 py-2.5 text-xs text-muted-foreground">{d.periodo_referencia || "—"}</td>
                 <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                  {d.vigente_desde ? (
+                  {rowProposal && rowProposal.decision?.tipo !== "rejeitada" ? (
+                    <span className="inline-flex items-center gap-1.5 text-foreground">
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" /> {rowProposal.proposta.arquivo.nome}
+                    </span>
+                  ) : d.vigente_desde ? (
                     `vigente desde ${isoToBr(d.vigente_desde)}`
                   ) : (
                     <span className="italic text-muted-foreground/70">nenhum arquivo enviado</span>
@@ -213,37 +247,53 @@ export function DocumentTable({
                   />
                 </td>
                 <td className="py-2.5 pl-3">
-                  <div className="flex items-center justify-end gap-0.5">
-                    <button
-                      aria-label="Ver documento"
-                      onClick={() => onView(d)}
-                      disabled={!d.arquivo_nome}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button
-                      aria-label="Editar campos"
-                      onClick={() => onEdit(d)}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      <SquarePen className="h-4 w-4" />
-                    </button>
-                    <button
-                      aria-label="Notas"
-                      onClick={() => setNotesDoc(d)}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </button>
-                    <button
-                      aria-label="Excluir"
-                      onClick={() => onDelete(d)}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {rowProposal && !pending ? (
+                    <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                      <span className="text-[12px] text-muted-foreground">
+                        {rowProposal.decision?.tipo === "aprovada"
+                          ? "Aprovada agora"
+                          : `Rejeitada · ${rowProposal.decision?.motivo}`}
+                      </span>
+                      <button
+                        onClick={rowProposal.onUndo}
+                        className="inline-flex items-center gap-1 text-[12px] font-medium text-primary transition-colors hover:text-primary/80"
+                      >
+                        <Undo2 className="h-3.5 w-3.5" /> Desfazer
+                      </button>
+                    </div>
+                  ) : !pending ? (
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button
+                        aria-label="Ver documento"
+                        onClick={() => onView(d)}
+                        disabled={!d.arquivo_nome}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        aria-label="Editar campos"
+                        onClick={() => onEdit(d)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <SquarePen className="h-4 w-4" />
+                      </button>
+                      <button
+                        aria-label="Notas"
+                        onClick={() => setNotesDoc(d)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </button>
+                      <button
+                        aria-label="Excluir"
+                        onClick={() => onDelete(d)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : null}
                 </td>
               </tr>
             );
@@ -251,6 +301,29 @@ export function DocumentTable({
         </tbody>
       </table>
       <DocumentPager page={page} totalPages={totalPages} onChange={setPage} />
+
+      {proposal && !proposal.decision && (
+        <div className="border-t border-border px-1 py-3">
+          {rejecting ? (
+            <PropostaRejectForm
+              onCancel={() => setRejecting(false)}
+              onConfirm={(motivo) => {
+                setRejecting(false);
+                proposal.onReject(motivo);
+              }}
+            />
+          ) : (
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRejecting(true)}>
+                <X className="mr-1 h-4 w-4" /> Rejeitar
+              </Button>
+              <Button size="sm" onClick={proposal.onApprove}>
+                <Check className="mr-1 h-4 w-4" /> Aprovar vínculo
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <Dialog open={notesDoc != null} onOpenChange={(o) => !o && setNotesDoc(null)}>
         <DialogContent className="sm:max-w-md flex max-h-[80vh] flex-col">

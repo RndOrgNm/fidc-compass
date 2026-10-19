@@ -15,6 +15,10 @@ import {
   Loader2,
   CalendarClock,
   MessageSquare,
+  Sparkles,
+  Check,
+  X,
+  Undo2,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -76,6 +80,8 @@ import {
 import { exportPrazosPdf, exportPrazosExcel } from "./prazos/prazoExport";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "./prazos/ResponsavelSelect";
+import { PropostaRejectForm } from "@/components/fundos/propostas/PropostaRejectForm";
+import type { PropostaDecisao, PropostaPrazo } from "@/types/propostas";
 
 // ── MiniCalendar ──────────────────────────────────────────────────────────────
 
@@ -213,15 +219,20 @@ function MiniCalendar({
 
 // ── PrazoItem ─────────────────────────────────────────────────────────────────
 
-function PrazoItem({
-  inst,
-  onConcluir,
-  onReabrir,
-  onEditar,
-  onExcluir,
-  onGatilho,
-  busy,
-}: {
+/**
+ * Proposal mode for an obligation the agent suggests creating from a source
+ * document — there is no `InstanciaResponse` yet, so it renders from
+ * `proposta.sugestao` instead of an inst, with its own approve/reject/undo.
+ */
+export interface PrazoItemProposalProps {
+  proposta: PropostaPrazo;
+  decision: PropostaDecisao | null;
+  onApprove: () => void;
+  onReject: (motivo: string) => void;
+  onUndo: () => void;
+}
+
+type PrazoItemBaseProps = {
   inst: InstanciaResponse;
   onConcluir: (i: InstanciaResponse) => void;
   onReabrir: (i: InstanciaResponse) => void;
@@ -229,7 +240,23 @@ function PrazoItem({
   onExcluir: (i: InstanciaResponse) => void;
   onGatilho: (i: InstanciaResponse, dataEvento: string) => void;
   busy: boolean;
-}) {
+};
+
+type PrazoItemProps = PrazoItemBaseProps | { proposal: PrazoItemProposalProps };
+
+/**
+ * Pure dispatcher — holds no hooks of its own, so it can pick between two
+ * components with unrelated hook sequences without breaking the rules of
+ * hooks (an early return before `RealPrazoItem`'s hooks would).
+ */
+export function PrazoItem(props: PrazoItemProps) {
+  if ("proposal" in props) {
+    return <PrazoProposalItem {...props.proposal} />;
+  }
+  return <RealPrazoItem {...props} />;
+}
+
+function RealPrazoItem({ inst, onConcluir, onReabrir, onEditar, onExcluir, onGatilho, busy }: PrazoItemBaseProps) {
   const cat = CAT_META[inst.categoria];
   const st = STATUS_META[displayStatus(inst)];
   const [eventoDate, setEventoDate] = useState(inst.data_evento_gatilho ?? "");
@@ -399,6 +426,121 @@ function PrazoItem({
           />
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function PrazoProposalItem({ proposta, decision, onApprove, onReject, onUndo }: PrazoItemProposalProps) {
+  const [rejecting, setRejecting] = useState(false);
+  const { sugestao } = proposta;
+  const cat = CAT_META[sugestao.categoria];
+  const pending = !decision;
+  const rejected = decision?.tipo === "rejeitada";
+
+  const venc = sugestao.dataVencimento ?? null;
+  const dd = venc ? Number(venc.split("-")[2]) : null;
+  const mm = venc ? Number(venc.split("-")[1]) : null;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border border-border bg-card/50 px-4 py-3.5 transition-colors hover:border-border/80 hover:bg-card/70 sm:flex-row sm:items-center sm:gap-3.5",
+        pending && "border-l-2 border-l-primary",
+      )}
+    >
+      {/* Date column */}
+      <div className="flex w-full flex-none items-center gap-3 border-border sm:w-[54px] sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:pr-3.5 sm:text-center">
+        {dd && mm ? (
+          <>
+            <div className="text-xl font-semibold tabular-nums leading-none">{String(dd).padStart(2, "0")}</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground sm:mt-1">{MES_ABBR[mm - 1]}</div>
+          </>
+        ) : (
+          <CalendarClock className="h-5 w-5 text-muted-foreground" />
+        )}
+      </div>
+
+      {/* Main content */}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+          {sugestao.topico}
+          <span
+            className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide"
+            style={{ background: `${cat.color}26`, color: cat.color }}
+          >
+            {cat.label}
+          </span>
+        </div>
+
+        {sugestao.observacao && (
+          <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{sugestao.observacao}</p>
+        )}
+
+        {sugestao.responsaveis && sugestao.responsaveis.length > 0 && (
+          <div className="mt-1 flex items-center gap-1.5">
+            <span className="flex -space-x-1.5">
+              {sugestao.responsaveis.slice(0, 3).map((nome) => (
+                <Avatar key={nome} className="h-4 w-4 ring-1 ring-background">
+                  <AvatarFallback className="text-[8px]">{initials(nome)}</AvatarFallback>
+                </Avatar>
+              ))}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {sugestao.responsaveis.length === 1 ? "Responsável: " : "Responsáveis: "}
+              <span className="font-medium text-foreground">{sugestao.responsaveis.join(", ")}</span>
+            </span>
+          </div>
+        )}
+
+        {pending && rejecting && (
+          <div className="mt-3">
+            <PropostaRejectForm
+              onCancel={() => setRejecting(false)}
+              onConfirm={(motivo) => {
+                setRejecting(false);
+                onReject(motivo);
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Right side: status + actions */}
+      <div className="flex flex-none flex-col items-start gap-1.5 sm:items-end">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+            rejected ? "bg-destructive/15 text-destructive" : pending ? "bg-primary/15 text-primary" : "bg-success/15 text-success",
+          )}
+        >
+          {rejected ? <X className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
+          {rejected ? "Rejeitada" : pending ? "Proposta" : "Aprovada"}
+        </span>
+
+        {pending && !rejecting && (
+          <div className="mt-0.5 flex items-center gap-1">
+            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => setRejecting(true)}>
+              Rejeitar
+            </Button>
+            <Button size="sm" className="h-7 gap-1 px-2 text-[11px]" onClick={onApprove}>
+              <Check className="h-3.5 w-3.5" /> Aprovar
+            </Button>
+          </div>
+        )}
+        {!pending && (
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              {rejected ? decision.motivo : "Criada agora"}
+            </span>
+            <button
+              onClick={onUndo}
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              <Undo2 className="h-3.5 w-3.5" /> Desfazer
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
