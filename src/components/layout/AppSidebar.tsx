@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { title: "Home", url: "/", icon: Home },
@@ -112,9 +113,9 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-4 py-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+      <SidebarFooter className={cn("border-t border-sidebar-border py-4", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+          <Avatar className={cn("shrink-0", collapsed ? "h-8 w-8" : "h-10 w-10")}>
             {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
             <AvatarFallback className="bg-primary text-primary-foreground">
               {initials.toUpperCase()}
