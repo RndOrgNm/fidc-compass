@@ -96,4 +96,24 @@ describe("prazoProposals", () => {
     expect(out).toHaveLength(1);
     expect(out[0].sugestao.responsaveis).toEqual(["Ana"]);
   });
+
+  it("carries the source file's name and download url when the proposal has one", () => {
+    const out = prazoProposals([
+      {
+        id: "1", topico: "Balancete", categoria: "REGULATORIO", ativa: true, responsaveis: [],
+        proposta: true, arquivo_origem_nome: "Acordo.pdf", download_url: "https://files.example/a.pdf",
+      } as ObrigacaoResponse,
+    ]);
+
+    expect(out[0].arquivo.nome).toBe("Acordo.pdf");
+    expect(out[0].fileUrl).toBe("https://files.example/a.pdf");
+  });
+
+  it("has no file url when the proposal came without a source file", () => {
+    const out = prazoProposals([
+      { id: "1", topico: "x", categoria: "REGULATORIO", ativa: true, responsaveis: [], proposta: true } as ObrigacaoResponse,
+    ]);
+
+    expect(out[0].fileUrl).toBeNull();
+  });
 });

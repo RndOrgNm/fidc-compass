@@ -74,6 +74,16 @@ describe("PropostasContent", () => {
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
   });
 
+  it("shows when the OneDrive was last checked, and shows nothing when that is unknown", () => {
+    const { rerender } = render(
+      <PropostasContent documentoProposals={[]} prazoProposals={[]} lastSyncLabel="há 12 minutos" />,
+    );
+    expect(screen.getByText(/OneDrive verificado há 12 minutos/)).toBeInTheDocument();
+
+    rerender(<PropostasContent documentoProposals={[]} prazoProposals={[]} />);
+    expect(screen.queryByText(/OneDrive verificado/)).not.toBeInTheDocument();
+  });
+
   it("saves the approval before showing it, and offers no undo once saved", async () => {
     const user = userEvent.setup();
     const onApprove = vi.fn().mockResolvedValue(undefined);

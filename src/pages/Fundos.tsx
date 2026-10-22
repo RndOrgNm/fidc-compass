@@ -14,6 +14,7 @@ import { aprovarPropostaDocumento, rejeitarPropostaDocumento } from "@/lib/api/d
 import { aprovarPropostaObrigacao, rejeitarPropostaObrigacao } from "@/lib/api/prazoService";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import { usePropostas } from "@/hooks/usePropostas";
+import { useOnedriveStatus } from "@/hooks/useOnedriveStatus";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
 const VALID_TABS = ["ativos", "prazos", "propostas", "cotistas", "graficos"];
@@ -39,6 +40,7 @@ export default function Fundos() {
   const selectedFundName = selectedFund ? fundDisplayName(selectedFund) : undefined;
   const propostas = usePropostas(resolvedId);
   const { user } = useUser();
+  const syncLabelText = useOnedriveStatus();
 
   async function handleApproveProposta(kind: PropostaKind, id: string) {
     const confirmadoPor = user?.id ?? "anon";
@@ -139,6 +141,7 @@ export default function Fundos() {
                 prazoProposals={propostas.prazoProposals}
                 onApprove={handleApproveProposta}
                 onReject={handleRejectProposta}
+                lastSyncLabel={syncLabelText}
               />
             )}
           </TabsContent>

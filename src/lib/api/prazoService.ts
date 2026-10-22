@@ -54,6 +54,9 @@ export interface ObrigacaoResponse {
   resumo_arquivo?: string | null;
   confianca?: "alta" | "media" | "baixa" | null;
   proposto_em?: string | null;
+  /** The OneDrive file a proposal came from, copied when it was proposed. */
+  arquivo_origem_nome?: string | null;
+  download_url?: string | null;
 }
 
 export interface ObrigacaoListResponse {

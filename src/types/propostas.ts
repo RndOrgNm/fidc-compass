@@ -54,6 +54,8 @@ export interface PropostaDocumento {
 export interface PropostaPrazo {
   id: string;
   arquivo: PropostaArquivo;
+  /** Where the source file can be downloaded from, when the agent proposed it with one. */
+  fileUrl?: string | null;
   sugestao: {
     topico: string;
     categoria: Categoria;

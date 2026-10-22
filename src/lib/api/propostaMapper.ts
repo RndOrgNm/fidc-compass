@@ -60,7 +60,8 @@ export function prazoProposals(obrigacoes: ObrigacaoResponse[]): PropostaPrazo[]
     .filter((o) => o.proposta && o.ativa)
     .map((o) => ({
       id: o.id,
-      arquivo: { nome: o.resumo_arquivo ?? "documento de origem", paginas: 0 },
+      arquivo: { nome: o.arquivo_origem_nome ?? o.resumo_arquivo ?? "documento de origem", paginas: 0 },
+      fileUrl: o.download_url ?? null,
       sugestao: {
         topico: o.topico,
         categoria: o.categoria,
