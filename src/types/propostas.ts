@@ -56,6 +56,8 @@ export interface PropostaPrazo {
   arquivo: PropostaArquivo;
   /** Where the source file can be downloaded from, when the agent proposed it with one. */
   fileUrl?: string | null;
+  /** Link to the source file in the OneDrive. */
+  onedriveUrl?: string | null;
   sugestao: {
     topico: string;
     categoria: Categoria;

@@ -140,6 +140,34 @@ describe("PropostasContent", () => {
     expect(onApprove).toHaveBeenCalledWith("obrigacao", "prazo-prop-1");
   });
 
+  it("offers the link to the original file in the OneDrive when the proposal has one", async () => {
+    const user = userEvent.setup();
+    const withLink: PropostaPrazo[] = [
+      {
+        ...prazoProposals[0],
+        raciocinio: "A cláusula 4.2 fixa reajuste anual pelo IPCA [1].",
+        onedriveUrl: "https://onedrive.example/aditivo.pdf",
+      },
+    ];
+    render(<PropostasContent documentoProposals={[]} prazoProposals={withLink} />);
+
+    await user.click(screen.getByRole("button", { name: /fonte 1/i }));
+
+    expect(screen.getByRole("button", { name: /abrir no onedrive/i })).toBeInTheDocument();
+  });
+
+  it("has no OneDrive button when the proposal has no link", async () => {
+    const user = userEvent.setup();
+    const noLink: PropostaPrazo[] = [
+      { ...prazoProposals[0], raciocinio: "A cláusula 4.2 fixa reajuste anual [1]." },
+    ];
+    render(<PropostasContent documentoProposals={[]} prazoProposals={noLink} />);
+
+    await user.click(screen.getByRole("button", { name: /fonte 1/i }));
+
+    expect(screen.queryByRole("button", { name: /abrir no onedrive/i })).not.toBeInTheDocument();
+  });
+
   it("opens the source viewer on the cited text when the proposal has no file to draw", async () => {
     const user = userEvent.setup();
     const withMarker: DocumentoProposalEntry[] = [

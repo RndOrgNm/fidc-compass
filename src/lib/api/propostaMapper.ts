@@ -62,6 +62,7 @@ export function prazoProposals(obrigacoes: ObrigacaoResponse[]): PropostaPrazo[]
       id: o.id,
       arquivo: { nome: o.arquivo_origem_nome ?? "documento de origem", paginas: 0 },
       fileUrl: o.download_url ?? null,
+      onedriveUrl: o.onedrive_url ?? null,
       sugestao: {
         topico: o.topico,
         categoria: o.categoria,

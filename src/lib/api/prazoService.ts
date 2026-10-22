@@ -56,6 +56,7 @@ export interface ObrigacaoResponse {
   /** The OneDrive file a proposal came from, copied when it was proposed. */
   arquivo_origem_nome?: string | null;
   download_url?: string | null;
+  onedrive_url?: string | null;
 }
 
 export interface ObrigacaoListResponse {

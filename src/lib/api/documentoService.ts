@@ -78,6 +78,8 @@ export interface DocumentoResponse {
   proximo_vencimento?: string | null;
   status: DocStatus;
   download_url?: string | null;
+  /** Link to the file in the OneDrive, when it came from a proposal of the agent. */
+  onedrive_url?: string | null;
   prazo?: LinkedPrazoInfo | null;
   /** True while the connector agent's suggestion awaits a human decision. */
   proposta?: boolean;

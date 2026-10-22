@@ -43,6 +43,8 @@ interface ViewerState {
   fonte: PropostaFonte;
   /** Where the file can be downloaded from, when the proposal has one. */
   fileUrl?: string | null;
+  /** Where the original file is in the OneDrive, for the panel's "Abrir no OneDrive" button. */
+  onedriveUrl?: string | null;
 }
 
 /**
@@ -97,8 +99,12 @@ export function PropostasContent({
   const isPdf = viewer != null && /\.pdf$/i.test(viewer.arquivoNome);
   const file = usePdfBytes(isPdf ? viewer.fileUrl : null);
 
-  const openSource = (arquivoNome: string, fonte: PropostaFonte, fileUrl?: string | null) =>
-    setViewer({ arquivoNome, fonte, fileUrl });
+  const openSource = (
+    arquivoNome: string,
+    fonte: PropostaFonte,
+    fileUrl?: string | null,
+    onedriveUrl?: string | null,
+  ) => setViewer({ arquivoNome, fonte, fileUrl, onedriveUrl });
 
   return (
     <div>
@@ -133,7 +139,9 @@ export function PropostasContent({
                     <PropostaReason
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
-                      onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte, doc.download_url)}
+                      onOpenSource={(fonte) =>
+                        openSource(proposta.arquivo.nome, fonte, doc.download_url, doc.onedrive_url)
+                      }
                     />
                   )}
                   <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
@@ -178,7 +186,9 @@ export function PropostasContent({
                     <PropostaReason
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
-                      onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte, proposta.fileUrl)}
+                      onOpenSource={(fonte) =>
+                        openSource(proposta.arquivo.nome, fonte, proposta.fileUrl, proposta.onedriveUrl)
+                      }
                     />
                   )}
                   <PrazoItem
@@ -204,6 +214,7 @@ export function PropostasContent({
         fileData={file.data}
         loading={file.loading}
         fonte={viewer?.fonte ?? null}
+        rawUrl={viewer?.onedriveUrl ?? undefined}
       />
     </div>
   );

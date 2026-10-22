@@ -109,6 +109,17 @@ describe("prazoProposals", () => {
     expect(out[0].fileUrl).toBe("https://files.example/a.pdf");
   });
 
+  it("carries the OneDrive link of the source file", () => {
+    const out = prazoProposals([
+      {
+        id: "1", topico: "x", categoria: "REGULATORIO", ativa: true, responsaveis: [],
+        proposta: true, onedrive_url: "https://onedrive.example/a",
+      } as ObrigacaoResponse,
+    ]);
+
+    expect(out[0].onedriveUrl).toBe("https://onedrive.example/a");
+  });
+
   it("has no file url when the proposal came without a source file", () => {
     const out = prazoProposals([
       { id: "1", topico: "x", categoria: "REGULATORIO", ativa: true, responsaveis: [], proposta: true } as ObrigacaoResponse,
