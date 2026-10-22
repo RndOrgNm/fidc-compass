@@ -33,7 +33,7 @@ export interface PropostasContentProps {
   onReject?: (kind: PropostaKind, id: string, motivo: string) => Promise<void>;
   /**
    * How long ago the connector last checked OneDrive — already formatted (e.g. "há 12 min").
-   * Left out when the time is unknown: the label is not shown rather than made up.
+   * The line is always shown: when the time is unknown it says so, rather than making one up.
    */
   lastSyncLabel?: string;
 }
@@ -102,13 +102,12 @@ export function PropostasContent({
 
   return (
     <div>
-      {lastSyncLabel && (
-        <div className="mb-5 flex items-center justify-end gap-3">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted-foreground">
-            <RefreshCw className="h-3.5 w-3.5" /> OneDrive verificado {lastSyncLabel}
-          </span>
-        </div>
-      )}
+      <div className="mb-5 flex items-center justify-end gap-3">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted-foreground">
+          <RefreshCw className="h-3.5 w-3.5" />
+          {lastSyncLabel ? `OneDrive verificado ${lastSyncLabel}` : "OneDrive: última verificação indisponível"}
+        </span>
+      </div>
 
       {saveError && (
         <p role="alert" className="mb-4 text-[13px] text-destructive">

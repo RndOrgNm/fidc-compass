@@ -74,13 +74,14 @@ describe("PropostasContent", () => {
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
   });
 
-  it("shows when the OneDrive was last checked, and shows nothing when that is unknown", () => {
+  it("always shows the OneDrive line: the time when known, a plain notice when not", () => {
     const { rerender } = render(
       <PropostasContent documentoProposals={[]} prazoProposals={[]} lastSyncLabel="há 12 minutos" />,
     );
-    expect(screen.getByText(/OneDrive verificado há 12 minutos/)).toBeInTheDocument();
+    expect(screen.getByText("OneDrive verificado há 12 minutos")).toBeInTheDocument();
 
     rerender(<PropostasContent documentoProposals={[]} prazoProposals={[]} />);
+    expect(screen.getByText("OneDrive: última verificação indisponível")).toBeInTheDocument();
     expect(screen.queryByText(/OneDrive verificado/)).not.toBeInTheDocument();
   });
 
