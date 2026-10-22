@@ -3,10 +3,8 @@ import type { Categoria } from "@/lib/api/prazoService";
 /**
  * Shared types for the connector agent's proposals.
  *
- * No backend yet (the agent was pulled from the spec that designed it): these
- * types describe the contract the UI expects, not one already agreed with any
- * API. Once the backend exists, swap whatever feeds `PropostasContent` for a
- * real call — the components here don't know where the data comes from.
+ * Mapped from the funds-pipeline `proposta` fields by `lib/api/propostaMapper`;
+ * the components here don't know where the data comes from.
  */
 
 export interface PropostaFonte {

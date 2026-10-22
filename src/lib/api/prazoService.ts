@@ -48,6 +48,12 @@ export interface ObrigacaoResponse {
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
   responsavel_email?: string | null;
+  proposta?: boolean;
+  raciocinio?: string | null;
+  fontes?: unknown[] | null;
+  resumo_arquivo?: string | null;
+  confianca?: "alta" | "media" | "baixa" | null;
+  proposto_em?: string | null;
 }
 
 export interface ObrigacaoListResponse {

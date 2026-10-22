@@ -10,6 +10,7 @@ import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { GraficosContent } from "@/components/fundos/GraficosContent";
 import { PropostasContent } from "@/components/fundos/propostas/PropostasContent";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
+import { usePropostas } from "@/hooks/usePropostas";
 import type { HomeFundRow } from "@/types/homeDashboard";
 
 const VALID_TABS = ["ativos", "prazos", "propostas", "cotistas", "graficos"];
@@ -33,6 +34,7 @@ export default function Fundos() {
   const resolvedId = urlFundoId ?? funds[0]?.idCarteira ?? null;
   const selectedFund = funds.find((f) => f.idCarteira === resolvedId) ?? funds[0] ?? null;
   const selectedFundName = selectedFund ? fundDisplayName(selectedFund) : undefined;
+  const propostas = usePropostas(resolvedId);
 
   function handleTabChange(newTab: string) {
     const id = resolvedId;
@@ -112,9 +114,16 @@ export default function Fundos() {
           </TabsContent>
 
           <TabsContent value="propostas" className="mt-8">
-            {/* No proposal source exists yet — empty on purpose until a
-                backend produces document/prazo proposals to feed here. */}
-            <PropostasContent documentoProposals={[]} prazoProposals={[]} />
+            {propostas.error ? (
+              <p className="py-10 text-center text-[13px] text-destructive">{propostas.error}</p>
+            ) : propostas.loading ? (
+              <p className="py-10 text-center text-[13px] text-muted-foreground">Carregando propostas…</p>
+            ) : (
+              <PropostasContent
+                documentoProposals={propostas.documentoProposals}
+                prazoProposals={propostas.prazoProposals}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="graficos" className="mt-8">

@@ -11,6 +11,8 @@ export type DocTipo =
   | "planilha_vendas"
   | "outro";
 
+export type TipoProposta = "arquivo" | "regra_prazo_nova" | "regra_prazo_existente";
+
 export type DocStatus = "em-dia" | "vencendo" | "vencido" | "pendente";
 
 export type DocumentoOrderBy = "nome" | "data_criacao" | "status" | "cadencia";
@@ -77,6 +79,15 @@ export interface DocumentoResponse {
   status: DocStatus;
   download_url?: string | null;
   prazo?: LinkedPrazoInfo | null;
+  /** True while the connector agent's suggestion awaits a human decision. */
+  proposta?: boolean;
+  tipo_proposta?: TipoProposta | null;
+  raciocinio?: string | null;
+  /** Loosely shaped by the agent — normalised in `propostaMapper`. */
+  fontes?: unknown[] | null;
+  resumo_arquivo?: string | null;
+  confianca?: "alta" | "media" | "baixa" | null;
+  proposto_em?: string | null;
   criado_em: string;
   atualizado_em: string;
 }
