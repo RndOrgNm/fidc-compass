@@ -129,7 +129,6 @@ export function PropostasContent({
                     <PropostaReason
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
-                      arquivoNome={proposta.arquivo.nome}
                       onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte, doc.download_url)}
                     />
                   )}
@@ -175,7 +174,6 @@ export function PropostasContent({
                     <PropostaReason
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
-                      arquivoNome={proposta.arquivo.nome}
                       onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte)}
                     />
                   )}

@@ -131,9 +131,18 @@ describe("PropostasContent", () => {
 
   it("opens the source viewer on the cited text when the proposal has no file to draw", async () => {
     const user = userEvent.setup();
-    render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={[]} />);
+    const withMarker: DocumentoProposalEntry[] = [
+      {
+        ...documentoProposals[0],
+        proposta: {
+          ...documentoProposals[0].proposta,
+          raciocinio: "Razão social e CNPJ coincidem com o ativo [1].",
+        },
+      },
+    ];
+    render(<PropostasContent documentoProposals={withMarker} prazoProposals={[]} />);
 
-    await user.click(screen.getByText("Identificação"));
+    await user.click(screen.getByRole("button", { name: /fonte 1/i }));
 
     // "Contrato_Social_2026.pdf" now appears twice (the table's file cell and
     // the opened Sheet's title) — assert on the Sheet-only caption instead.
