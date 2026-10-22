@@ -10,34 +10,38 @@ import type { PropostaFonte } from "@/types/propostas";
  * Same pattern as `DocumentViewerSheet` (Ativos) and the chatbot's source
  * viewer (`src/pages/Agent.tsx`) — a right-side Sheet with `PdfViewerCanvas`.
  * The difference that justifies its own component: it opens straight at the
- * clicked source's page (`startPage`), not always page 1.
+ * clicked source's first page, not always page 1.
  *
- * The quoted excerpt (`fonte.texto`) is shown as a caption below the page,
- * not overlaid on the PDF — `PdfViewerCanvas` renders to a `<canvas>` with no
- * text layer, so there's nowhere to draw a real highlight over the render.
+ * The cited excerpt (`fonte.texto`) is shown below the page, not overlaid on
+ * the PDF — `PdfViewerCanvas` renders to a `<canvas>` with no text layer, so
+ * there's nowhere to draw a real highlight over the render. When there is no
+ * file to render (an obligation proposal has none, and Word can't be drawn),
+ * the excerpt is all the sheet shows.
  *
  * Whoever opens the Sheet is responsible for supplying the file bytes
- * (`fileData`) — this component doesn't know how to fetch the file from
- * anywhere, only how to display what it's given.
+ * (`fileData`) and whether they are still `loading` — this component doesn't
+ * know how to fetch the file from anywhere, only how to display what it's given.
  */
 export function PropostaPdfViewerSheet({
   open,
   onOpenChange,
   arquivoNome,
   fileData,
-  startPage,
-  fontes,
+  loading = false,
+  fonte,
   rawUrl,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   arquivoNome: string;
   fileData: ArrayBuffer | null;
-  startPage: number;
-  fontes: PropostaFonte[];
+  loading?: boolean;
+  /** The cited source that was clicked. */
+  fonte: PropostaFonte | null;
   /** Link to open the original file (e.g. on OneDrive), if there is one. */
   rawUrl?: string;
 }) {
+  const startPage = fonte?.page ?? 1;
   const [currentPage, setCurrentPage] = useState(startPage);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -45,8 +49,7 @@ export function PropostaPdfViewerSheet({
     if (open) setCurrentPage(startPage);
   }, [open, startPage]);
 
-  const activeFonte = fontes.find((f) => f.page === currentPage);
-  const loading = open && fileData == null;
+  const hasFile = fileData != null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
@@ -71,7 +74,7 @@ export function PropostaPdfViewerSheet({
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="text-sm">Carregando documento...</span>
             </div>
-          ) : (
+          ) : hasFile ? (
             <div className="flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg bg-white shadow-xl">
               <PdfViewerCanvas
                 pdfData={fileData}
@@ -80,34 +83,42 @@ export function PropostaPdfViewerSheet({
                 className="h-full min-h-[400px] w-full"
               />
             </div>
+          ) : (
+            <p className="max-w-[32ch] text-center text-sm text-muted-foreground">
+              A visualização do arquivo não está disponível. O trecho citado aparece abaixo.
+            </p>
           )}
         </div>
 
-        {activeFonte && (
-          <div className="flex-shrink-0 border-t bg-muted/30 px-6 py-3 text-[12.5px] text-muted-foreground">
-            <span className="font-medium text-foreground">{activeFonte.trecho}:</span> “{activeFonte.texto}”
+        {fonte && (
+          <div className="max-h-[40%] flex-shrink-0 overflow-y-auto border-t bg-muted/30 px-6 py-3 text-[12.5px] text-muted-foreground">
+            <span className="font-medium text-foreground">{fonte.trecho}:</span> “{fonte.texto}”
           </div>
         )}
 
         <SheetFooter className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4">
           <span className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages}
+            {hasFile ? `Página ${currentPage} de ${totalPages}` : null}
           </span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              Próxima <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+            {hasFile && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </>
+            )}
             {rawUrl && (
               <Button variant="outline" onClick={() => window.open(rawUrl, "_blank", "noopener,noreferrer")}>
                 <ExternalLink className="mr-1 h-4 w-4" /> Abrir no OneDrive

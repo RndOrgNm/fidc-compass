@@ -5,6 +5,7 @@ import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
 import { PropostaReason } from "@/components/fundos/propostas/PropostaReason";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
+import { usePdfBytes } from "@/hooks/usePdfBytes";
 import type { DocumentoResponse } from "@/lib/api/documentoService";
 import type { PropostaDecisao, PropostaDocumento, PropostaFonte, PropostaPrazo } from "@/types/propostas";
 
@@ -28,8 +29,9 @@ export interface PropostasContentProps {
 
 interface ViewerState {
   arquivoNome: string;
-  startPage: number;
-  fontes: PropostaFonte[];
+  fonte: PropostaFonte;
+  /** Where the file can be downloaded from, when the proposal has one. */
+  fileUrl?: string | null;
 }
 
 /**
@@ -57,8 +59,12 @@ export function PropostasContent({
     });
   };
 
-  const openSource = (arquivoNome: string, fontes: PropostaFonte[], page: number) =>
-    setViewer({ arquivoNome, startPage: page, fontes });
+  // Only a PDF can be drawn by the viewer; anything else shows the cited text alone.
+  const isPdf = viewer != null && /\.pdf$/i.test(viewer.arquivoNome);
+  const file = usePdfBytes(isPdf ? viewer.fileUrl : null);
+
+  const openSource = (arquivoNome: string, fonte: PropostaFonte, fileUrl?: string | null) =>
+    setViewer({ arquivoNome, fonte, fileUrl });
 
   return (
     <div>
@@ -87,7 +93,7 @@ export function PropostasContent({
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
                       arquivoNome={proposta.arquivo.nome}
-                      onOpenSource={(page) => openSource(proposta.arquivo.nome, proposta.fontes, page)}
+                      onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte, doc.download_url)}
                     />
                   )}
                   <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
@@ -139,7 +145,7 @@ export function PropostasContent({
                       raciocinio={proposta.raciocinio}
                       fontes={proposta.fontes}
                       arquivoNome={proposta.arquivo.nome}
-                      onOpenSource={(page) => openSource(proposta.arquivo.nome, proposta.fontes, page)}
+                      onOpenSource={(fonte) => openSource(proposta.arquivo.nome, fonte)}
                     />
                   )}
                   <PrazoItem
@@ -168,9 +174,9 @@ export function PropostasContent({
         open={viewer != null}
         onOpenChange={(o) => !o && setViewer(null)}
         arquivoNome={viewer?.arquivoNome ?? ""}
-        fileData={null}
-        startPage={viewer?.startPage ?? 1}
-        fontes={viewer?.fontes ?? []}
+        fileData={file.data}
+        loading={file.loading}
+        fonte={viewer?.fonte ?? null}
       />
     </div>
   );

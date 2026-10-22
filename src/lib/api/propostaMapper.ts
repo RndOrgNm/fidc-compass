@@ -3,17 +3,31 @@ import type { ObrigacaoResponse } from "./prazoService";
 import type { DocumentoProposalEntry } from "@/components/fundos/propostas/PropostasContent";
 import type { PropostaFonte, PropostaPrazo } from "@/types/propostas";
 
-/** The agent writes sources as free-form JSON; accept the spellings it may use. */
+function pageOrNull(value: unknown): number | null {
+  const n = Number(value);
+  return value != null && Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/**
+ * Sources come from the connector agent's document chunks: `page` is null for
+ * Word (no pages), `page_end` is set when a chunk spans several pages.
+ */
 export function normalizeFontes(raw: unknown[] | null | undefined): PropostaFonte[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item) => {
-    if (typeof item === "string") return [{ trecho: item, page: 1, texto: "" }];
+    if (typeof item === "string") return [{ trecho: item, page: null, texto: item }];
     if (!item || typeof item !== "object") return [];
     const f = item as Record<string, unknown>;
-    const page = Number(f.page ?? f.pagina ?? 1);
     const trecho = String(f.trecho ?? f.texto ?? "");
-    const texto = String(f.texto ?? f.trecho ?? "");
-    return [{ trecho, page: Number.isFinite(page) && page > 0 ? page : 1, texto }];
+    return [
+      {
+        trecho,
+        page: pageOrNull(f.page ?? f.pagina),
+        pageEnd: pageOrNull(f.page_end),
+        texto: String(f.texto ?? f.trecho ?? ""),
+        chunkId: typeof f.chunk_id === "string" ? f.chunk_id : undefined,
+      },
+    ];
   });
 }
 

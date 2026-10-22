@@ -17,11 +17,31 @@ function doc(over: Partial<DocumentoResponse>): DocumentoResponse {
 }
 
 describe("normalizeFontes", () => {
-  it("accepts both portuguese and english keys and defaults the page", () => {
+  it("carries the chunk's page range and id", () => {
+    expect(
+      normalizeFontes([
+        { chunk_id: "c12", trecho: "Balancete trimestral", page: 3, page_end: 4, texto: "Texto completo." },
+      ]),
+    ).toEqual([
+      { trecho: "Balancete trimestral", page: 3, pageEnd: 4, texto: "Texto completo.", chunkId: "c12" },
+    ]);
+  });
+
+  it("keeps the page null when the source has none (Word) or it is not a valid page", () => {
+    const [word, bad] = normalizeFontes([
+      { chunk_id: "c5", trecho: "Um parágrafo", page: null, texto: "Um parágrafo." },
+      { trecho: "x", page: 0, texto: "x" },
+    ]);
+
+    expect(word.page).toBeNull();
+    expect(bad.page).toBeNull();
+  });
+
+  it("falls back between trecho and texto, and accepts the portuguese page key", () => {
     expect(normalizeFontes([{ pagina: 3, trecho: "cl. 4" }, { texto: "x" }, "solto"])).toEqual([
-      { trecho: "cl. 4", page: 3, texto: "cl. 4" },
-      { trecho: "x", page: 1, texto: "x" },
-      { trecho: "solto", page: 1, texto: "" },
+      { trecho: "cl. 4", page: 3, pageEnd: null, texto: "cl. 4", chunkId: undefined },
+      { trecho: "x", page: null, pageEnd: null, texto: "x", chunkId: undefined },
+      { trecho: "solto", page: null, texto: "solto" },
     ]);
   });
 

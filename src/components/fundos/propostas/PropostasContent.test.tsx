@@ -74,7 +74,7 @@ describe("PropostasContent", () => {
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
   });
 
-  it("opens the source viewer at the clicked page", async () => {
+  it("opens the source viewer on the cited text when the proposal has no file to draw", async () => {
     const user = userEvent.setup();
     render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={[]} />);
 
@@ -83,6 +83,6 @@ describe("PropostasContent", () => {
     // "Contrato_Social_2026.pdf" now appears twice (the table's file cell and
     // the opened Sheet's title) — assert on the Sheet-only caption instead.
     expect(screen.getByText(/CNPJ 41\.208\.553\/0001-10/)).toBeInTheDocument();
-    expect(screen.getByText("Página 1 de 1")).toBeInTheDocument();
+    expect(screen.getByText(/visualização do arquivo não está disponível/i)).toBeInTheDocument();
   });
 });

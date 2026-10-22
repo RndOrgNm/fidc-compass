@@ -10,10 +10,14 @@ import type { Categoria } from "@/lib/api/prazoService";
 export interface PropostaFonte {
   /** Short source label — e.g. "Cláusula 4.2 · índice e data-base". */
   trecho: string;
-  /** Page of the document where the source appears. */
-  page: number;
+  /** First page the source covers; null for Word, which has no pages. */
+  page: number | null;
+  /** Last page the source covers, when it spans more than one. */
+  pageEnd?: number | null;
   /** Quoted excerpt, shown next to the page when the document is opened. */
   texto: string;
+  /** Id of the document chunk the agent cited (e.g. "c12"). */
+  chunkId?: string;
 }
 
 export type PropostaDecisao =
