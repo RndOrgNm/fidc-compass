@@ -51,7 +51,6 @@ export interface ObrigacaoResponse {
   proposta?: boolean;
   raciocinio?: string | null;
   fontes?: unknown[] | null;
-  resumo_arquivo?: string | null;
   confianca?: "alta" | "media" | "baixa" | null;
   proposto_em?: string | null;
   /** The OneDrive file a proposal came from, copied when it was proposed. */

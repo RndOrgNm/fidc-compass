@@ -85,7 +85,6 @@ export interface DocumentoResponse {
   raciocinio?: string | null;
   /** Loosely shaped by the agent — normalised in `propostaMapper`. */
   fontes?: unknown[] | null;
-  resumo_arquivo?: string | null;
   confianca?: "alta" | "media" | "baixa" | null;
   proposto_em?: string | null;
   criado_em: string;
