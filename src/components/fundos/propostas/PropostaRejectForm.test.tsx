@@ -29,6 +29,40 @@ describe("PropostaRejectForm", () => {
     expect(onConfirm).toHaveBeenCalledWith("Ativo errado");
   });
 
+  it("offers 'Agente errou' and 'Outro' besides the other reasons", () => {
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={() => {}} />);
+
+    expect(screen.getByRole("button", { name: "Agente errou" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Outro" })).toBeInTheDocument();
+  });
+
+  it("confirms 'Agente errou' with just the reason", async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={onConfirm} />);
+
+    await user.click(screen.getByRole("button", { name: "Agente errou" }));
+    await user.click(screen.getByRole("button", { name: /confirmar rejeição/i }));
+
+    expect(onConfirm).toHaveBeenCalledWith("Agente errou");
+  });
+
+  it("needs a comment for 'Outro' and sends it with the reason", async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(<PropostaRejectForm onCancel={() => {}} onConfirm={onConfirm} />);
+    const confirmButton = screen.getByRole("button", { name: /confirmar rejeição/i });
+
+    await user.click(screen.getByRole("button", { name: "Outro" }));
+    expect(confirmButton).toBeDisabled();
+
+    await user.type(screen.getByPlaceholderText("Descreva o motivo"), "  Já cadastrada em outro fundo ");
+    expect(confirmButton).toBeEnabled();
+    await user.click(confirmButton);
+
+    expect(onConfirm).toHaveBeenCalledWith("Outro: Já cadastrada em outro fundo");
+  });
+
   it("calls onCancel and never onConfirm when cancelled", async () => {
     const onCancel = vi.fn();
     const onConfirm = vi.fn();

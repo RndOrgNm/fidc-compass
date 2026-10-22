@@ -5,12 +5,21 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-const REJECT_REASONS = ["Documento errado", "Período incorreto", "Ativo errado", "Arquivo incompleto"];
+const OTHER_REASON = "Outro";
+const REJECT_REASONS = [
+  "Documento errado",
+  "Período incorreto",
+  "Ativo errado",
+  "Arquivo incompleto",
+  "Agente errou",
+  OTHER_REASON,
+];
 
 /**
- * Proposal rejection form — required reason (chips) + optional free-text
- * comment for the agent. `onConfirm` receives the chosen reason; the comment
- * stays out of the contract for now (no backend consumes it yet).
+ * Proposal rejection form — required reason (chips) + free-text comment for the
+ * agent. `onConfirm` receives the chosen reason. The comment stays out of the
+ * contract, except for "Outro": a bare "Outro" says nothing, so that one needs
+ * the comment and is sent as "Outro: <comment>".
  */
 export function PropostaRejectForm({
   onCancel,
@@ -21,6 +30,9 @@ export function PropostaRejectForm({
 }) {
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState("");
+
+  const otherNeedsNote = reason === OTHER_REASON && !note.trim();
+  const motivo = reason === OTHER_REASON ? `${OTHER_REASON}: ${note.trim()}` : reason;
 
   return (
     <div className="mt-3.5 grid gap-2.5 rounded-lg border border-border bg-background p-3.5">
@@ -43,7 +55,9 @@ export function PropostaRejectForm({
         ))}
       </div>
       <Textarea
-        placeholder="Comentário para o agente (opcional)"
+        placeholder={
+          reason === OTHER_REASON ? "Descreva o motivo" : "Comentário para o agente (opcional)"
+        }
         value={note}
         onChange={(e) => setNote(e.target.value)}
         className="min-h-[60px] resize-y text-[13px]"
@@ -55,8 +69,8 @@ export function PropostaRejectForm({
         <Button
           variant="outline"
           size="sm"
-          disabled={!reason}
-          onClick={() => reason && onConfirm(reason)}
+          disabled={!reason || otherNeedsNote}
+          onClick={() => motivo && onConfirm(motivo)}
           className="text-destructive hover:text-destructive"
         >
           <X className="mr-1 h-4 w-4" /> Confirmar rejeição
