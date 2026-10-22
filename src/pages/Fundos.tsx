@@ -8,7 +8,10 @@ import { AtivosContent } from "@/components/fundos/AtivosContent";
 import { EmConstrucao } from "@/components/fundos/EmConstrucao";
 import { PrazosContent } from "@/components/fundos/PrazosContent";
 import { GraficosContent } from "@/components/fundos/GraficosContent";
-import { PropostasContent } from "@/components/fundos/propostas/PropostasContent";
+import { useUser } from "@clerk/clerk-react";
+import { PropostasContent, type PropostaKind } from "@/components/fundos/propostas/PropostasContent";
+import { aprovarPropostaDocumento, rejeitarPropostaDocumento } from "@/lib/api/documentoService";
+import { aprovarPropostaObrigacao, rejeitarPropostaObrigacao } from "@/lib/api/prazoService";
 import { useHomeMetrics } from "@/hooks/useHomeMetrics";
 import { usePropostas } from "@/hooks/usePropostas";
 import type { HomeFundRow } from "@/types/homeDashboard";
@@ -35,6 +38,18 @@ export default function Fundos() {
   const selectedFund = funds.find((f) => f.idCarteira === resolvedId) ?? funds[0] ?? null;
   const selectedFundName = selectedFund ? fundDisplayName(selectedFund) : undefined;
   const propostas = usePropostas(resolvedId);
+  const { user } = useUser();
+
+  async function handleApproveProposta(kind: PropostaKind, id: string) {
+    const confirmadoPor = user?.id ?? "anon";
+    if (kind === "documento") await aprovarPropostaDocumento(id, confirmadoPor);
+    else await aprovarPropostaObrigacao(id, confirmadoPor);
+  }
+
+  async function handleRejectProposta(kind: PropostaKind, id: string, motivo: string) {
+    if (kind === "documento") await rejeitarPropostaDocumento(id, motivo);
+    else await rejeitarPropostaObrigacao(id, motivo);
+  }
 
   function handleTabChange(newTab: string) {
     const id = resolvedId;
@@ -122,6 +137,8 @@ export default function Fundos() {
               <PropostasContent
                 documentoProposals={propostas.documentoProposals}
                 prazoProposals={propostas.prazoProposals}
+                onApprove={handleApproveProposta}
+                onReject={handleRejectProposta}
               />
             )}
           </TabsContent>

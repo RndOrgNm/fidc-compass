@@ -217,6 +217,30 @@ export async function updateObrigacao(
   return handleResponse<ObrigacaoResponse>(response);
 }
 
+export async function aprovarPropostaObrigacao(
+  id: string,
+  confirmadoPor: string
+): Promise<ObrigacaoResponse> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/prazos/obrigacoes/${id}/proposta/aprovar`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ confirmado_por: confirmadoPor }),
+  });
+  return handleResponse<ObrigacaoResponse>(response);
+}
+
+export async function rejeitarPropostaObrigacao(
+  id: string,
+  motivo?: string
+): Promise<ObrigacaoResponse> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/prazos/obrigacoes/${id}/proposta/rejeitar`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ motivo }),
+  });
+  return handleResponse<ObrigacaoResponse>(response);
+}
+
 export async function deleteObrigacao(id: string): Promise<void> {
   const response = await fetch(`${FUNDS_API_BASE_URL}/prazos/obrigacoes/${id}`, {
     method: "DELETE",

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PropostasContent, type DocumentoProposalEntry } from "./PropostasContent";
 import type { DocumentoResponse } from "@/lib/api/documentoService";
@@ -72,6 +72,61 @@ describe("PropostasContent", () => {
     expect(screen.getByText("Aprovada agora")).toBeInTheDocument();
     // The Prazos section's own proposal is untouched by the Ativos decision.
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
+  });
+
+  it("saves the approval before showing it, and offers no undo once saved", async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn().mockResolvedValue(undefined);
+    render(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={[]}
+        onApprove={onApprove}
+        onReject={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /aprovar vínculo/i }));
+
+    expect(onApprove).toHaveBeenCalledWith("documento", "doc-prop-1");
+    expect(await screen.findByText("Aprovada agora")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /desfazer/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps the proposal pending and shows the error when saving fails", async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn().mockRejectedValue(new Error("documento não tem proposta pendente"));
+    render(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={[]}
+        onApprove={onApprove}
+        onReject={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /aprovar vínculo/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("documento não tem proposta pendente");
+    expect(screen.queryByText("Aprovada agora")).not.toBeInTheDocument();
+    expect(screen.getByText("Razão social e CNPJ coincidem com o ativo.")).toBeInTheDocument();
+  });
+
+  it("saves an obligation approval under the obligation kind", async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn().mockResolvedValue(undefined);
+    render(
+      <PropostasContent
+        documentoProposals={[]}
+        prazoProposals={prazoProposals}
+        onApprove={onApprove}
+        onReject={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /aprovar/i }));
+
+    expect(onApprove).toHaveBeenCalledWith("obrigacao", "prazo-prop-1");
   });
 
   it("opens the source viewer on the cited text when the proposal has no file to draw", async () => {

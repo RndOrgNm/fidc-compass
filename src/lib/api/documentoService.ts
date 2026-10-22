@@ -294,6 +294,30 @@ export async function updateDocumento(
   return handleResponse<DocumentoResponse>(response);
 }
 
+export async function aprovarPropostaDocumento(
+  id: string,
+  confirmadoPor: string
+): Promise<DocumentoResponse> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/documentos/${id}/proposta/aprovar`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ confirmado_por: confirmadoPor }),
+  });
+  return handleResponse<DocumentoResponse>(response);
+}
+
+export async function rejeitarPropostaDocumento(
+  id: string,
+  motivo?: string
+): Promise<DocumentoResponse> {
+  const response = await fetch(`${FUNDS_API_BASE_URL}/documentos/${id}/proposta/rejeitar`, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ motivo }),
+  });
+  return handleResponse<DocumentoResponse>(response);
+}
+
 export async function deleteDocumento(id: string): Promise<void> {
   const response = await fetch(`${FUNDS_API_BASE_URL}/documentos/${id}`, { method: "DELETE" });
   await handleResponse<void>(response);

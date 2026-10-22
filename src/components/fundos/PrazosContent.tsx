@@ -229,7 +229,8 @@ export interface PrazoItemProposalProps {
   decision: PropostaDecisao | null;
   onApprove: () => void;
   onReject: (motivo: string) => void;
-  onUndo: () => void;
+  /** Absent once the decision has been saved: a saved decision cannot be taken back here. */
+  onUndo?: () => void;
 }
 
 type PrazoItemBaseProps = {
@@ -532,12 +533,14 @@ function PrazoProposalItem({ proposta, decision, onApprove, onReject, onUndo }: 
             <span className="text-[11px] text-muted-foreground">
               {rejected ? decision.motivo : "Criada agora"}
             </span>
-            <button
-              onClick={onUndo}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-primary transition-colors hover:text-primary/80"
-            >
-              <Undo2 className="h-3.5 w-3.5" /> Desfazer
-            </button>
+            {onUndo && (
+              <button
+                onClick={onUndo}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-primary transition-colors hover:text-primary/80"
+              >
+                <Undo2 className="h-3.5 w-3.5" /> Desfazer
+              </button>
+            )}
           </div>
         )}
       </div>

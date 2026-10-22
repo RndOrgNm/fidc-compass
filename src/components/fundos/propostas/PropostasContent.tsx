@@ -20,9 +20,17 @@ export interface DocumentoProposalEntry {
   contextName: string;
 }
 
+export type PropostaKind = "documento" | "obrigacao";
+
 export interface PropostasContentProps {
   documentoProposals: DocumentoProposalEntry[];
   prazoProposals: PropostaPrazo[];
+  /**
+   * Save a decision. When both are given the decision is shown only after the save
+   * succeeds, and cannot be undone here; without them it stays in local state, undoable.
+   */
+  onApprove?: (kind: PropostaKind, id: string) => Promise<void>;
+  onReject?: (kind: PropostaKind, id: string, motivo: string) => Promise<void>;
   /** How long ago the connector last checked OneDrive — already formatted (e.g. "há 12 min"). */
   lastSyncLabel?: string;
 }
@@ -45,10 +53,33 @@ interface ViewerState {
 export function PropostasContent({
   documentoProposals,
   prazoProposals,
+  onApprove,
+  onReject,
   lastSyncLabel = "há poucos minutos",
 }: PropostasContentProps) {
   const [decisions, setDecisions] = useState<Record<string, PropostaDecisao>>({});
   const [viewer, setViewer] = useState<ViewerState | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const persisted = onApprove != null && onReject != null;
+
+  // Builds the approve/reject/undo callbacks a proposal card needs.
+  const actionsFor = (kind: PropostaKind, id: string) => {
+    const save = async (decision: PropostaDecisao, request?: () => Promise<void>) => {
+      try {
+        await request?.();
+        setSaveError(null);
+        decide(id, decision);
+      } catch (e) {
+        setSaveError(e instanceof Error ? e.message : "Não foi possível salvar a decisão");
+      }
+    };
+    return {
+      onApprove: () => save({ tipo: "aprovada" }, onApprove && (() => onApprove(kind, id))),
+      onReject: (motivo: string) =>
+        save({ tipo: "rejeitada", motivo }, onReject && (() => onReject(kind, id, motivo))),
+      onUndo: persisted ? undefined : () => decide(id, null),
+    };
+  };
 
   const decide = (id: string, decision: PropostaDecisao | null) => {
     setDecisions((prev) => {
@@ -73,6 +104,12 @@ export function PropostasContent({
           <RefreshCw className="h-3.5 w-3.5" /> OneDrive verificado {lastSyncLabel}
         </span>
       </div>
+
+      {saveError && (
+        <p role="alert" className="mb-4 text-[13px] text-destructive">
+          {saveError}
+        </p>
+      )}
 
       {documentoProposals.length > 0 && (
         <div className="mb-6">
@@ -110,13 +147,7 @@ export function PropostasContent({
                       onCreatePrazo={() => {}}
                       onVerPrazo={() => {}}
                       emptyMessage=""
-                      proposal={{
-                        proposta,
-                        decision,
-                        onApprove: () => decide(proposta.id, { tipo: "aprovada" }),
-                        onReject: (motivo) => decide(proposta.id, { tipo: "rejeitada", motivo }),
-                        onUndo: () => decide(proposta.id, null),
-                      }}
+                      proposal={{ proposta, decision, ...actionsFor("documento", proposta.id) }}
                     />
                   </div>
                 </div>
@@ -149,13 +180,7 @@ export function PropostasContent({
                     />
                   )}
                   <PrazoItem
-                    proposal={{
-                      proposta,
-                      decision,
-                      onApprove: () => decide(proposta.id, { tipo: "aprovada" }),
-                      onReject: (motivo) => decide(proposta.id, { tipo: "rejeitada", motivo }),
-                      onUndo: () => decide(proposta.id, null),
-                    }}
+                    proposal={{ proposta, decision, ...actionsFor("obrigacao", proposta.id) }}
                   />
                 </div>
               );

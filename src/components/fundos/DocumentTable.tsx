@@ -49,7 +49,8 @@ export interface DocumentTableProposal {
   decision: PropostaDecisao | null;
   onApprove: () => void;
   onReject: (motivo: string) => void;
-  onUndo: () => void;
+  /** Absent once the decision has been saved: a saved decision cannot be taken back here. */
+  onUndo?: () => void;
 }
 
 const DOCS_PAGE_SIZE = 10;
@@ -254,12 +255,14 @@ export function DocumentTable({
                           ? "Aprovada agora"
                           : `Rejeitada · ${rowProposal.decision?.motivo}`}
                       </span>
-                      <button
-                        onClick={rowProposal.onUndo}
-                        className="inline-flex items-center gap-1 text-[12px] font-medium text-primary transition-colors hover:text-primary/80"
-                      >
-                        <Undo2 className="h-3.5 w-3.5" /> Desfazer
-                      </button>
+                      {rowProposal.onUndo && (
+                        <button
+                          onClick={rowProposal.onUndo}
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-primary transition-colors hover:text-primary/80"
+                        >
+                          <Undo2 className="h-3.5 w-3.5" /> Desfazer
+                        </button>
+                      )}
                     </div>
                   ) : !pending ? (
                     <div className="flex items-center justify-end gap-0.5">
