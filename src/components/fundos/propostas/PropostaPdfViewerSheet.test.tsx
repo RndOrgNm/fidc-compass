@@ -4,16 +4,25 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 import { PropostaPdfViewerSheet } from "./PropostaPdfViewerSheet";
 
-vi.mock("@/components/PdfViewerCanvas", () => ({
-  PdfViewerCanvas: ({
-    currentPage,
+// The real viewer draws with pdf.js and needs a browser; here it only shows the page it was
+// asked for and lets a test play the reader scrolling to another one.
+vi.mock("@/components/PdfPagesViewer", () => ({
+  PdfPagesViewer: ({
+    page,
+    onPageChange,
     onTotalPages,
   }: {
-    currentPage: number;
+    page: number;
+    onPageChange: (n: number) => void;
     onTotalPages: (n: number) => void;
   }) => {
     onTotalPages(20);
-    return <div data-testid="pdf-canvas">página renderizada: {currentPage}</div>;
+    return (
+      <div data-testid="pdf-canvas">
+        página renderizada: {page}
+        <button onClick={() => onPageChange(15)}>rolar até a 15</button>
+      </div>
+    );
   },
 }));
 
@@ -52,6 +61,18 @@ describe("PropostaPdfViewerSheet", () => {
     expect(screen.getByText("página renderizada: 12")).toBeInTheDocument();
     expect(screen.getByText("Página 12 de 20")).toBeInTheDocument();
     expect(screen.queryByText(/tabela de amortização/)).not.toBeInTheDocument();
+  });
+
+  it("follows the reader scrolling through the document: the page counter and Anterior/Próxima", async () => {
+    const user = userEvent.setup();
+    renderSheet({ fonte: { ...cl42, page: 3 } });
+
+    await user.click(screen.getByRole("button", { name: "rolar até a 15" }));
+
+    expect(screen.getByText("Página 15 de 20")).toBeInTheDocument();
+    // Anterior goes back from where the reader is, not from where the source was.
+    await user.click(screen.getByRole("button", { name: /anterior/i }));
+    expect(screen.getByText("página renderizada: 14")).toBeInTheDocument();
   });
 
   it("shows only the cited text, without page controls, when there is no file to draw", () => {

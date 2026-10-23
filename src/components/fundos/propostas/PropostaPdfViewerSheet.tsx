@@ -3,20 +3,18 @@ import { ChevronLeft, ChevronRight, ExternalLink, FileText, Loader2, X } from "l
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
+import { PdfPagesViewer } from "@/components/PdfPagesViewer";
 import type { PropostaFonte } from "@/types/propostas";
 
 /**
- * Same pattern as `DocumentViewerSheet` (Ativos) and the chatbot's source
- * viewer (`src/pages/Agent.tsx`) — a right-side Sheet with `PdfViewerCanvas`.
- * The difference that justifies its own component: it opens straight at the
- * clicked source's first page, not always page 1.
+ * A right-side Sheet like `DocumentViewerSheet` (Ativos) and the chatbot's source
+ * viewer (`src/pages/Agent.tsx`), but the document is `PdfPagesViewer`: every page in
+ * one column that scrolls, opened straight at the clicked source's first page, with
+ * Anterior/Próxima and the page counter following the scroll.
  *
- * The cited excerpt (`fonte.texto`) is shown below the page, not overlaid on
- * the PDF — `PdfViewerCanvas` renders to a `<canvas>` with no text layer, so
- * there's nowhere to draw a real highlight over the render. When there is no
- * file to render (an obligation proposal has none, and Word can't be drawn),
- * the excerpt is all the sheet shows.
+ * The cited excerpt (`fonte.texto`) is shown only when there is no file to draw (Word
+ * can't be drawn, and a proposal may have no file): then it is all the sheet has. With a
+ * PDF it is not repeated, since the page opens where the source is.
  *
  * Whoever opens the Sheet is responsible for supplying the file bytes
  * (`fileData`) and whether they are still `loading` — this component doesn't
@@ -68,28 +66,27 @@ export function PropostaPdfViewerSheet({
           </Button>
         </SheetHeader>
 
-        {/* Same structure as the chatbot's source viewer: the white box has a definite height,
-            so the page scrolls inside `PdfViewerCanvas`. */}
-        <div className="flex flex-1 items-center justify-center overflow-hidden bg-slate-100 p-4">
-          <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-white shadow-xl">
-            {loading ? (
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="text-sm">Carregando documento...</span>
-              </div>
-            ) : hasFile ? (
-              <PdfViewerCanvas
-                pdfData={fileData}
-                currentPage={currentPage}
-                onTotalPages={setTotalPages}
-                className="h-full min-h-[400px] w-full"
-              />
-            ) : (
-              <p className="max-w-[32ch] p-4 text-center text-sm text-muted-foreground">
-                A visualização do arquivo não está disponível. O trecho citado aparece abaixo.
-              </p>
-            )}
-          </div>
+        {/* The document is one column of pages that scrolls inside this box; the page counter
+            and Anterior/Próxima follow it. */}
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-slate-100">
+          {loading ? (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="text-sm">Carregando documento...</span>
+            </div>
+          ) : hasFile ? (
+            <PdfPagesViewer
+              pdfData={fileData}
+              page={currentPage}
+              onPageChange={setCurrentPage}
+              onTotalPages={setTotalPages}
+              className="h-full w-full"
+            />
+          ) : (
+            <p className="max-w-[32ch] p-4 text-center text-sm text-muted-foreground">
+              A visualização do arquivo não está disponível. O trecho citado aparece abaixo.
+            </p>
+          )}
         </div>
 
         {/* The page opens where the source is, so the excerpt is only shown when there is no
