@@ -105,7 +105,10 @@ export function PdfViewerCanvas({
   }
 
   return (
-    <div className={`overflow-y-auto flex justify-center bg-white ${className}`}>
+    // items-start: without it the canvas is stretched to the container's height, so it never
+    // overflows and cannot scroll (the page scrolls instead). overscroll-contain keeps the wheel
+    // from scrolling the page behind once the end of the PDF is reached.
+    <div className={`overflow-y-auto overscroll-contain flex items-start justify-center bg-white ${className}`}>
       <canvas ref={canvasRef} className="block max-w-full h-auto" />
     </div>
   );
