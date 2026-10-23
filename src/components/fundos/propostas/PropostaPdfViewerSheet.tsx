@@ -68,29 +68,33 @@ export function PropostaPdfViewerSheet({
           </Button>
         </SheetHeader>
 
-        <div className="flex flex-1 flex-col items-center justify-center overflow-hidden bg-slate-100 p-4">
-          {loading ? (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="text-sm">Carregando documento...</span>
-            </div>
-          ) : hasFile ? (
-            <div className="flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg bg-white shadow-xl">
+        {/* Same structure as the chatbot's source viewer: the white box has a definite height,
+            so the page scrolls inside `PdfViewerCanvas`. */}
+        <div className="flex flex-1 items-center justify-center overflow-hidden bg-slate-100 p-4">
+          <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-white shadow-xl">
+            {loading ? (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-sm">Carregando documento...</span>
+              </div>
+            ) : hasFile ? (
               <PdfViewerCanvas
                 pdfData={fileData}
                 currentPage={currentPage}
                 onTotalPages={setTotalPages}
                 className="h-full min-h-[400px] w-full"
               />
-            </div>
-          ) : (
-            <p className="max-w-[32ch] text-center text-sm text-muted-foreground">
-              A visualização do arquivo não está disponível. O trecho citado aparece abaixo.
-            </p>
-          )}
+            ) : (
+              <p className="max-w-[32ch] p-4 text-center text-sm text-muted-foreground">
+                A visualização do arquivo não está disponível. O trecho citado aparece abaixo.
+              </p>
+            )}
+          </div>
         </div>
 
-        {fonte && (
+        {/* The page opens where the source is, so the excerpt is only shown when there is no
+            file to draw: then it is all the panel has. */}
+        {fonte && !hasFile && !loading && (
           <div className="max-h-[40%] flex-shrink-0 overflow-y-auto border-t bg-muted/30 px-6 py-3 text-[12.5px] text-muted-foreground">
             <span className="font-medium text-foreground">{fonte.trecho}:</span> “{fonte.texto}”
           </div>

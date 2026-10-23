@@ -46,12 +46,12 @@ describe("PropostaPdfViewerSheet", () => {
     expect(screen.queryByTestId("pdf-canvas")).not.toBeInTheDocument();
   });
 
-  it("opens directly at the source's first page and shows its cited text", () => {
+  it("opens directly at the source's first page, without repeating the cited text", () => {
     renderSheet({ fonte: anexo });
 
     expect(screen.getByText("página renderizada: 12")).toBeInTheDocument();
-    expect(screen.getByText(/tabela de amortização/)).toBeInTheDocument();
     expect(screen.getByText("Página 12 de 20")).toBeInTheDocument();
+    expect(screen.queryByText(/tabela de amortização/)).not.toBeInTheDocument();
   });
 
   it("shows only the cited text, without page controls, when there is no file to draw", () => {
