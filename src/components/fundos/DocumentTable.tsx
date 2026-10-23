@@ -49,6 +49,8 @@ export interface DocumentTableProposal {
   decision: PropostaDecisao | null;
   onApprove: () => void;
   onReject: (motivo: string) => void;
+  /** Edit what the agent proposed; the proposal stays pending until it is approved. */
+  onEdit?: () => void;
   /** Absent once the decision has been saved: a saved decision cannot be taken back here. */
   onUndo?: () => void;
 }
@@ -317,6 +319,11 @@ export function DocumentTable({
             />
           ) : (
             <div className="flex justify-end gap-2">
+              {proposal.onEdit && (
+                <Button variant="outline" size="sm" onClick={proposal.onEdit}>
+                  <SquarePen className="mr-1 h-4 w-4" /> Editar
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setRejecting(true)}>
                 <X className="mr-1 h-4 w-4" /> Rejeitar
               </Button>

@@ -1,4 +1,4 @@
-import type { Categoria } from "@/lib/api/prazoService";
+import type { Categoria, ObrigacaoResponse } from "@/lib/api/prazoService";
 
 /**
  * Shared types for the connector agent's proposals.
@@ -58,6 +58,8 @@ export interface PropostaPrazo {
   fileUrl?: string | null;
   /** Link to the source file in the OneDrive. */
   onedriveUrl?: string | null;
+  /** The obligation record behind the proposal, for the edit form. */
+  obrigacao?: ObrigacaoResponse;
   sugestao: {
     topico: string;
     categoria: Categoria;

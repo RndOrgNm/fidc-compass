@@ -167,9 +167,11 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   initial?: ObrigacaoFormInitial;
   onCreated?: (obrigacao: ObrigacaoResponse, ciclo: string) => void;
+  /** Called after an edit is saved (not after a creation). */
+  onUpdated?: (obrigacao: ObrigacaoResponse) => void;
 }
 
-export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCreated }: Props) {
+export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCreated, onUpdated }: Props) {
   const { user } = useUser();
   const { members, isLoaded: membersLoaded } = useTeamMembers();
   const queryClient = useQueryClient();
@@ -292,6 +294,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
       if (!isEdit && onCreated) {
         onCreated(result, variables.ciclo_inicial ?? CYCLE_OPTIONS[0].value);
       }
+      if (isEdit && onUpdated) onUpdated(result);
       onOpenChange(false);
     },
     onError: (err: Error) => {

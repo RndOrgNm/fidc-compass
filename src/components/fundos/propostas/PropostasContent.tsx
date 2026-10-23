@@ -5,6 +5,8 @@ import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
 import { PropostaReason } from "@/components/fundos/propostas/PropostaReason";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
+import { PropostaDocumentoEditDialog } from "@/components/fundos/propostas/PropostaDocumentoEditDialog";
+import { ObrigacaoFormDialog } from "@/components/fundos/prazos/ObrigacaoFormDialog";
 import { usePdfBytes } from "@/hooks/usePdfBytes";
 import type { DocumentoResponse } from "@/lib/api/documentoService";
 import type { PropostaDecisao, PropostaDocumento, PropostaFonte, PropostaPrazo } from "@/types/propostas";
@@ -31,6 +33,11 @@ export interface PropostasContentProps {
    */
   onApprove?: (kind: PropostaKind, id: string) => Promise<void>;
   onReject?: (kind: PropostaKind, id: string, motivo: string) => Promise<void>;
+  /**
+   * Called after an edit of a proposal is saved, so the list can be reloaded. Without it the
+   * cards have no "Editar" button. An edit never approves: the proposal stays pending.
+   */
+  onChanged?: () => void;
   /**
    * How long ago the connector last checked OneDrive — already formatted (e.g. "há 12 min").
    * The line is always shown: when the time is unknown it says so, rather than making one up.
@@ -60,11 +67,14 @@ export function PropostasContent({
   prazoProposals,
   onApprove,
   onReject,
+  onChanged,
   lastSyncLabel,
 }: PropostasContentProps) {
   const [decisions, setDecisions] = useState<Record<string, PropostaDecisao>>({});
   const [viewer, setViewer] = useState<ViewerState | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingDoc, setEditingDoc] = useState<DocumentoProposalEntry | null>(null);
+  const [editingPrazo, setEditingPrazo] = useState<PropostaPrazo | null>(null);
   const persisted = onApprove != null && onReject != null;
 
   // Builds the approve/reject/undo callbacks a proposal card needs.
@@ -158,7 +168,12 @@ export function PropostasContent({
                       onCreatePrazo={() => {}}
                       onVerPrazo={() => {}}
                       emptyMessage=""
-                      proposal={{ proposta, decision, ...actionsFor("documento", proposta.id) }}
+                      proposal={{
+                        proposta,
+                        decision,
+                        ...actionsFor("documento", proposta.id),
+                        onEdit: onChanged ? () => setEditingDoc({ doc, proposta, contextName }) : undefined,
+                      }}
                     />
                   </div>
                 </div>
@@ -192,7 +207,12 @@ export function PropostasContent({
                     />
                   )}
                   <PrazoItem
-                    proposal={{ proposta, decision, ...actionsFor("obrigacao", proposta.id) }}
+                    proposal={{
+                      proposta,
+                      decision,
+                      ...actionsFor("obrigacao", proposta.id),
+                      onEdit: onChanged && proposta.obrigacao ? () => setEditingPrazo(proposta) : undefined,
+                    }}
                   />
                 </div>
               );
@@ -205,6 +225,40 @@ export function PropostasContent({
         <p className="py-10 text-center text-[13px] text-muted-foreground">
           Nenhuma proposta pendente no momento.
         </p>
+      )}
+
+      {editingDoc && (
+        <PropostaDocumentoEditDialog
+          doc={editingDoc.doc}
+          open
+          onOpenChange={(o) => !o && setEditingDoc(null)}
+          onSaved={() => onChanged?.()}
+        />
+      )}
+
+      {editingPrazo?.obrigacao && (
+        <ObrigacaoFormDialog
+          owner={
+            editingPrazo.obrigacao.fundo_id != null
+              ? { fundo_id: editingPrazo.obrigacao.fundo_id }
+              : { gestora_id: editingPrazo.obrigacao.gestora_id! }
+          }
+          open
+          onOpenChange={(o) => !o && setEditingPrazo(null)}
+          initial={{
+            id: editingPrazo.obrigacao.id,
+            topico: editingPrazo.obrigacao.topico,
+            observacao: editingPrazo.obrigacao.observacao,
+            categoria: editingPrazo.obrigacao.categoria,
+            tipo_prazo: editingPrazo.obrigacao.tipo_prazo,
+            parametros: editingPrazo.obrigacao.parametros,
+            antecedencia_alerta_dias: editingPrazo.obrigacao.antecedencia_alerta_dias,
+            recorrente: editingPrazo.obrigacao.recorrente,
+            intervalo_meses: editingPrazo.obrigacao.intervalo_meses,
+            responsaveis: editingPrazo.obrigacao.responsaveis,
+          }}
+          onUpdated={() => onChanged?.()}
+        />
       )}
 
       <PropostaPdfViewerSheet

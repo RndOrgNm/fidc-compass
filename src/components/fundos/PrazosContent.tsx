@@ -19,6 +19,7 @@ import {
   Check,
   X,
   Undo2,
+  SquarePen,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -229,6 +230,8 @@ export interface PrazoItemProposalProps {
   decision: PropostaDecisao | null;
   onApprove: () => void;
   onReject: (motivo: string) => void;
+  /** Edit what the agent proposed; the proposal stays pending until it is approved. */
+  onEdit?: () => void;
   /** Absent once the decision has been saved: a saved decision cannot be taken back here. */
   onUndo?: () => void;
 }
@@ -431,7 +434,7 @@ function RealPrazoItem({ inst, onConcluir, onReabrir, onEditar, onExcluir, onGat
   );
 }
 
-function PrazoProposalItem({ proposta, decision, onApprove, onReject, onUndo }: PrazoItemProposalProps) {
+function PrazoProposalItem({ proposta, decision, onApprove, onReject, onEdit, onUndo }: PrazoItemProposalProps) {
   const [rejecting, setRejecting] = useState(false);
   const { sugestao } = proposta;
   const cat = CAT_META[sugestao.categoria];
@@ -520,6 +523,11 @@ function PrazoProposalItem({ proposta, decision, onApprove, onReject, onUndo }: 
 
         {pending && !rejecting && (
           <div className="mt-0.5 flex items-center gap-1">
+            {onEdit && (
+              <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-[11px]" onClick={onEdit}>
+                <SquarePen className="h-3.5 w-3.5" /> Editar
+              </Button>
+            )}
             <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => setRejecting(true)}>
               Rejeitar
             </Button>

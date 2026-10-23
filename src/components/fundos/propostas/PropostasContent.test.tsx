@@ -3,6 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { PropostasContent, type DocumentoProposalEntry } from "./PropostasContent";
+
+// The obligation form pulls in Clerk, react-query and the team list; what matters here is
+// only that it is opened with the proposal's record.
+const formDialog = vi.hoisted(() => vi.fn());
+vi.mock("@/components/fundos/prazos/ObrigacaoFormDialog", () => ({
+  ObrigacaoFormDialog: (props: unknown) => {
+    formDialog(props);
+    return null;
+  },
+}));
 import type { DocumentoResponse } from "@/lib/api/documentoService";
 import type { PropostaPrazo } from "@/types/propostas";
 
@@ -72,6 +82,56 @@ describe("PropostasContent", () => {
     expect(screen.getByText("Aprovada agora")).toBeInTheDocument();
     // The Prazos section's own proposal is untouched by the Ativos decision.
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
+  });
+
+  it("has no Editar button unless the list can be reloaded after an edit", () => {
+    render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
+
+    expect(screen.queryByRole("button", { name: /editar/i })).not.toBeInTheDocument();
+  });
+
+  it("edits a document proposal in a dialog and leaves it pending", async () => {
+    const user = userEvent.setup();
+    render(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={[]}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onChanged={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /editar/i }));
+
+    expect(screen.getByRole("heading", { name: "Editar proposta" })).toBeInTheDocument();
+    // Opening the editor decides nothing: the approve button is still there, behind the modal.
+    expect(screen.getByRole("button", { name: /aprovar vínculo/i, hidden: true })).toBeInTheDocument();
+  });
+
+  it("edits an obligation proposal in the obligation form, with the proposal's values", async () => {
+    const user = userEvent.setup();
+    const withRecord: PropostaPrazo[] = [
+      {
+        ...prazoProposals[0],
+        obrigacao: { id: "ob-1", fundo_id: 51476870, topico: "Reajuste anual", categoria: "OPERACIONAL" } as never,
+      },
+    ];
+    render(
+      <PropostasContent
+        documentoProposals={[]}
+        prazoProposals={withRecord}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        onChanged={() => {}}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /editar/i }));
+
+    expect(formDialog).toHaveBeenCalledTimes(1);
+    expect(formDialog.mock.calls[0][0].initial).toMatchObject({ id: "ob-1", topico: "Reajuste anual" });
+    expect(formDialog.mock.calls[0][0].owner).toEqual({ fundo_id: 51476870 });
   });
 
   it("always shows the OneDrive line: the time when known, a plain notice when not", () => {
