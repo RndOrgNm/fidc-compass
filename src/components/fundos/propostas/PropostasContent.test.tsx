@@ -60,19 +60,55 @@ describe("PropostasContent", () => {
     expect(screen.getByText("Nenhuma proposta pendente no momento.")).toBeInTheDocument();
   });
 
-  it("renders one section per proposal kind with its reasoning and count", () => {
+  it("has one tab per proposal kind, each with its count, showing one kind at a time", async () => {
+    const user = userEvent.setup();
     render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
 
-    expect(screen.getByText("Ativos")).toBeInTheDocument();
-    expect(screen.getByText("Prazos")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /ativos\s*1/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /prazos\s*1/i })).toBeInTheDocument();
+    // Ativos is open: its card and reasoning are there, the Prazos ones are not.
     expect(screen.getByText("Imóvel Alpha")).toBeInTheDocument();
-    expect(screen.getByText("Reajuste anual do aluguel (IPCA)")).toBeInTheDocument();
-    // Reasoning renders once per pending proposal.
     expect(screen.getByText("Razão social e CNPJ coincidem com o ativo.")).toBeInTheDocument();
+    expect(screen.queryByText("Reajuste anual do aluguel (IPCA)")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: /prazos/i }));
+
+    expect(screen.getByText("Reajuste anual do aluguel (IPCA)")).toBeInTheDocument();
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
+    expect(screen.queryByText("Imóvel Alpha")).not.toBeInTheDocument();
   });
 
-  it("hides the reasoning block once a document proposal is decided, keeping the other section intact", async () => {
+  it("opens on Prazos when there are no document proposals", () => {
+    render(<PropostasContent documentoProposals={[]} prazoProposals={prazoProposals} />);
+
+    expect(screen.getByRole("tab", { name: /prazos/i })).toHaveAttribute("data-state", "active");
+    expect(screen.getByText("Reajuste anual do aluguel (IPCA)")).toBeInTheDocument();
+  });
+
+  it("keeps the tab the reader chose when the list is reloaded", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /prazos/i }));
+    rerender(
+      <PropostasContent documentoProposals={[...documentoProposals]} prazoProposals={[...prazoProposals]} />,
+    );
+
+    expect(screen.getByRole("tab", { name: /prazos/i })).toHaveAttribute("data-state", "active");
+  });
+
+  it("says so when the open tab has no proposals", async () => {
+    const user = userEvent.setup();
+    render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={[]} />);
+
+    await user.click(screen.getByRole("tab", { name: /prazos/i }));
+
+    expect(screen.getByText("Nenhuma proposta de prazos no momento.")).toBeInTheDocument();
+  });
+
+  it("hides the reasoning block once a document proposal is decided, keeping the other tab intact", async () => {
     const user = userEvent.setup();
     render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
 
@@ -80,7 +116,10 @@ describe("PropostasContent", () => {
 
     expect(screen.queryByText("Razão social e CNPJ coincidem com o ativo.")).not.toBeInTheDocument();
     expect(screen.getByText("Aprovada agora")).toBeInTheDocument();
-    // The Prazos section's own proposal is untouched by the Ativos decision.
+    // The count is what is still pending: the decided card no longer counts.
+    expect(screen.getByRole("tab", { name: /ativos\s*0/i })).toBeInTheDocument();
+    // The Prazos tab's own proposal is untouched by the Ativos decision.
+    await user.click(screen.getByRole("tab", { name: /prazos\s*1/i }));
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
   });
 

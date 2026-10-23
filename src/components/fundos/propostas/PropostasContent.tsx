@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 
 import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropostaReason } from "@/components/fundos/propostas/PropostaReason";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
 import { PropostaDocumentoEditDialog } from "@/components/fundos/propostas/PropostaDocumentoEditDialog";
@@ -23,6 +24,16 @@ export interface DocumentoProposalEntry {
 }
 
 export type PropostaKind = "documento" | "obrigacao";
+
+type ProposalTab = "ativos" | "prazos";
+
+function CountBadge({ count }: { count: number }) {
+  return (
+    <span className="rounded-full bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      {count}
+    </span>
+  );
+}
 
 export interface PropostasContentProps {
   documentoProposals: DocumentoProposalEntry[];
@@ -76,6 +87,13 @@ export function PropostasContent({
   const [editingDoc, setEditingDoc] = useState<DocumentoProposalEntry | null>(null);
   const [editingPrazo, setEditingPrazo] = useState<PropostaPrazo | null>(null);
   const persisted = onApprove != null && onReject != null;
+
+  // Until the reader picks a tab, it follows the data: Ativos if there are any, else Prazos.
+  const [chosenTab, setChosenTab] = useState<ProposalTab | null>(null);
+  const activeTab: ProposalTab = chosenTab ?? (documentoProposals.length > 0 ? "ativos" : "prazos");
+  // The count is what is still pending: a decided card stays on screen but no longer counts.
+  const pendingDocumentos = documentoProposals.filter((p) => !decisions[p.proposta.id]).length;
+  const pendingPrazos = prazoProposals.filter((p) => !decisions[p.id]).length;
 
   // Builds the approve/reject/undo callbacks a proposal card needs.
   const actionsFor = (kind: PropostaKind, id: string) => {
@@ -131,94 +149,101 @@ export function PropostasContent({
         </p>
       )}
 
-      {documentoProposals.length > 0 && (
-        <div className="mb-6">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-foreground">Ativos</span>
-            <span className="h-px flex-1 bg-border" />
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {documentoProposals.length}
-            </span>
-          </div>
-          <div className="flex flex-col gap-5">
-            {documentoProposals.map(({ doc, proposta, contextName }) => {
-              const decision = decisions[proposta.id] ?? null;
-              return (
-                <div key={proposta.id}>
-                  {!decision && (
-                    <PropostaReason
-                      raciocinio={proposta.raciocinio}
-                      fontes={proposta.fontes}
-                      onOpenSource={(fonte) =>
-                        openSource(proposta.arquivo.nome, fonte, doc.download_url, doc.onedrive_url)
-                      }
-                    />
-                  )}
-                  <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
-                    <div className="mb-3 text-sm font-semibold text-foreground">{contextName}</div>
-                    <DocumentTable
-                      docs={[doc]}
-                      contextName={contextName}
-                      orderBy={undefined}
-                      orderDir="asc"
-                      onSortChange={() => {}}
-                      onView={() => {}}
-                      onEdit={() => {}}
-                      onDelete={() => {}}
-                      onCreatePrazo={() => {}}
-                      onVerPrazo={() => {}}
-                      emptyMessage=""
-                      proposal={{
-                        proposta,
-                        decision,
-                        ...actionsFor("documento", proposta.id),
-                        onEdit: onChanged ? () => setEditingDoc({ doc, proposta, contextName }) : undefined,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {documentoProposals.length + prazoProposals.length > 0 && (
+        <Tabs value={activeTab} onValueChange={(v) => setChosenTab(v as ProposalTab)}>
+          <TabsList className="mb-5">
+            <TabsTrigger value="ativos" className="gap-2">
+              Ativos <CountBadge count={pendingDocumentos} />
+            </TabsTrigger>
+            <TabsTrigger value="prazos" className="gap-2">
+              Prazos <CountBadge count={pendingPrazos} />
+            </TabsTrigger>
+          </TabsList>
 
-      {prazoProposals.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[15px] font-semibold text-foreground">Prazos</span>
-            <span className="h-px flex-1 bg-border" />
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {prazoProposals.length}
-            </span>
-          </div>
-          <div className="flex flex-col gap-3">
-            {prazoProposals.map((proposta) => {
-              const decision = decisions[proposta.id] ?? null;
-              return (
-                <div key={proposta.id}>
-                  {!decision && (
-                    <PropostaReason
-                      raciocinio={proposta.raciocinio}
-                      fontes={proposta.fontes}
-                      onOpenSource={(fonte) =>
-                        openSource(proposta.arquivo.nome, fonte, proposta.fileUrl, proposta.onedriveUrl)
-                      }
-                    />
-                  )}
-                  <PrazoItem
-                    proposal={{
-                      proposta,
-                      decision,
-                      ...actionsFor("obrigacao", proposta.id),
-                      onEdit: onChanged && proposta.obrigacao ? () => setEditingPrazo(proposta) : undefined,
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+          <TabsContent value="ativos" className="mt-0">
+            {documentoProposals.length === 0 ? (
+              <p className="py-10 text-center text-[13px] text-muted-foreground">
+                Nenhuma proposta de ativos no momento.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {documentoProposals.map(({ doc, proposta, contextName }) => {
+                  const decision = decisions[proposta.id] ?? null;
+                  return (
+                    <div key={proposta.id}>
+                      {!decision && (
+                        <PropostaReason
+                          raciocinio={proposta.raciocinio}
+                          fontes={proposta.fontes}
+                          onOpenSource={(fonte) =>
+                            openSource(proposta.arquivo.nome, fonte, doc.download_url, doc.onedrive_url)
+                          }
+                        />
+                      )}
+                      <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
+                        <div className="mb-3 text-sm font-semibold text-foreground">{contextName}</div>
+                        <DocumentTable
+                          docs={[doc]}
+                          contextName={contextName}
+                          orderBy={undefined}
+                          orderDir="asc"
+                          onSortChange={() => {}}
+                          onView={() => {}}
+                          onEdit={() => {}}
+                          onDelete={() => {}}
+                          onCreatePrazo={() => {}}
+                          onVerPrazo={() => {}}
+                          emptyMessage=""
+                          proposal={{
+                            proposta,
+                            decision,
+                            ...actionsFor("documento", proposta.id),
+                            onEdit: onChanged ? () => setEditingDoc({ doc, proposta, contextName }) : undefined,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="prazos" className="mt-0">
+            {prazoProposals.length === 0 ? (
+              <p className="py-10 text-center text-[13px] text-muted-foreground">
+                Nenhuma proposta de prazos no momento.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {prazoProposals.map((proposta) => {
+                  const decision = decisions[proposta.id] ?? null;
+                  return (
+                    <div key={proposta.id}>
+                      {!decision && (
+                        <PropostaReason
+                          raciocinio={proposta.raciocinio}
+                          fontes={proposta.fontes}
+                          onOpenSource={(fonte) =>
+                            openSource(proposta.arquivo.nome, fonte, proposta.fileUrl, proposta.onedriveUrl)
+                          }
+                        />
+                      )}
+                      <PrazoItem
+                        proposal={{
+                          proposta,
+                          decision,
+                          ...actionsFor("obrigacao", proposta.id),
+                          onEdit: onChanged && proposta.obrigacao ? () => setEditingPrazo(proposta) : undefined,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
 
       {documentoProposals.length === 0 && prazoProposals.length === 0 && (
