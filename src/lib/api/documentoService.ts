@@ -259,14 +259,18 @@ export async function updateFundDocumentosMeta(
 
 // ── Documentos — leitura agrupada + CRUD ───────────────────────────────────────
 
+/** The fund's documents by ativo. A file or deadline rule that the Agent has proposed and
+ * nobody has approved is left out unless `includeProposals`: only the Propostas tab asks. */
 export async function listDocumentosByFundo(
   fundoId: number,
   orderBy?: DocumentoOrderBy,
-  orderDir: OrderDir = "asc"
+  orderDir: OrderDir = "asc",
+  options: { includeProposals?: boolean } = {}
 ): Promise<FundoDocumentosResponse> {
   const params = new URLSearchParams();
   if (orderBy) params.set("order_by", orderBy);
   if (orderBy) params.set("order_dir", orderDir);
+  if (options.includeProposals) params.set("include_proposals", "true");
   const qs = params.toString();
   const url = `${FUNDS_API_BASE_URL}/fundos/${fundoId}/documentos${qs ? `?${qs}` : ""}`;
   return handleResponse<FundoDocumentosResponse>(await fetch(url));

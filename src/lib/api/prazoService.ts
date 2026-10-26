@@ -190,10 +190,15 @@ function ownerParams(owner: PrazoOwner): URLSearchParams {
   );
 }
 
+/** The owner's rules. Pending proposals of the Agent are left out unless `includeProposals`:
+ * only the Propostas tab asks for them. */
 export async function listObrigacoes(
-  owner: PrazoOwner
+  owner: PrazoOwner,
+  options: { includeProposals?: boolean } = {}
 ): Promise<ObrigacaoListResponse> {
-  const url = `${FUNDS_API_BASE_URL}/prazos/obrigacoes?${ownerParams(owner).toString()}`;
+  const params = ownerParams(owner);
+  if (options.includeProposals) params.set("include_proposals", "true");
+  const url = `${FUNDS_API_BASE_URL}/prazos/obrigacoes?${params.toString()}`;
   return handleResponse<ObrigacaoListResponse>(await fetch(url));
 }
 

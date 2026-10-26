@@ -30,6 +30,14 @@ describe("usePropostas", () => {
     expect(result.current.prazoProposals.map((p) => p.sugestao.topico)).toEqual(["Antes"]);
   });
 
+  it("asks for the pending proposals, which the other tabs leave out", async () => {
+    const { result } = renderHook(() => usePropostas(7));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(listDocumentosByFundo).toHaveBeenCalledWith(7, undefined, "asc", { includeProposals: true });
+    expect(listObrigacoes).toHaveBeenCalledWith({ fundo_id: 7 }, { includeProposals: true });
+  });
+
   it("reloads without flashing the loading state, keeping the cards on screen", async () => {
     const { result } = renderHook(() => usePropostas(1));
     await waitFor(() => expect(result.current.loading).toBe(false));

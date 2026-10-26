@@ -40,7 +40,12 @@ export function usePropostas(fundoId: number | null): UsePropostasResult {
     const isReload = reloading.current;
     reloading.current = false;
     setState((s) => ({ ...s, loading: !isReload, error: null }));
-    Promise.all([listDocumentosByFundo(fundoId), listObrigacoes({ fundo_id: fundoId })])
+    // The other tabs leave a pending proposal out; this one is where it lives.
+    const withProposals = { includeProposals: true };
+    Promise.all([
+      listDocumentosByFundo(fundoId, undefined, "asc", withProposals),
+      listObrigacoes({ fundo_id: fundoId }, withProposals),
+    ])
       .then(([docs, obrigacoes]) => {
         if (cancelled) return;
         setState({
