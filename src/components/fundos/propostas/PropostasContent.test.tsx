@@ -123,6 +123,29 @@ describe("PropostasContent", () => {
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
   });
 
+  it("takes a saved decision off the tab and reloads the list", async () => {
+    const user = userEvent.setup();
+    const onApprove = vi.fn().mockResolvedValue(undefined);
+    const onChanged = vi.fn();
+    render(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={prazoProposals}
+        onApprove={onApprove}
+        onReject={vi.fn()}
+        onChanged={onChanged}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /aprovar vínculo/i }));
+
+    expect(onApprove).toHaveBeenCalledWith("documento", "doc-prop-1");
+    expect(onChanged).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText("Imóvel Alpha")).not.toBeInTheDocument();
+    expect(screen.queryByText("Aprovada agora")).not.toBeInTheDocument();
+    expect(screen.getByText("Nenhuma proposta de ativos no momento.")).toBeInTheDocument();
+  });
+
   it("has no Editar button unless the list can be reloaded after an edit", () => {
     render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
 
@@ -182,25 +205,6 @@ describe("PropostasContent", () => {
     rerender(<PropostasContent documentoProposals={[]} prazoProposals={[]} />);
     expect(screen.getByText("OneDrive: última verificação indisponível")).toBeInTheDocument();
     expect(screen.queryByText(/OneDrive verificado/)).not.toBeInTheDocument();
-  });
-
-  it("saves the approval before showing it, and offers no undo once saved", async () => {
-    const user = userEvent.setup();
-    const onApprove = vi.fn().mockResolvedValue(undefined);
-    render(
-      <PropostasContent
-        documentoProposals={documentoProposals}
-        prazoProposals={[]}
-        onApprove={onApprove}
-        onReject={vi.fn()}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: /aprovar vínculo/i }));
-
-    expect(onApprove).toHaveBeenCalledWith("documento", "doc-prop-1");
-    expect(await screen.findByText("Aprovada agora")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /desfazer/i })).not.toBeInTheDocument();
   });
 
   it("keeps the proposal pending and shows the error when saving fails", async () => {

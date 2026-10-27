@@ -91,7 +91,12 @@ export function PropostasContent({
   // Until the reader picks a tab, it follows the data: Ativos if there are any, else Prazos.
   const [chosenTab, setChosenTab] = useState<ProposalTab | null>(null);
   const activeTab: ProposalTab = chosenTab ?? (documentoProposals.length > 0 ? "ativos" : "prazos");
-  // The count is what is still pending: a decided card stays on screen but no longer counts.
+  // A saved decision takes the card off the tab (the list is reloaded right after); a local-only
+  // decision keeps it on screen so it can be undone. Either way the count is what is still pending.
+  const visibleDocumentos = persisted
+    ? documentoProposals.filter((p) => !decisions[p.proposta.id])
+    : documentoProposals;
+  const visiblePrazos = persisted ? prazoProposals.filter((p) => !decisions[p.id]) : prazoProposals;
   const pendingDocumentos = documentoProposals.filter((p) => !decisions[p.proposta.id]).length;
   const pendingPrazos = prazoProposals.filter((p) => !decisions[p.id]).length;
 
@@ -102,6 +107,7 @@ export function PropostasContent({
         await request?.();
         setSaveError(null);
         decide(id, decision);
+        if (request) onChanged?.();
       } catch (e) {
         setSaveError(e instanceof Error ? e.message : "Não foi possível salvar a decisão");
       }
@@ -149,7 +155,7 @@ export function PropostasContent({
         </p>
       )}
 
-      {documentoProposals.length + prazoProposals.length > 0 && (
+      {visibleDocumentos.length + visiblePrazos.length > 0 && (
         <Tabs value={activeTab} onValueChange={(v) => setChosenTab(v as ProposalTab)}>
           <TabsList className="mb-5">
             <TabsTrigger value="ativos" className="gap-2">
@@ -161,13 +167,13 @@ export function PropostasContent({
           </TabsList>
 
           <TabsContent value="ativos" className="mt-0">
-            {documentoProposals.length === 0 ? (
+            {visibleDocumentos.length === 0 ? (
               <p className="py-10 text-center text-[13px] text-muted-foreground">
                 Nenhuma proposta de ativos no momento.
               </p>
             ) : (
               <div className="flex flex-col gap-5">
-                {documentoProposals.map(({ doc, proposta, contextName }) => {
+                {visibleDocumentos.map(({ doc, proposta, contextName }) => {
                   const decision = decisions[proposta.id] ?? null;
                   return (
                     <div key={proposta.id}>
@@ -210,13 +216,13 @@ export function PropostasContent({
           </TabsContent>
 
           <TabsContent value="prazos" className="mt-0">
-            {prazoProposals.length === 0 ? (
+            {visiblePrazos.length === 0 ? (
               <p className="py-10 text-center text-[13px] text-muted-foreground">
                 Nenhuma proposta de prazos no momento.
               </p>
             ) : (
               <div className="flex flex-col gap-3">
-                {prazoProposals.map((proposta) => {
+                {visiblePrazos.map((proposta) => {
                   const decision = decisions[proposta.id] ?? null;
                   return (
                     <div key={proposta.id}>
@@ -246,7 +252,7 @@ export function PropostasContent({
         </Tabs>
       )}
 
-      {documentoProposals.length === 0 && prazoProposals.length === 0 && (
+      {visibleDocumentos.length === 0 && visiblePrazos.length === 0 && (
         <p className="py-10 text-center text-[13px] text-muted-foreground">
           Nenhuma proposta pendente no momento.
         </p>
