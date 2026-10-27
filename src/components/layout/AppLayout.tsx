@@ -4,6 +4,7 @@ import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AlertsBell } from "@/components/layout/AlertsBell";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -65,7 +66,10 @@ export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
 
             <div className="flex items-center gap-4">
               {headerRight}
-              <AlertsBell />
+              <div className="flex items-center gap-1">
+                <ThemeToggle />
+                <AlertsBell />
+              </div>
             </div>
           </header>
 
