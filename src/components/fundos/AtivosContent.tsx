@@ -683,7 +683,7 @@ function AtivoSelector({
       {open && options.length > 0 && (
         <>
           <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-[320px] max-h-80 overflow-y-auto rounded-lg border border-border bg-[#10141a] shadow-[0_20px_40px_-12px_rgba(3,6,12,0.7)] p-1.5">
+          <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-[320px] max-h-80 overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-xl p-1.5">
             {options.map((o) => {
               const active = o.id === selectedId;
               return (
