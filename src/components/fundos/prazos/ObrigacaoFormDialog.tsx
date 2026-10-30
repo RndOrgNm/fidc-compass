@@ -38,6 +38,7 @@ import {
 } from "@/lib/api/prazoService";
 import { prazoKeys, alertaKeys } from "@/lib/queryKeys";
 import { CAT_META, CAT_ORDER, TIPO_LABEL } from "./prazoMeta";
+import { MAX_INTERVALO_MESES, intervaloOptions } from "./intervalo";
 import { ResponsavelSelect } from "./ResponsavelSelect";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 
@@ -47,14 +48,6 @@ const TIPOS: TipoPrazo[] = [
   "DIAS_ANTES_DU",
   "DIAS_APOS_EVENTO",
   "FINAL_DO_MES",
-];
-
-const INTERVALO_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Mensal" },
-  { value: "2", label: "Bimestral (a cada 2 meses)" },
-  { value: "3", label: "Trimestral (a cada 3 meses)" },
-  { value: "6", label: "Semestral (a cada 6 meses)" },
-  { value: "12", label: "Anual (a cada 12 meses)" },
 ];
 
 const MONTH_NAMES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -102,7 +95,7 @@ const schema = z
     ]),
     antecedencia_alerta_dias: z.coerce.number().int().min(0).max(365),
     recorrente: z.boolean().default(false),
-    intervalo_meses: z.coerce.number().int().min(1).max(12).default(1),
+    intervalo_meses: z.coerce.number().int().min(1).max(MAX_INTERVALO_MESES).default(1),
     responsavel_ids: z.array(z.string()).default([]),
     ciclo_inicial: z.string().optional(),
     dia: optInt(1, 31),
@@ -489,7 +482,7 @@ export function ObrigacaoFormDialog({ owner, open, onOpenChange, initial, onCrea
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {INTERVALO_OPTIONS.map((opt) => (
+                      {intervaloOptions(field.value).map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </SelectItem>
