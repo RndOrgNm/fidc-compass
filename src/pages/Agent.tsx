@@ -24,7 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
-import { RAG_API_BASE_URL, FUNDS_AGENT_API_URL } from "@/lib/api/config";
+import { FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { apiFetch } from "@/lib/api/client";
 import { useChat } from "@/contexts/ChatContext";
 import type { ToolCallView } from "@/lib/agui/chatItems";
@@ -298,7 +298,7 @@ export default function Agent() {
   useEffect(() => {
     if (pdfFetchStartedRef.current) return;
     pdfFetchStartedRef.current = true;
-    apiFetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
+    apiFetch(`${FUNDS_AGENT_API_URL}/static/pdf/resol175consolid.pdf`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -338,7 +338,7 @@ export default function Agent() {
     const timeout = setTimeout(() => {
       if (cancelled || pdfDataRef.current) return;
       clearInterval(interval);
-      apiFetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
+      apiFetch(`${FUNDS_AGENT_API_URL}/static/pdf/resol175consolid.pdf`)
         .then(async (res) => {
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
