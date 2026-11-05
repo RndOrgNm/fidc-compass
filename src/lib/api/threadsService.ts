@@ -75,6 +75,11 @@ export async function listThreads(agentId?: string): Promise<Thread[]> {
   return (await json<{ threads: Thread[] }>(response)).threads;
 }
 
+export async function getThread(threadId: string): Promise<Thread> {
+  const response = await apiFetch(`${FUNDS_AGENT_API_URL}/threads/${encodeURIComponent(threadId)}`);
+  return json<Thread>(response);
+}
+
 export async function renameThread(threadId: string, title: string): Promise<Thread> {
   const response = await apiFetch(`${FUNDS_AGENT_API_URL}/threads/${encodeURIComponent(threadId)}`, {
     method: "PATCH",

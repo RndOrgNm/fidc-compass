@@ -1,416 +1,268 @@
-import { createContext, useContext, useState, useRef, useCallback, ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, ReactNode } from "react";
+import type { Message } from "@ag-ui/core";
+
 import { toast } from "@/hooks/use-toast";
-import { ragService, type ConversationWithMetadata } from "@/lib/api/ragService";
-import { fundsAgentService } from "@/lib/api/fundsAgentService";
-import { prazosAgentService } from "@/lib/api/prazosAgentService";
-import type { ApiSource, ToolActivityEvent } from "@/lib/api/client";
-
-export interface ToolActivityItem {
-  tool: string;
-  logs: string[];
-  progress?: { current: number; total: number };
-  status: "running" | "done" | "error";
-}
-
-export interface Message {
-  message_id: string;
-  conversation_id: string;
-  role: "user" | "assistant";
-  content: string;
-  created_at: string;
-  sources?: ApiSource[] | null;
-}
-
-export interface Conversation extends ConversationWithMetadata {
-  title: string;
-  created_at: string;
-  updated_at: string;
-  user?: string;
-}
-
-interface PendingMessage {
-  conversationId: string;
-  query: string;
-  userMessage: Message;
-  status: "pending" | "processing" | "completed" | "error";
-  assistantMessage?: Message;
-  error?: string;
-}
+import { buildChatItems, type ChatItem } from "@/lib/agui/chatItems";
+import { streamRun } from "@/lib/agui/streamRun";
+import {
+  ApiRequestError,
+  ThreadBusyError,
+  deleteThread as removeThread,
+  getThread,
+  getThreadMessages,
+  listChatAgents,
+  listThreads,
+  runThread,
+  type ChatAgent,
+  type Thread,
+} from "@/lib/api/threadsService";
 
 interface ChatContextType {
-  conversations: Conversation[];
-  currentConversationId: string | null;
-  messages: Message[];
-  isLoading: boolean;
-  isLoadingConversations: boolean;
-  streamingMessage: Message | null;
-  toolActivity: ToolActivityItem[];
-  streamingText: string;
-  pendingMessages: Map<string, PendingMessage>;
-  selectedAgent: "cvm" | "funds" | "prazos";
-  setSelectedAgent: (agent: "cvm" | "funds" | "prazos") => void;
+  /** The agents of the chat menu, from the registry. */
+  agents: ChatAgent[];
+  isLoadingAgents: boolean;
+  selectedAgentId: string | null;
+  /** Picks the agent of the next conversation: the open thread is left, since it has one agent only. */
+  selectAgent: (agentId: string) => void;
+  /** Picks an agent only if none is chosen yet (the open thread's agent, or the link's, wins). */
+  setDefaultAgent: (agentId: string) => void;
 
-  setCurrentConversationId: (id: string | null) => void;
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  setStreamingMessage: (message: Message | null) => void;
+  /** The threads of the selected agent, latest first. */
+  threads: Thread[];
+  isLoadingThreads: boolean;
+  currentThreadId: string | null;
+  setCurrentThreadId: (id: string | null) => void;
 
-  refreshConversations: () => Promise<void>;
-  loadMessages: (conversationId: string) => Promise<void>;
+  /** The open thread as the chat shows it: questions, and one answer under each. */
+  items: ChatItem[];
+  /** A run is going: nothing can be sent until it ends. */
+  isRunning: boolean;
+
+  loadAgents: () => Promise<ChatAgent[]>;
+  refreshThreads: (agentId?: string) => Promise<void>;
+  loadMessages: (threadId: string) => Promise<void>;
   sendMessage: (query: string) => Promise<void>;
-  deleteConversation: (conversationId: string) => Promise<void>;
+  deleteThread: (threadId: string) => Promise<void>;
   resetToInitialState: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
-export function ChatProvider({ children }: { children: ReactNode }) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
-  const [streamingMessage, setStreamingMessage] = useState<Message | null>(null);
-  const [toolActivity, setToolActivity] = useState<ToolActivityItem[]>([]);
-  const [streamingText, setStreamingText] = useState("");
-  const [pendingMessages, setPendingMessages] = useState<Map<string, PendingMessage>>(new Map());
-  const [selectedAgent, setSelectedAgentState] = useState<"cvm" | "funds" | "prazos">("cvm");
+/** The title is written after the answer ends, so the list is read once more a little later. */
+const TITLE_REFRESH_DELAY_MS = 3000;
 
-  const isSendingMessageRef = useRef(false);
+function reasonOf(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export function ChatProvider({ children }: { children: ReactNode }) {
+  const [agents, setAgents] = useState<ChatAgent[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(false);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Read inside callbacks that must not run twice at once, whatever the render they came from.
+  const isRunningRef = useRef(false);
+
+  const items = useMemo(() => buildChatItems(messages), [messages]);
 
   const resetToInitialState = useCallback(() => {
-    setCurrentConversationId(null);
+    setCurrentThreadId(null);
     setMessages([]);
-    setStreamingMessage(null);
-    setToolActivity([]);
-    setStreamingText("");
-    setIsLoading(false);
   }, []);
 
-  const getService = useCallback(
-    (agent: "cvm" | "funds" | "prazos") =>
-      agent === "funds"
-        ? fundsAgentService
-        : agent === "prazos"
-          ? prazosAgentService
-          : ragService,
-    []
-  );
+  const loadAgents = useCallback(async () => {
+    setIsLoadingAgents(true);
+    try {
+      const loaded = await listChatAgents();
+      setAgents(loaded);
+      return loaded;
+    } catch (error) {
+      console.error("Error loading agents:", error);
+      toast({
+        title: "Erro ao carregar os agentes",
+        description: reasonOf(error, "Não foi possível carregar a lista de agentes"),
+        variant: "destructive",
+      });
+      return [];
+    } finally {
+      setIsLoadingAgents(false);
+    }
+  }, []);
 
-  const refreshConversations = useCallback(
-    async (agentOverride?: "cvm" | "funds" | "prazos") => {
-      const agent = agentOverride ?? selectedAgent;
+  const refreshThreads = useCallback(
+    async (agentId?: string) => {
+      const agent = agentId ?? selectedAgentId;
+      if (!agent) return;
+      setIsLoadingThreads(true);
       try {
-        setIsLoadingConversations(true);
-        const service = getService(agent);
-        const fetchedConversations = await service.fetchConversations(50);
-        setConversations(fetchedConversations);
+        setThreads(await listThreads(agent));
       } catch (error) {
-        console.error("Error loading conversations:", error);
+        console.error("Error loading threads:", error);
         toast({
           title: "Erro ao carregar conversas",
-          description:
-            error instanceof Error ? error.message : "Não foi possível carregar as conversas",
+          description: reasonOf(error, "Não foi possível carregar as conversas"),
           variant: "destructive",
         });
       } finally {
-        setIsLoadingConversations(false);
+        setIsLoadingThreads(false);
       }
     },
-    [selectedAgent, getService]
+    [selectedAgentId],
   );
 
-  const setSelectedAgent = useCallback(
-    (agent: "cvm" | "funds" | "prazos") => {
-      setSelectedAgentState(agent);
-      setCurrentConversationId(null);
-      setMessages([]);
-      setStreamingMessage(null);
-      setToolActivity([]);
-      setStreamingText("");
-      refreshConversations(agent);
+  const selectAgent = useCallback(
+    (agentId: string) => {
+      if (agentId === selectedAgentId) return;
+      setSelectedAgentId(agentId);
+      resetToInitialState();
     },
-    [refreshConversations]
+    [selectedAgentId, resetToInitialState],
   );
 
-  const loadMessages = useCallback(
-    async (conversationId: string) => {
-      if (!conversationId) {
+  const setDefaultAgent = useCallback((agentId: string) => {
+    setSelectedAgentId((current) => current ?? agentId);
+  }, []);
+
+  const loadMessages = useCallback(async (threadId: string) => {
+    if (!threadId) {
+      setMessages([]);
+      return;
+    }
+    // The run in progress is the source of truth for its thread.
+    if (isRunningRef.current) return;
+
+    try {
+      const [thread, loaded] = await Promise.all([getThread(threadId), getThreadMessages(threadId)]);
+      // A thread has one agent only: opening it moves the menu to that agent.
+      setSelectedAgentId(thread.agent_id);
+      setMessages(loaded);
+    } catch (error) {
+      // A thread that does not exist yet (a link, or a first run still being accepted) is empty.
+      if (error instanceof ApiRequestError && error.status === 404) {
         setMessages([]);
         return;
       }
-
-      if (isSendingMessageRef.current) {
-        return;
-      }
-
-      const service = getService(selectedAgent);
-      try {
-        const fetchedMessages = await service.loadConversationMessages(conversationId);
-        setMessages(fetchedMessages as Message[]);
-      } catch (error) {
-        console.error("Error loading messages:", error);
-        toast({
-          title: "Erro ao carregar mensagens",
-          description:
-            error instanceof Error ? error.message : "Não foi possível carregar as mensagens",
-          variant: "destructive",
-        });
-      }
-    },
-    [selectedAgent, getService]
-  );
-
-  const handleActivityEvent = useCallback((event: ToolActivityEvent) => {
-    if (event.type === "text_delta") {
-      if (event.text) setStreamingText((prev) => prev + event.text);
-      return;
+      console.error("Error loading messages:", error);
+      toast({
+        title: "Erro ao carregar mensagens",
+        description: reasonOf(error, "Não foi possível carregar as mensagens"),
+        variant: "destructive",
+      });
     }
-    setToolActivity((prev) => {
-      if (event.type === "tool_start") {
-        return [...prev, { tool: event.tool ?? "ferramenta", logs: [], status: "running" as const }];
-      }
-      if (!prev.length) return prev;
-      const next = [...prev];
-      const last = next[next.length - 1];
-      if (event.type === "log" && event.message) {
-        next[next.length - 1] = { ...last, logs: [...last.logs, event.message] };
-      } else if (event.type === "progress" && event.total != null) {
-        next[next.length - 1] = {
-          ...last,
-          progress: { current: event.progress ?? 0, total: event.total },
-        };
-      } else if (event.type === "tool_end") {
-        next[next.length - 1] = { ...last, status: "done" };
-      } else if (event.type === "tool_error") {
-        next[next.length - 1] = {
-          ...last,
-          status: "error",
-          logs: event.message ? [...last.logs, event.message] : last.logs,
-        };
-      }
-      return next;
-    });
   }, []);
 
   const sendMessage = useCallback(
     async (query: string) => {
-      if (!query.trim() || isLoading) return;
+      if (!query.trim() || isRunningRef.current || !selectedAgentId) return;
 
-      const service = getService(selectedAgent);
+      const agentId = selectedAgentId;
+      const threadId = currentThreadId ?? crypto.randomUUID();
+      const question: Message = { id: crypto.randomUUID(), role: "user", content: query };
 
-      setIsLoading(true);
-      setToolActivity([]);
-      setStreamingText("");
-      isSendingMessageRef.current = true;
-
-      const messageId = `pending-${Date.now()}`;
+      isRunningRef.current = true;
+      setIsRunning(true);
+      setMessages((prev) => [...prev, question]);
 
       try {
-        let conversationIdAtSend = currentConversationId;
-        let isNewConversation = false;
-
-        if (!conversationIdAtSend) {
-          const newConv = await service.createNewConversation("Nova Conversa");
-          conversationIdAtSend = newConv.conversation_id;
-          isNewConversation = true;
-          setCurrentConversationId(conversationIdAtSend);
-          await refreshConversations();
-        }
-
-        const currentConv = conversations.find(
-          (c) => c.conversation_id === conversationIdAtSend
-        );
-        const shouldGenerateTitle =
-          isNewConversation || !currentConv || currentConv.title === "Nova Conversa";
-
-        const tempUserMessage: Message = {
-          message_id: `temp-user-${Date.now()}`,
-          conversation_id: conversationIdAtSend,
-          role: "user",
-          content: query,
-          created_at: new Date().toISOString(),
-        };
-
-        setMessages((prev) => [...prev, tempUserMessage]);
-
-        const pending: PendingMessage = {
-          conversationId: conversationIdAtSend,
-          query,
-          userMessage: tempUserMessage,
-          status: "processing",
-        };
-        setPendingMessages((prev) => new Map(prev).set(messageId, pending));
-
-        const { userMessage, assistantMessage } = await service.sendMessage(
-          conversationIdAtSend,
-          query,
-          shouldGenerateTitle,
-          handleActivityEvent
-        );
-
-        setPendingMessages((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(messageId, {
-            ...pending,
-            status: "completed",
-            assistantMessage: assistantMessage as Message,
-          });
-          return newMap;
-        });
-
-        setMessages((prev) => {
-          const filtered = prev.filter(
-            (m) => m.message_id !== tempUserMessage.message_id
-          );
-          return [...filtered, userMessage as Message, assistantMessage as Message];
-        });
-
-        // Prazos already streamed the answer live via text_delta events — no
-        // need for the fake character-by-character typewriter on top of it.
-        // Other agents (no real streaming yet) still get the typewriter.
-        if (selectedAgent !== "prazos") {
-          setStreamingMessage(assistantMessage as Message);
-        }
-
-        if (shouldGenerateTitle) {
-          try {
-            const updatedConv = await service.getConversation(
-              conversationIdAtSend
-            );
-            setConversations((prev) =>
-              prev.map((c) =>
-                c.conversation_id === conversationIdAtSend
-                  ? { ...c, title: updatedConv.title }
-                  : c
-              )
-            );
-          } catch (titleError) {
-            console.error("Error updating conversation title:", titleError);
-          }
-        }
-
-        await refreshConversations();
-
-        setTimeout(() => {
-          setPendingMessages((prev) => {
-            const newMap = new Map(prev);
-            newMap.delete(messageId);
-            return newMap;
-          });
-        }, 5000);
-      } catch (error) {
-        console.error("Error sending message:", error);
-
-        setPendingMessages((prev) => {
-          const newMap = new Map(prev);
-          const existing = newMap.get(messageId);
-          if (existing) {
-            newMap.set(messageId, {
-              ...existing,
-              status: "error",
-              error: error instanceof Error ? error.message : "Unknown error",
+        let events;
+        try {
+          events = await runThread({ threadId, agentId, messages: [question] });
+        } catch (error) {
+          // Refused before any event: the question was never part of the thread.
+          setMessages((prev) => prev.filter((m) => m.id !== question.id));
+          if (error instanceof ThreadBusyError) {
+            toast({
+              title: "Esta conversa já está respondendo",
+              description: "Aguarde a resposta terminar e envie de novo.",
+              variant: "destructive",
+            });
+          } else {
+            console.error("Error sending message:", error);
+            toast({
+              title: "Erro ao enviar mensagem",
+              description: reasonOf(error, "Não foi possível enviar a mensagem"),
+              variant: "destructive",
             });
           }
-          return newMap;
-        });
-
-        toast({
-          title: "Erro ao enviar mensagem",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Não foi possível enviar a mensagem",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-        setToolActivity([]);
-        setStreamingText("");
-        isSendingMessageRef.current = false;
-      }
-    },
-    [
-      currentConversationId,
-      conversations,
-      isLoading,
-      refreshConversations,
-      selectedAgent,
-      getService,
-      handleActivityEvent,
-    ]
-  );
-
-  const deleteConversation = useCallback(
-    async (conversationId: string) => {
-      if (!conversationId || !conversationId.trim()) {
-        toast({
-          title: "Erro",
-          description: "ID da conversa inválido",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const service = getService(selectedAgent);
-
-      try {
-        await service.deleteConversation(conversationId);
-
-        if (conversationId === currentConversationId) {
-          resetToInitialState();
+          return;
         }
 
-        await refreshConversations();
+        // The thread exists from its first run: only now does the page move to its address.
+        if (!currentThreadId) setCurrentThreadId(threadId);
 
-        toast({
-          title: "Conversa excluída",
-          description: "A conversa foi excluída com sucesso.",
-        });
+        try {
+          const outcome = await streamRun(events, setMessages);
+          if (outcome) {
+            toast({ title: "A resposta falhou", description: outcome.error, variant: "destructive" });
+          }
+        } catch (error) {
+          console.error("Error reading the answer:", error);
+          toast({
+            title: "A conexão foi interrompida",
+            description: "Reabra a conversa para ver o que foi gravado.",
+            variant: "destructive",
+          });
+        }
+
+        await refreshThreads(agentId);
+        setTimeout(() => void refreshThreads(agentId), TITLE_REFRESH_DELAY_MS);
+      } finally {
+        isRunningRef.current = false;
+        setIsRunning(false);
+      }
+    },
+    [selectedAgentId, currentThreadId, refreshThreads],
+  );
+
+  const deleteThread = useCallback(
+    async (threadId: string) => {
+      if (!threadId || !threadId.trim()) {
+        toast({ title: "Erro", description: "ID da conversa inválido", variant: "destructive" });
+        return;
+      }
+      try {
+        await removeThread(threadId);
+        if (threadId === currentThreadId) resetToInitialState();
+        await refreshThreads();
+        toast({ title: "Conversa excluída", description: "A conversa foi excluída com sucesso." });
       } catch (error) {
-        console.error("Error deleting conversation:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Não foi possível excluir a conversa";
+        console.error("Error deleting thread:", error);
         toast({
           title: "Erro ao excluir conversa",
-          description: errorMessage,
+          description: reasonOf(error, "Não foi possível excluir a conversa"),
           variant: "destructive",
         });
       }
     },
-    [currentConversationId, refreshConversations, resetToInitialState, selectedAgent, getService]
+    [currentThreadId, refreshThreads, resetToInitialState],
   );
 
   const value: ChatContextType = {
-    conversations,
-    currentConversationId,
-    messages,
-    isLoading,
-    isLoadingConversations,
-    streamingMessage,
-    toolActivity,
-    streamingText,
-    pendingMessages,
-    selectedAgent,
-    setSelectedAgent,
-
-    setCurrentConversationId,
-    setMessages,
-    setStreamingMessage,
-
-    refreshConversations,
+    agents,
+    isLoadingAgents,
+    selectedAgentId,
+    selectAgent,
+    setDefaultAgent,
+    threads,
+    isLoadingThreads,
+    currentThreadId,
+    setCurrentThreadId,
+    items,
+    isRunning,
+    loadAgents,
+    refreshThreads,
     loadMessages,
     sendMessage,
-    deleteConversation,
+    deleteThread,
     resetToInitialState,
   };
 
-  return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
 
 export function useChat() {
@@ -420,4 +272,3 @@ export function useChat() {
   }
   return context;
 }
-

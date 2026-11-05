@@ -7,6 +7,7 @@ import {
   ApiRequestError,
   ThreadBusyError,
   deleteThread,
+  getThread,
   getThreadMessages,
   listChatAgents,
   listThreads,
@@ -50,6 +51,12 @@ describe("reading", () => {
 
     await listThreads("a 1");
     expect(lastCall().url).toBe(`${BASE}/threads?agent_id=a%201`);
+  });
+
+  it("reads one thread", async () => {
+    reply({ id: "t1", agent_id: "a1" });
+    expect(await getThread("t1")).toEqual({ id: "t1", agent_id: "a1" });
+    expect(lastCall().url).toBe(`${BASE}/threads/t1`);
   });
 
   it("reads the messages of a thread from its snapshot", async () => {

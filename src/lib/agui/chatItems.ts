@@ -9,7 +9,10 @@ export interface ToolCallView {
   /** The arguments as the model wrote them (JSON text, possibly still arriving). */
   args: string;
   result?: string;
-  status: "running" | "done";
+  status: "running" | "done" | "error";
+  /** What the tool reported while it ran: its log lines and its latest progress. */
+  logs: string[];
+  progress?: { current: number; total: number };
 }
 
 export interface ActivityView {
@@ -29,8 +32,35 @@ export type ChatItem =
       sources: ApiSource[];
     };
 
+/** The activity_type of what an MCP tool call reports while it runs. */
+const MCP_ACTIVITY = "mcp_tool_call";
+
 function textOf(content: unknown): string {
   return typeof content === "string" ? content : "";
+}
+
+/**
+ * Hands each tool call the report of its own activity: the one whose server and tool make the
+ * call's name (`server__tool`), the first still unclaimed when a tool is called more than once.
+ */
+function attachReports(toolCalls: ToolCallView[], activities: ActivityView[]): void {
+  const claimed = new Set<string>();
+  for (const activity of activities) {
+    if (activity.type !== MCP_ACTIVITY) continue;
+    const { server, tool, progress, logs } = activity.content as {
+      server?: string;
+      tool?: string;
+      progress?: { progress: number; total: number | null } | null;
+      logs?: { message: string }[];
+    };
+    const call = toolCalls.find((c) => c.name === `${server}__${tool}` && !claimed.has(c.id));
+    if (!call) continue;
+    claimed.add(call.id);
+    call.logs = (logs ?? []).map((log) => log.message);
+    if (progress && progress.total != null) {
+      call.progress = { current: progress.progress, total: progress.total };
+    }
+  }
 }
 
 /**
@@ -46,6 +76,7 @@ export function buildChatItems(messages: Message[]): ChatItem[] {
 
   const close = () => {
     if (!answer) return;
+    attachReports(answer.toolCalls, answer.activities);
     answer.text = texts.join("\n\n");
     answer.sources = sourcesFromToolResults(results);
     answer = null;
@@ -75,13 +106,14 @@ export function buildChatItems(messages: Message[]): ChatItem[] {
           name: call.function.name,
           args: call.function.arguments,
           status: "running",
+          logs: [],
         });
       }
     } else if (message.role === "tool") {
       const call = answer?.toolCalls.find((c) => c.id === message.toolCallId);
       if (call) {
         call.result = textOf(message.content);
-        call.status = "done";
+        call.status = message.error ? "error" : "done";
       }
       results.push(textOf(message.content));
     } else if (message.role === "activity") {

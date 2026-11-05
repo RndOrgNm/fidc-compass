@@ -25,7 +25,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import { RAG_API_BASE_URL, FUNDS_AGENT_API_URL } from "@/lib/api/config";
-import { useChat, type ToolActivityItem } from "@/contexts/ChatContext";
+import { apiFetch } from "@/lib/api/client";
+import { useChat } from "@/contexts/ChatContext";
+import type { ToolCallView } from "@/lib/agui/chatItems";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 
 const MARKDOWN_COMPONENTS = {
@@ -41,27 +43,13 @@ const MARKDOWN_COMPONENTS = {
   td: ({node, ...props}: any) => <td className="border border-gray-300 px-4 py-2" {...props} />,
 };
 
-/** Live-growing assistant bubble for real token streaming (Prazos tab), shown
- * in place of the bounce/ToolActivityCard once the model starts producing its
- * answer text. Reuses the same markdown styling as a persisted message. */
-function LiveAnswerBubble({ text }: { text: string }) {
-  return (
-    <div className="flex-1 max-w-[75%] min-w-0">
-      <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3 break-words">
-        <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-          <ReactMarkdown components={MARKDOWN_COMPONENTS}>{text}</ReactMarkdown>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ToolActivityCard({ items }: { items: ToolActivityItem[] }) {
+/** The tools an answer called: running until their result arrives, with what they reported. */
+function ToolActivityCard({ items }: { items: ToolCallView[] }) {
   if (!items.length) return null;
   return (
     <div className="space-y-2">
-      {items.map((item, i) => (
-        <div key={i} className="min-w-[280px] rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+      {items.map((item) => (
+        <div key={item.id} className="min-w-[280px] rounded-lg border border-border bg-muted/30 px-3 py-2.5">
           <div className="flex items-center gap-2 text-xs font-medium">
             {item.status === "running" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -70,7 +58,7 @@ function ToolActivityCard({ items }: { items: ToolActivityItem[] }) {
                 className={`h-2 w-2 rounded-full ${item.status === "error" ? "bg-destructive" : "bg-success"}`}
               />
             )}
-            <span>{item.tool}</span>
+            <span>{item.name}</span>
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">call</Badge>
           </div>
           {item.progress && (
@@ -110,28 +98,26 @@ export default function Agent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const {
-    conversations,
-    currentConversationId,
-    messages,
-    isLoading,
-    isLoadingConversations,
-    streamingMessage,
-    toolActivity,
-    streamingText,
-    selectedAgent,
-    setSelectedAgent,
-    setCurrentConversationId,
-    setStreamingMessage,
-    refreshConversations,
+    agents,
+    selectedAgentId,
+    selectAgent,
+    setDefaultAgent,
+    threads,
+    currentThreadId,
+    setCurrentThreadId,
+    items,
+    isRunning,
+    isLoadingThreads,
+    loadAgents,
+    refreshThreads,
     loadMessages,
     sendMessage,
-    deleteConversation,
+    deleteThread,
     resetToInitialState,
   } = useChat();
 
   // UI-specific local state
   const [inputValue, setInputValue] = useState("");
-  const [displayedText, setDisplayedText] = useState("");
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(100);
@@ -155,58 +141,62 @@ export default function Agent() {
     if (state?.reset) {
       resetToInitialState();
       setInputValue("");
-      setDisplayedText("");
       setPdfViewerOpen(false);
       setCurrentPage(1);
       window.history.replaceState({}, document.title);
     }
   }, [location.state, resetToInitialState]);
 
-  // URL → state: agent and conversationId from URL
+  // The menu comes from the registry. Once it is loaded, the agent of the link (?agent=<id>) is
+  // the selected one; with none, or one that is not in the list, the first of the list.
+  const agentFromUrl = searchParams.get("agent");
   useEffect(() => {
-    const agentFromUrl = searchParams.get("agent");
-    const validAgents = ["cvm", "prazos"] as const;
-    type ValidAgent = typeof validAgents[number];
+    loadAgents().then((loaded) => {
+      if (!loaded.length) return;
+      const wanted = loaded.find((a) => a.id === agentFromUrl) ?? loaded[0];
+      setDefaultAgent(wanted.id);
+    });
+    // Only when the page opens: later, the menu and the open thread decide the agent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    if (agentFromUrl && validAgents.includes(agentFromUrl as ValidAgent)) {
-      const agent = agentFromUrl as ValidAgent;
-      if (selectedAgent !== agent) setSelectedAgent(agent);
-    } else if (selectedAgent && validAgents.includes(selectedAgent as ValidAgent)) {
-      setSearchParams((p) => {
-        const next = new URLSearchParams(p);
-        next.set("agent", selectedAgent);
-        return next;
-      }, { replace: true });
-    }
-  }, [searchParams, setSelectedAgent, selectedAgent, setSearchParams]);
+  // The address always names the agent in use.
+  useEffect(() => {
+    if (!selectedAgentId || agentFromUrl === selectedAgentId) return;
+    setSearchParams((p) => {
+      const next = new URLSearchParams(p);
+      next.set("agent", selectedAgentId);
+      return next;
+    }, { replace: true });
+  }, [agentFromUrl, selectedAgentId, setSearchParams]);
 
   // Sync conversationId from URL
   useEffect(() => {
-    if (conversationIdFromUrl && conversationIdFromUrl !== currentConversationId) {
-      setCurrentConversationId(conversationIdFromUrl);
+    if (conversationIdFromUrl && conversationIdFromUrl !== currentThreadId) {
+      setCurrentThreadId(conversationIdFromUrl);
     }
-  }, [conversationIdFromUrl, setCurrentConversationId]);
+  }, [conversationIdFromUrl, setCurrentThreadId]);
 
   // --- Data loading ---
   useEffect(() => {
-    refreshConversations();
-  }, [refreshConversations]);
+    refreshThreads();
+  }, [refreshThreads]);
 
   // Load messages when conversation changes
   useEffect(() => {
-    if (currentConversationId) {
-      loadMessages(currentConversationId);
+    if (currentThreadId) {
+      loadMessages(currentThreadId);
     }
-  }, [currentConversationId, loadMessages]);
+  }, [currentThreadId, loadMessages]);
 
   // Sync state -> URL when conversation is set
   useEffect(() => {
-    if (!currentConversationId) return;
-    if (currentConversationId === conversationIdFromUrl) return;
+    if (!currentThreadId || !selectedAgentId) return;
+    if (currentThreadId === conversationIdFromUrl) return;
     const params = new URLSearchParams();
-    params.set("agent", selectedAgent);
-    navigate(`/agent/${encodeURIComponent(currentConversationId)}?${params}`, { replace: true });
-  }, [currentConversationId, conversationIdFromUrl, selectedAgent, navigate]);
+    params.set("agent", selectedAgentId);
+    navigate(`/agent/${encodeURIComponent(currentThreadId)}?${params}`, { replace: true });
+  }, [currentThreadId, conversationIdFromUrl, selectedAgentId, navigate]);
 
   const scrollToBottom = () => {
     if (shouldAutoScrollRef.current) {
@@ -222,13 +212,13 @@ export default function Agent() {
     return distanceFromBottom < threshold;
   };
 
-  // Only scroll on new messages, NOT during text streaming
+  // Follow the answer as it grows, unless the person has scrolled up
   useEffect(() => {
     if (isNearBottom()) {
       shouldAutoScrollRef.current = true;
       scrollToBottom();
     }
-  }, [messages]);
+  }, [items]);
 
   // Track user scroll - if they scroll up, disable auto-scroll
   useEffect(() => {
@@ -244,43 +234,9 @@ export default function Agent() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Streaming text animation
-  useEffect(() => {
-    if (!streamingMessage) return;
-
-    let index = 0;
-    const fullText = streamingMessage.content;
-    let mounted = true;
-    setDisplayedText("");
-
-    const interval = setInterval(() => {
-      if (!mounted) {
-        clearInterval(interval);
-        return;
-      }
-
-      if (index < fullText.length) {
-        // Add 3-5 characters at a time for faster display
-        const chunkSize = Math.min(4, fullText.length - index);
-        setDisplayedText(fullText.slice(0, index + chunkSize));
-        index += chunkSize;
-      } else {
-        clearInterval(interval);
-        if (mounted) {
-          setStreamingMessage(null);
-        }
-      }
-    }, 8);
-
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [streamingMessage, setStreamingMessage]);
-
-  const buildAgentUrl = (conversationId?: string, agent = selectedAgent) => {
+  const buildAgentUrl = (conversationId?: string, agent = selectedAgentId) => {
     const params = new URLSearchParams();
-    params.set("agent", agent);
+    if (agent) params.set("agent", agent);
     const query = params.toString();
     return conversationId
       ? `/agent/${encodeURIComponent(conversationId)}?${query}`
@@ -288,28 +244,34 @@ export default function Agent() {
   };
 
   const handleConversationChange = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
+    setCurrentThreadId(conversationId);
     setInputValue("");
-    setStreamingMessage(null);
-    setDisplayedText("");
     navigate(buildAgentUrl(conversationId), { replace: true });
   };
 
   const handleNewConversation = () => {
     resetToInitialState();
     setInputValue("");
-    setDisplayedText("");
     setPdfViewerOpen(false);
     setCurrentPage(1);
     navigate(buildAgentUrl(), { replace: true });
+  };
+
+  // A thread has one agent only: another agent opens another conversation.
+  const handleAgentChange = (agentId: string) => {
+    selectAgent(agentId);
+    setInputValue("");
+    setPdfViewerOpen(false);
+    setCurrentPage(1);
+    navigate(buildAgentUrl(undefined, agentId), { replace: true });
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
     if (!confirm("Tem certeza que deseja excluir esta conversa?")) {
       return;
     }
-    const wasCurrent = conversationId === currentConversationId || conversationId === conversationIdFromUrl;
-    await deleteConversation(conversationId);
+    const wasCurrent = conversationId === currentThreadId || conversationId === conversationIdFromUrl;
+    await deleteThread(conversationId);
     if (wasCurrent) {
       navigate(buildAgentUrl(), { replace: true });
     }
@@ -336,7 +298,7 @@ export default function Agent() {
   useEffect(() => {
     if (pdfFetchStartedRef.current) return;
     pdfFetchStartedRef.current = true;
-    fetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
+    apiFetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -376,7 +338,7 @@ export default function Agent() {
     const timeout = setTimeout(() => {
       if (cancelled || pdfDataRef.current) return;
       clearInterval(interval);
-      fetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
+      apiFetch(`${RAG_API_BASE_URL}/static/pdf/resol175consolid.pdf`)
         .then(async (res) => {
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -406,7 +368,7 @@ export default function Agent() {
   }, [pdfViewerOpen]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isRunning) return;
     const query = inputValue.trim();
     setInputValue("");
     await sendMessage(query);
@@ -445,7 +407,7 @@ export default function Agent() {
           const blob = new Blob(audioChunksRef.current, { type: mimeType });
           const form = new FormData();
           form.append("file", blob, `audio.${mimeType.split("/")[1]}`);
-          const res = await fetch(`${FUNDS_AGENT_API_URL}/transcribe`, { method: "POST", body: form });
+          const res = await apiFetch(`${FUNDS_AGENT_API_URL}/transcribe`, { method: "POST", body: form });
           if (!res.ok) throw new Error("Transcription request failed");
           const { text } = await res.json();
           if (text?.trim()) {
@@ -470,12 +432,12 @@ export default function Agent() {
     return format(new Date(timestamp), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
-  const effectiveConversationId = currentConversationId || conversationIdFromUrl || undefined;
-  const currentConversation = conversations.find(c => c.conversation_id === (currentConversationId || conversationIdFromUrl));
-  const displayMessages = messages.map(msg => ({
-    ...msg,
-    content: msg.message_id === streamingMessage?.message_id ? displayedText : msg.content
-  }));
+  const effectiveConversationId = currentThreadId || conversationIdFromUrl || undefined;
+  const currentConversation = threads.find(t => t.id === effectiveConversationId);
+  const selectedAgent = agents.find(a => a.id === selectedAgentId);
+  // The answer being written: the last one, while a run is going.
+  const lastItem = items[items.length - 1];
+  const waitingForAnswer = isRunning && !(lastItem?.kind === "assistant" && (lastItem.text || lastItem.toolCalls.length));
 
   return (
     <div className="flex h-[calc(100vh-7rem)] relative -mx-6 -mb-0">
@@ -483,42 +445,42 @@ export default function Agent() {
       <div className={`flex flex-col transition-all duration-300 ${pdfViewerOpen ? 'w-[65%] min-w-0' : 'w-full'} h-full relative z-0`}>
       {/* Header */}
         <div className="border-b bg-card p-4 flex flex-wrap items-center gap-4 flex-shrink-0">
-        <Select value={effectiveConversationId} onValueChange={handleConversationChange}>
+        <Select value={effectiveConversationId} onValueChange={handleConversationChange} disabled={isRunning}>
           <SelectTrigger className="w-[400px]">
             <SelectValue>
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                <span className="truncate">{currentConversation?.title || "Selecione uma conversa"}</span>
+                <span className="truncate">
+                  {currentConversation ? currentConversation.title || "Nova conversa" : "Selecione uma conversa"}
+                </span>
               </div>
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {isLoadingConversations ? (
+            {isLoadingThreads ? (
               <SelectItem value="loading" disabled>
                 Carregando...
               </SelectItem>
-            ) : conversations.length === 0 ? (
+            ) : threads.length === 0 ? (
               <SelectItem value="empty" disabled>
                 Nenhuma conversa
               </SelectItem>
             ) : (
-              conversations.map((conv) => (
-                <SelectItem key={conv.conversation_id} value={conv.conversation_id}>
+              threads.map((thread) => (
+                <SelectItem key={thread.id} value={thread.id}>
                 <div className="flex items-center justify-between gap-2 w-full group">
                   <div className="flex flex-col gap-1 py-1 min-w-0">
-                    <span className="font-medium truncate">{conv.title}</span>
-                    {conv.lastMessageAt && (
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimestamp(conv.lastMessageAt)}
-                      </span>
-                    )}
+                    <span className="font-medium truncate">{thread.title || "Nova conversa"}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTimestamp(thread.updated_at)}
+                    </span>
                   </div>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleDeleteConversation(conv.conversation_id);
+                      handleDeleteConversation(thread.id);
                     }}
                     className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity flex-shrink-0"
                     aria-label="Excluir conversa"
@@ -535,58 +497,51 @@ export default function Agent() {
         {effectiveConversationId && (
           <Button 
             onClick={() => handleDeleteConversation(effectiveConversationId)} 
-            variant="outline" 
+            variant="outline"
             size="sm"
             className="text-destructive hover:text-destructive"
+            disabled={isRunning}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Excluir
           </Button>
         )}
-        <Button onClick={handleNewConversation} variant="outline" size="sm">
+        <Button onClick={handleNewConversation} variant="outline" size="sm" disabled={isRunning}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Conversa
         </Button>
         <Button
           onClick={async () => {
-            await refreshConversations();
-            if (currentConversationId) {
-              await loadMessages(currentConversationId);
+            await refreshThreads();
+            if (currentThreadId) {
+              await loadMessages(currentThreadId);
             }
           }}
           variant="outline"
           size="sm"
-          disabled={isLoadingConversations}
+          disabled={isLoadingThreads || isRunning}
           title="Atualizar lista de conversas e mensagens"
         >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingConversations ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingThreads ? "animate-spin" : ""}`} />
           Atualizar
         </Button>
 
         <div className="ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled={isRunning || !agents.length}>
                 <UserCog className="h-4 w-4 mr-2" />
-                {selectedAgent === "prazos" ? "Prazos Agent" : "CVM Agent"}
+                {selectedAgent?.name ?? "Agente"}
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuRadioGroup
-                value={selectedAgent}
-                onValueChange={(v) => {
-                  const agent = v as "cvm" | "prazos";
-                  setSelectedAgent(agent);
-                  setSearchParams((p) => {
-                    const next = new URLSearchParams(p);
-                    next.set("agent", agent);
-                    return next;
-                  }, { replace: true });
-                }}
-              >
-                <DropdownMenuRadioItem value="cvm">CVM Agent</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="prazos">Prazos Agent</DropdownMenuRadioItem>
+              <DropdownMenuRadioGroup value={selectedAgentId ?? undefined} onValueChange={handleAgentChange}>
+                {agents.map((agent) => (
+                  <DropdownMenuRadioItem key={agent.id} value={agent.id}>
+                    {agent.name}
+                  </DropdownMenuRadioItem>
+                ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -595,9 +550,9 @@ export default function Agent() {
 
       {/* Messages Area */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 space-y-4 min-w-0 w-full">
-        {displayMessages.length === 0 ? (
+        {items.length === 0 ? (
           <>
-            {!isLoading ? (
+            {!isRunning ? (
           <div className="flex flex-col items-center justify-center h-full gap-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-semibold">Olá{firstName ? `, ${firstName}` : ""}!</h2>
@@ -632,63 +587,53 @@ export default function Agent() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                {streamingText ? (
-                  <LiveAnswerBubble text={streamingText} />
-                ) : toolActivity.length > 0 ? (
-                  <ToolActivityCard items={toolActivity} />
-                ) : (
-                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-                    </div>
+                <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                   </div>
-                )}
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </>
         ) : (
           <>
-            {displayMessages.map((message) => {
-              const displayContent = message.message_id === streamingMessage?.message_id
-                ? displayedText
-                : (message.content ?? "");
-              
+            {items.map((message) => {
               return (
                 <div
-                  key={message.message_id}
+                  key={message.id}
                   className={`flex gap-3 ${
-                    message.role === "user" ? "flex-row-reverse" : "flex-row"
+                    message.kind === "user" ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
-                  {message.role === "assistant" && (
+                  {message.kind === "assistant" && (
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                       <Bot className="h-5 w-5 text-primary-foreground" />
                     </div>
                   )}
-                  
+
                   <div className="flex-1 max-w-[75%] min-w-0">
+                    {message.kind === "assistant" && <ToolActivityCard items={message.toolCalls} />}
+                    {(message.kind === "user" || message.text) && (
                     <div
                       className={`${
-                        message.role === "assistant"
+                        message.kind === "assistant"
                           ? "bg-primary text-primary-foreground rounded-2xl rounded-bl-none"
                           : "bg-muted text-foreground rounded-2xl rounded-br-none"
-                      } px-4 py-3 break-words`}
+                      } px-4 py-3 break-words ${message.kind === "assistant" && message.toolCalls.length ? "mt-2" : ""}`}
                     >
                       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                         <ReactMarkdown components={MARKDOWN_COMPONENTS}>
-                          {displayContent}
+                          {message.text}
                         </ReactMarkdown>
                       </div>
-                      <div className="text-xs mt-2 opacity-70">
-                        {formatTimestamp(message.created_at)}
-                      </div>
                     </div>
-                    
+                    )}
+
                     {/* Sources Section */}
-                    {message.role === "assistant" && message.sources && message.sources.length > 0 && (
+                    {message.kind === "assistant" && message.sources.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-border/40">
                         <p className="text-xs text-muted-foreground mb-2">Fontes:</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -734,26 +679,19 @@ export default function Agent() {
                 </div>
               );
             })}
-            
-            
-            {isLoading && (
+
+            {waitingForAnswer && (
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                {streamingText ? (
-                  <LiveAnswerBubble text={streamingText} />
-                ) : toolActivity.length > 0 ? (
-                  <ToolActivityCard items={toolActivity} />
-                ) : (
-                  <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                      <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-                    </div>
+                <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                   </div>
-                )}
+                </div>
               </div>
             )}
             
@@ -774,14 +712,14 @@ export default function Agent() {
             placeholder="Digite sua mensagem..."
             className="resize-none"
             rows={1}
-            disabled={isLoading}
+            disabled={isRunning}
           />
           <Button
             type="button"
             variant={isRecording ? "destructive" : "outline"}
             size="lg"
             onClick={toggleRecording}
-            disabled={isLoading || isTranscribing}
+            disabled={isRunning || isTranscribing}
             title={isRecording ? "Parar gravação" : "Gravar áudio"}
             className={isRecording ? "animate-pulse" : ""}
           >
@@ -795,10 +733,10 @@ export default function Agent() {
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim() || isRunning}
             size="lg"
           >
-            {isLoading ? (
+            {isRunning ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <Send className="h-5 w-5" />

@@ -72,6 +72,51 @@ describe("buildChatItems", () => {
     expect(second.kind === "assistant" && second.sources).toEqual([]);
   });
 
+  it("gives each tool call the progress and logs its own tool reported", () => {
+    const call = (id: string, name: string) => ({
+      id,
+      type: "function" as const,
+      function: { name, arguments: "{}" },
+    });
+    const report = (id: string, tool: string, done: number) => ({
+      id,
+      role: "activity" as const,
+      activityType: "mcp_tool_call",
+      content: {
+        server: "funds",
+        tool,
+        progress: { progress: done, total: 4, message: null },
+        logs: [{ level: "info", message: `${tool} ${done}` }],
+      },
+    });
+    const messages: Message[] = [
+      { id: "u1", role: "user", content: "Compare" },
+      { id: "a1", role: "assistant", content: "", toolCalls: [call("c1", "funds__get_fund"), call("c2", "funds__list_funds")] },
+      report("act1", "list_funds", 2),
+      report("act2", "get_fund", 4),
+    ];
+    const answer = buildChatItems(messages)[1];
+    expect(answer.kind === "assistant" && answer.toolCalls).toMatchObject([
+      { id: "c1", logs: ["get_fund 4"], progress: { current: 4, total: 4 } },
+      { id: "c2", logs: ["list_funds 2"], progress: { current: 2, total: 4 } },
+    ]);
+  });
+
+  it("marks a tool call whose result is an error", () => {
+    const messages: Message[] = [
+      { id: "u1", role: "user", content: "x" },
+      {
+        id: "a1",
+        role: "assistant",
+        content: "",
+        toolCalls: [{ id: "c1", type: "function", function: { name: "funds__get_fund", arguments: "{}" } }],
+      },
+      { id: "r1", role: "tool", toolCallId: "c1", content: "boom", error: "boom" },
+    ];
+    const answer = buildChatItems(messages)[1];
+    expect(answer.kind === "assistant" && answer.toolCalls[0].status).toBe("error");
+  });
+
   it("is empty for a thread with no messages", () => {
     expect(buildChatItems([])).toEqual([]);
   });
