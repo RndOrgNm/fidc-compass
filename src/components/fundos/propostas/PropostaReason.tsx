@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 
 import { RaciocinioText } from "@/components/fundos/propostas/RaciocinioText";
@@ -12,15 +13,21 @@ export function PropostaReason({
   raciocinio,
   fontes,
   onOpenSource,
+  chat,
 }: {
   raciocinio: string;
   fontes: PropostaFonte[];
   onOpenSource: (fonte: PropostaFonte) => void;
+  /** What sits at the end of the title row: the icon of the conversation about the proposal. */
+  chat?: ReactNode;
 }) {
   return (
     <div className="mb-3 px-0.5">
-      <div className="mb-1.5 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
-        <Sparkles className="h-3 w-3" /> Raciocínio do agente
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Sparkles className="h-3 w-3" /> Raciocínio do agente
+        </div>
+        {chat}
       </div>
       <p className="max-w-[80ch] text-[13px] leading-relaxed text-foreground">
         <RaciocinioText raciocinio={raciocinio} fontes={fontes} onOpenSource={onOpenSource} />

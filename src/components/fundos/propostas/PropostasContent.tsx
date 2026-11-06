@@ -5,6 +5,7 @@ import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropostaReason } from "@/components/fundos/propostas/PropostaReason";
+import { ProposalChat } from "@/components/fundos/propostas/ProposalChat";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
 import { PropostaDocumentoEditDialog } from "@/components/fundos/propostas/PropostaDocumentoEditDialog";
 import { ObrigacaoFormDialog } from "@/components/fundos/prazos/ObrigacaoFormDialog";
@@ -184,6 +185,7 @@ export function PropostasContent({
                           onOpenSource={(fonte) =>
                             openSource(proposta.arquivo.nome, fonte, doc.download_url, doc.onedrive_url)
                           }
+                          chat={<ProposalChat proposal={{ documentoId: proposta.documentoId }} />}
                         />
                       )}
                       <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
@@ -233,6 +235,7 @@ export function PropostasContent({
                           onOpenSource={(fonte) =>
                             openSource(proposta.arquivo.nome, fonte, proposta.fileUrl, proposta.onedriveUrl)
                           }
+                          chat={<ProposalChat proposal={{ obrigacaoId: proposta.id }} />}
                         />
                       )}
                       <PrazoItem

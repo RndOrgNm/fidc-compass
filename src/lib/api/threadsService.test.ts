@@ -7,10 +7,12 @@ import {
   ApiRequestError,
   ThreadBusyError,
   deleteThread,
+  findProposalThread,
   getThread,
   getThreadMessages,
   listChatAgents,
   listThreads,
+  openThreadFromTask,
   renameThread,
   runThread,
 } from "./threadsService";
@@ -155,5 +157,53 @@ describe("runThread", () => {
     expect(refusal).toBeInstanceOf(ApiRequestError);
     expect(refusal).not.toBeInstanceOf(ThreadBusyError);
     expect(refusal.detail).toBe("Thread t1 belongs to agent-1");
+  });
+});
+
+describe("talking about a proposal", () => {
+  const origin = {
+    thread_id: "task-1",
+    until_message_id: "run-1",
+    action_id: "act-1",
+    kind: "proposal.obrigacao",
+    created_at: "2026-11-06T10:00:00Z",
+  };
+
+  it("asks which task thread made an obligation, by its id", async () => {
+    reply(origin);
+    expect(await findProposalThread({ obrigacaoId: "ob 1" })).toEqual(origin);
+    expect(lastCall().url).toBe(`${BASE}/proposal-threads?obrigacao_id=ob%201`);
+  });
+
+  it("asks which task thread made a file or a deadline rule, by the document's id", async () => {
+    reply(origin);
+    await findProposalThread({ documentoId: "doc-1" });
+    expect(lastCall().url).toBe(`${BASE}/proposal-threads?documento_id=doc-1`);
+  });
+
+  it("answers null for a proposal no task made, instead of failing", async () => {
+    reply({ detail: "No task thread made this proposal" }, 404);
+    expect(await findProposalThread({ obrigacaoId: "ob-old" })).toBeNull();
+  });
+
+  it("still fails on any other error", async () => {
+    reply({ detail: "Threads not initialized" }, 503);
+    const failure = await findProposalThread({ obrigacaoId: "ob-1" }).catch((e) => e);
+    expect(failure).toBeInstanceOf(ApiRequestError);
+    expect(failure.status).toBe(503);
+  });
+
+  it("opens a conversation that continues the task thread, up to the message given", async () => {
+    reply({ id: "t-new", agent_id: "agent-proposal", context_from: { thread_id: "task-1", until_message_id: "run-1" } }, 201);
+
+    const thread = await openThreadFromTask({ thread_id: "task-1", until_message_id: "run-1" });
+
+    const { url, init } = lastCall();
+    expect(url).toBe(`${BASE}/threads`);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
+      context_from: { thread_id: "task-1", until_message_id: "run-1" },
+    });
+    expect(thread.id).toBe("t-new");
   });
 });

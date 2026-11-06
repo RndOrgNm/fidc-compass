@@ -13,6 +13,15 @@ vi.mock("@/components/fundos/prazos/ObrigacaoFormDialog", () => ({
     return null;
   },
 }));
+// The chat of a proposal asks the service which thread made it; here it only records what it was
+// given, so these tests make no request.
+const proposalChat = vi.hoisted(() => vi.fn());
+vi.mock("@/components/fundos/propostas/ProposalChat", () => ({
+  ProposalChat: (props: { proposal: unknown }) => {
+    proposalChat(props.proposal);
+    return null;
+  },
+}));
 import type { DocumentoResponse } from "@/lib/api/documentoService";
 import type { PropostaPrazo } from "@/types/propostas";
 
@@ -76,6 +85,18 @@ describe("PropostasContent", () => {
     expect(screen.getByText("Reajuste anual do aluguel (IPCA)")).toBeInTheDocument();
     expect(screen.getByText("A cláusula 4.2 fixa reajuste anual pelo IPCA.")).toBeInTheDocument();
     expect(screen.queryByText("Imóvel Alpha")).not.toBeInTheDocument();
+  });
+
+  it("gives each proposal the chat of the row it is about: the document, or the obligation", async () => {
+    const user = userEvent.setup();
+    proposalChat.mockClear();
+    render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
+
+    expect(proposalChat).toHaveBeenCalledWith({ documentoId: "doc-1" });
+
+    await user.click(screen.getByRole("tab", { name: /prazos/i }));
+
+    expect(proposalChat).toHaveBeenCalledWith({ obrigacaoId: "prazo-prop-1" });
   });
 
   it("opens on Prazos when there are no document proposals", () => {

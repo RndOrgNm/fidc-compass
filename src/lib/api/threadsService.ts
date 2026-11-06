@@ -12,15 +12,34 @@ export interface ChatAgent {
   version: number;
 }
 
+/** The task thread a conversation continues, and the last message of it that it inherits. */
+export interface ContextFrom {
+  thread_id: string;
+  until_message_id: string | null;
+}
+
 export interface Thread {
   id: string;
   agent_id: string;
   title: string | null;
   subject_type: string | null;
   subject_id: string | null;
+  context_from?: ContextFrom | null;
   created_at: string;
   updated_at: string;
 }
+
+/** Where a proposal came from: the task thread of the run that made it. */
+export interface ProposalThread {
+  thread_id: string;
+  until_message_id: string;
+  action_id: string;
+  kind: string;
+  created_at: string;
+}
+
+/** A proposal is the funds-pipeline row a person decides on: an obligation, or a document. */
+export type ProposalRef = { obrigacaoId: string } | { documentoId: string };
 
 /** The service answered with an error; `detail` is what it said, in text. */
 export class ApiRequestError extends Error {
@@ -77,6 +96,35 @@ export async function listThreads(agentId?: string): Promise<Thread[]> {
 
 export async function getThread(threadId: string): Promise<Thread> {
   const response = await apiFetch(`${FUNDS_AGENT_API_URL}/threads/${encodeURIComponent(threadId)}`);
+  return json<Thread>(response);
+}
+
+/**
+ * The task thread that made a proposal, or null when none did (a proposal from before the agent
+ * ran in the agent-services, or one a person made): there is nothing to talk about then.
+ */
+export async function findProposalThread(ref: ProposalRef): Promise<ProposalThread | null> {
+  const query =
+    "obrigacaoId" in ref
+      ? `obrigacao_id=${encodeURIComponent(ref.obrigacaoId)}`
+      : `documento_id=${encodeURIComponent(ref.documentoId)}`;
+  const response = await apiFetch(`${FUNDS_AGENT_API_URL}/proposal-threads?${query}`);
+  if (response.status === 404) return null;
+  return json<ProposalThread>(response);
+}
+
+/**
+ * Opens a conversation of the person that continues a task's thread: the task's agent and subject,
+ * and the task's messages up to `until_message_id` as the start of its history.
+ */
+export async function openThreadFromTask(contextFrom: {
+  thread_id: string;
+  until_message_id?: string | null;
+}): Promise<Thread> {
+  const response = await apiFetch(`${FUNDS_AGENT_API_URL}/threads`, {
+    method: "POST",
+    body: JSON.stringify({ context_from: contextFrom }),
+  });
   return json<Thread>(response);
 }
 
