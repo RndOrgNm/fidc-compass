@@ -27,9 +27,10 @@ import ReactMarkdown from "react-markdown";
 import { FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { apiFetch } from "@/lib/api/client";
 import { useChat } from "@/contexts/ChatContext";
-import { MARKDOWN_COMPONENTS } from "@/components/chat/markdown";
+import { citationTitle, markdownComponents } from "@/components/chat/markdown";
 import { ToolActivityCard } from "@/components/chat/ToolActivityCard";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
+import type { Citation } from "@/lib/agui/citations";
 
 export default function Agent() {
   const { user } = useUser();
@@ -225,6 +226,18 @@ export default function Agent() {
   const openPdfViewer = (pageNumber: number) => {
     setCurrentPage(pageNumber);
     setPdfViewerOpen(true);
+  };
+
+  // A numbered source of an answer: the marker `[n]` in its text and its button below open the page.
+  const openCitation = (citation: Citation) => {
+    if (citation.pageStart) {
+      openPdfViewer(citation.pageStart);
+    } else {
+      toast({
+        title: "Informação não disponível",
+        description: "Número da página não disponível para esta fonte",
+      });
+    }
   };
 
   const nextPage = () => {
@@ -566,14 +579,45 @@ export default function Agent() {
                       } px-4 py-3 break-words ${message.kind === "assistant" && message.toolCalls.length ? "mt-2" : ""}`}
                     >
                       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
-                        <ReactMarkdown components={MARKDOWN_COMPONENTS}>
+                        <ReactMarkdown
+                          components={message.kind === "assistant" ? markdownComponents(message.citations, openCitation) : undefined}
+                        >
                           {message.text}
                         </ReactMarkdown>
                       </div>
                     </div>
                     )}
 
-                    {/* Sources Section */}
+                    {/* The sources the answer cites, numbered as its markers are */}
+                    {message.kind === "assistant" && message.citations.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-border/40">
+                        <p className="text-xs text-muted-foreground mb-2">Fontes:</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {message.citations.map((citation) => (
+                            <Button
+                              key={citation.n}
+                              variant="outline"
+                              size="sm"
+                              className="flex flex-col items-start h-auto py-2 px-3 hover:bg-accent"
+                              onClick={() => openCitation(citation)}
+                              title={citation.text.substring(0, 150) + (citation.text.length > 150 ? "..." : "")}
+                              disabled={!citation.pageStart}
+                            >
+                              <span className="text-xs font-medium truncate w-full text-left">
+                                [{citation.n}] {citationTitle(citation)}
+                              </span>
+                              {citation.pageStart && (
+                                <Badge variant="secondary" className="text-xs mt-1">
+                                  Pág. {citation.pageStart}
+                                </Badge>
+                              )}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Before the service reports what the Agent read: every passage a search returned */}
                     {message.kind === "assistant" && message.sources.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-border/40">
                         <p className="text-xs text-muted-foreground mb-2">Fontes:</p>

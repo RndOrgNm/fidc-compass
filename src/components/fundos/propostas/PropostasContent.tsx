@@ -185,7 +185,12 @@ export function PropostasContent({
                           onOpenSource={(fonte) =>
                             openSource(proposta.arquivo.nome, fonte, doc.download_url, doc.onedrive_url)
                           }
-                          chat={<ProposalChat proposal={{ documentoId: proposta.documentoId }} />}
+                          chat={
+                            <ProposalChat
+                              proposal={{ documentoId: proposta.documentoId }}
+                              file={{ nome: proposta.arquivo.nome, url: doc.download_url, onedriveUrl: doc.onedrive_url }}
+                            />
+                          }
                         />
                       )}
                       <div className="rounded-lg border border-l-[3px] border-border border-l-primary bg-card/50 px-5 py-4">
@@ -235,7 +240,12 @@ export function PropostasContent({
                           onOpenSource={(fonte) =>
                             openSource(proposta.arquivo.nome, fonte, proposta.fileUrl, proposta.onedriveUrl)
                           }
-                          chat={<ProposalChat proposal={{ obrigacaoId: proposta.id }} />}
+                          chat={
+                            <ProposalChat
+                              proposal={{ obrigacaoId: proposta.id }}
+                              file={{ nome: proposta.arquivo.nome, url: proposta.fileUrl, onedriveUrl: proposta.onedriveUrl }}
+                            />
+                          }
                         />
                       )}
                       <PrazoItem

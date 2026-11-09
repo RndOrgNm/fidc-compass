@@ -2,8 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Message } from "@ag-ui/core";
 
 import { toast } from "@/hooks/use-toast";
-import { buildChatItems } from "@/lib/agui/chatItems";
-import { splitInherited } from "@/lib/agui/inherited";
+import { conversationItems } from "@/lib/agui/inherited";
 import { streamRun } from "@/lib/agui/streamRun";
 import { getThread, getThreadMessages, runThread, ThreadBusyError } from "@/lib/api/threadsService";
 
@@ -110,10 +109,7 @@ export function useThreadConversation(threadId: string | null) {
     [threadId, agentId],
   );
 
-  const { inheritedItems, items } = useMemo(() => {
-    const { inherited, own } = splitInherited(messages);
-    return { inheritedItems: buildChatItems(inherited), items: buildChatItems(own) };
-  }, [messages]);
+  const { inheritedItems, items } = useMemo(() => conversationItems(messages), [messages]);
 
   return { inheritedItems, items, isLoading, isRunning, canSend: Boolean(threadId && agentId), send };
 }

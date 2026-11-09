@@ -28,6 +28,7 @@ export function PropostaPdfViewerSheet({
   loading = false,
   fonte,
   rawUrl,
+  side = "right",
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -38,6 +39,8 @@ export function PropostaPdfViewerSheet({
   fonte: PropostaFonte | null;
   /** Link to open the original file (e.g. on OneDrive), if there is one. */
   rawUrl?: string;
+  /** The edge the sheet comes from: "left" when the right one is taken, as by the chat's side panel. */
+  side?: "left" | "right";
 }) {
   const startPage = fonte?.page ?? 1;
   const [currentPage, setCurrentPage] = useState(startPage);
@@ -52,8 +55,8 @@ export function PropostaPdfViewerSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
-        side="right"
-        className="!w-[35%] !max-w-none p-0 flex flex-col [&>button]:hidden border-l !z-40"
+        side={side}
+        className={`!w-[35%] !max-w-none p-0 flex flex-col [&>button]:hidden ${side === "left" ? "border-r" : "border-l"} !z-40`}
         hideOverlay
       >
         <SheetHeader className="flex-shrink-0 flex-row items-center justify-between border-b px-6 py-4">

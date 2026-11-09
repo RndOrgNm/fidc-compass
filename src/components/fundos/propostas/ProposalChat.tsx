@@ -2,15 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Loader2, MessageSquare, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-import { MARKDOWN_COMPONENTS } from "@/components/chat/markdown";
+import { citationTitle, markdownComponents } from "@/components/chat/markdown";
 import { ToolActivityCard } from "@/components/chat/ToolActivityCard";
+import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { usePdfBytes } from "@/hooks/usePdfBytes";
 import { useThreadConversation } from "@/hooks/useThreadConversation";
 import type { ChatItem } from "@/lib/agui/chatItems";
+import type { Citation } from "@/lib/agui/citations";
 import {
   findProposalThread,
   listThreads,
@@ -40,8 +43,17 @@ async function conversationAbout(origin: ProposalThread): Promise<string> {
   return opened.id;
 }
 
+/** The file a proposal came from, as the card that opens the panel knows it. */
+export interface ProposalFile {
+  nome: string;
+  /** Where the bytes are downloaded from; only a PDF is drawn. */
+  url?: string | null;
+  /** The file in the OneDrive itself, when there is a link. */
+  onedriveUrl?: string | null;
+}
+
 /** Questions and answers, drawn as the chat page draws them. */
-function Bubbles({ items }: { items: ChatItem[] }) {
+function Bubbles({ items, onOpenCitation }: { items: ChatItem[]; onOpenCitation: (citation: Citation) => void }) {
   return (
     <div className="space-y-4">
       {items.map((item) => (
@@ -59,7 +71,11 @@ function Bubbles({ items }: { items: ChatItem[] }) {
                 }`}
               >
                 <div className="prose prose-sm max-w-none break-words dark:prose-invert">
-                  <ReactMarkdown components={MARKDOWN_COMPONENTS}>{item.text}</ReactMarkdown>
+                  <ReactMarkdown
+                    components={item.kind === "assistant" ? markdownComponents(item.citations, onOpenCitation) : undefined}
+                  >
+                    {item.text}
+                  </ReactMarkdown>
                 </div>
               </div>
             )}
@@ -70,7 +86,13 @@ function Bubbles({ items }: { items: ChatItem[] }) {
   );
 }
 
-function ConversationPanel({ threadId }: { threadId: string }) {
+function ConversationPanel({
+  threadId,
+  onOpenCitation,
+}: {
+  threadId: string;
+  onOpenCitation: (citation: Citation) => void;
+}) {
   const { inheritedItems, items, isLoading, isRunning, canSend, send } = useThreadConversation(threadId);
   const [draft, setDraft] = useState("");
   const end = useRef<HTMLDivElement>(null);
@@ -110,7 +132,7 @@ function ConversationPanel({ threadId }: { threadId: string }) {
               <ChevronDown className="h-3.5 w-3.5" />
             </CollapsibleTrigger>
             <CollapsibleContent className="border-t border-border px-3 py-3">
-              <Bubbles items={inheritedItems} />
+              <Bubbles items={inheritedItems} onOpenCitation={onOpenCitation} />
             </CollapsibleContent>
           </Collapsible>
         )}
@@ -119,7 +141,7 @@ function ConversationPanel({ threadId }: { threadId: string }) {
             Pergunte o que quiser sobre esta proposta e o arquivo de onde ela veio.
           </p>
         )}
-        <Bubbles items={items} />
+        <Bubbles items={items} onOpenCitation={onOpenCitation} />
         {waiting && (
           <div className="flex gap-1 px-1" aria-label="O Agente está respondendo">
             <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground" style={{ animationDelay: "0ms" }} />
@@ -163,13 +185,19 @@ function ConversationPanel({ threadId }: { threadId: string }) {
  * proposal, with the Agent that made it. The icon is shown only for a proposal a task made — one
  * from before the agent ran in the agent-services has no run to talk about. The decision stays on
  * the card: the panel answers questions, it does not approve or reject.
+ *
+ * A source the answer cites (`[1]`) opens the proposal's file at its page, in the PDF viewer, on the
+ * left edge since the panel holds the right one. `file` is what the card knows of that file.
  */
-export function ProposalChat({ proposal }: { proposal: ProposalRef }) {
+export function ProposalChat({ proposal, file }: { proposal: ProposalRef; file?: ProposalFile }) {
   const key = "obrigacaoId" in proposal ? `o:${proposal.obrigacaoId}` : `d:${proposal.documentoId}`;
   const [origin, setOrigin] = useState<ProposalThread | null>(null);
   const [open, setOpen] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
+  const [source, setSource] = useState<Citation | null>(null);
+  // Only a PDF can be drawn; anything else shows the cited text alone, as the proposals tab does.
+  const pdf = usePdfBytes(source != null && file && /\.pdf$/i.test(file.nome) ? file.url : null);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,7 +261,7 @@ export function ProposalChat({ proposal }: { proposal: ProposalRef }) {
             </SheetDescription>
           </SheetHeader>
           {threadId ? (
-            <ConversationPanel threadId={threadId} />
+            <ConversationPanel threadId={threadId} onOpenCitation={setSource} />
           ) : (
             <div className="flex flex-1 items-center justify-center text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -241,6 +269,24 @@ export function ProposalChat({ proposal }: { proposal: ProposalRef }) {
           )}
         </SheetContent>
       </Sheet>
+      <PropostaPdfViewerSheet
+        side="left"
+        open={source != null}
+        onOpenChange={(isOpen) => !isOpen && setSource(null)}
+        arquivoNome={file?.nome ?? ""}
+        fileData={pdf.data}
+        loading={pdf.loading}
+        fonte={
+          source && {
+            trecho: citationTitle(source),
+            page: source.pageStart,
+            pageEnd: source.pageEnd,
+            texto: source.text,
+            chunkId: source.ref,
+          }
+        }
+        rawUrl={file?.onedriveUrl ?? undefined}
+      />
     </>
   );
 }

@@ -1,5 +1,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 
+import type { Citation } from "@/lib/agui/citations";
+
 /** The props react-markdown hands a component: the element's own, and the node it came from. */
 type Tag<T extends keyof JSX.IntrinsicElements> = ComponentPropsWithoutRef<T> & { node?: unknown };
 
@@ -24,3 +26,42 @@ export const MARKDOWN_COMPONENTS = {
   ),
   td: ({ node, ...props }: Tag<"td">) => <td className="border border-gray-300 px-4 py-2" {...props} />,
 };
+
+/** What a source is called where it is offered: its label, or the start of its text. */
+export function citationTitle(citation: Citation): string {
+  if (citation.label) return citation.label;
+  const flat = citation.text.replace(/\s+/g, " ").trim();
+  return flat.length > 80 ? `${flat.slice(0, 79)}…` : flat;
+}
+
+/**
+ * The chat's Markdown with the numbered sources of an answer drawn as buttons: the `[[n]](#cite-n)`
+ * links that `resolveMarkers` wrote open the source n. Any other link is drawn as it is.
+ */
+export function markdownComponents(citations: Citation[], onOpen: (citation: Citation) => void) {
+  return {
+    ...MARKDOWN_COMPONENTS,
+    a: ({ node, href, children, ...props }: Tag<"a">) => {
+      const number = href?.match(/^#cite-(\d+)$/)?.[1];
+      const citation = number ? citations.find((c) => c.n === Number(number)) : undefined;
+      if (!citation) {
+        return (
+          <a href={href} {...props}>
+            {children}
+          </a>
+        );
+      }
+      return (
+        <button
+          type="button"
+          aria-label={`Fonte ${citation.n}: ${citationTitle(citation)}`}
+          title={citationTitle(citation)}
+          onClick={() => onOpen(citation)}
+          className="mx-0.5 align-baseline font-semibold underline underline-offset-2 hover:opacity-80"
+        >
+          {children}
+        </button>
+      );
+    },
+  };
+}

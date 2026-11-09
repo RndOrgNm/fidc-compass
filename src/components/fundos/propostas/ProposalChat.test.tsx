@@ -143,6 +143,60 @@ describe("ProposalChat", () => {
     expect(box).toHaveValue("");
   });
 
+  describe("the sources an answer cites", () => {
+    const read = {
+      id: "task-passages",
+      role: "activity",
+      activityType: "passages",
+      content: {
+        passages: [
+          { ref: "c33", label: null, text: "A prestação de contas é mensal, até o dia 20.", page_start: 5, page_end: 6 },
+        ],
+      },
+      metadata: mark,
+    };
+    const asked = [
+      { id: "q1", role: "user", content: "De onde veio o prazo?" },
+      { id: "a1", role: "assistant", content: "Da cláusula de prestação de contas [c33], conforme [c999]." },
+    ];
+
+    async function openWith(messages: unknown[], file?: { nome: string; url?: string | null }) {
+      service.getThreadMessages.mockResolvedValue([...history, ...messages] as unknown as Message[]);
+      const user = userEvent.setup();
+      render(<ProposalChat proposal={{ obrigacaoId: "ob-1" }} file={file} />);
+      await user.click(await screen.findByRole("button", ICON));
+      return user;
+    }
+
+    it("draws a marker of the answer as a button, resolved against what the task read", async () => {
+      await openWith([read, ...asked]);
+
+      const marker = await screen.findByRole("button", { name: /Fonte 1:/ });
+      expect(marker).toHaveTextContent("[1]");
+      expect(screen.getByText(/Da cláusula de prestação de contas/)).toBeInTheDocument();
+      expect(screen.queryByText(/c999/)).not.toBeInTheDocument();
+      expect(screen.getAllByRole("button", { name: /Fonte \d+:/ })).toHaveLength(1);
+    });
+
+    it("opens the source at its text when the proposal's file cannot be drawn", async () => {
+      const user = await openWith([read, ...asked], { nome: "contrato.docx", url: null });
+
+      await user.click(await screen.findByRole("button", { name: /Fonte 1:/ }));
+
+      // With no label the title is the start of the text, so the viewer shows it as the title and quoted.
+      expect((await screen.findAllByText(/A prestação de contas é mensal, até o dia 20\./)).length).toBeGreaterThan(0);
+      expect(screen.getByText("contrato.docx")).toBeInTheDocument();
+    });
+
+    it("shows a marker nothing was read for as plain text, never as a source", async () => {
+      await openWith(asked);
+
+      await screen.findByText(/Da cláusula de prestação de contas/);
+      expect(screen.queryByRole("button", { name: /Fonte \d+:/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(/c33/)).not.toBeInTheDocument();
+    });
+  });
+
   it("sends nothing for an empty question", async () => {
     const user = userEvent.setup();
     render(<ProposalChat proposal={{ obrigacaoId: "ob-1" }} />);

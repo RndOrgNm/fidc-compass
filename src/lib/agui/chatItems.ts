@@ -1,6 +1,7 @@
 import type { Message } from "@ag-ui/core";
 
 import type { ApiSource } from "@/lib/api/client";
+import { PASSAGES_ACTIVITY, passagesFromMessages, resolveMarkers, type Citation, type PassageTable } from "./citations";
 import { sourcesFromToolResults } from "./sources";
 
 export interface ToolCallView {
@@ -29,6 +30,15 @@ export type ChatItem =
       text: string;
       toolCalls: ToolCallView[];
       activities: ActivityView[];
+      /**
+       * The numbered sources the answer cites: the `[n]` in `text` points to one. Only the ones cited,
+       * from what the service reported the Agent read.
+       */
+      citations: Citation[];
+      /**
+       * What the page used to show when the service reported nothing: every passage a search
+       * returned, cited or not. Empty once the turn reports the passages it read.
+       */
       sources: ApiSource[];
     };
 
@@ -67,9 +77,14 @@ function attachReports(toolCalls: ToolCallView[], activities: ActivityView[]): v
  * What the chat shows for a list of messages: each question, and under it one answer that gathers
  * the turn's tool calls (running until their result arrives), their activity, the text and the
  * sources. The same function renders a run being streamed and a thread read back.
+ *
+ * The markers of an answer (`[sj6tdsf]`) are resolved against the passages the thread reported the
+ * Agent read: by default those of `messages`, or `options.passages` when the messages are only part
+ * of the thread (the history a conversation inherited is built apart from the conversation's own).
  */
-export function buildChatItems(messages: Message[]): ChatItem[] {
+export function buildChatItems(messages: Message[], options: { passages?: PassageTable } = {}): ChatItem[] {
   const items: ChatItem[] = [];
+  const passages = options.passages ?? passagesFromMessages(messages);
   let answer: Extract<ChatItem, { kind: "assistant" }> | null = null;
   let texts: string[] = [];
   let results: string[] = [];
@@ -77,8 +92,13 @@ export function buildChatItems(messages: Message[]): ChatItem[] {
   const close = () => {
     if (!answer) return;
     attachReports(answer.toolCalls, answer.activities);
-    answer.text = texts.join("\n\n");
-    answer.sources = sourcesFromToolResults(results);
+    const resolved = resolveMarkers(texts.join("\n\n"), passages);
+    answer.text = resolved.text;
+    answer.citations = resolved.citations;
+    // A turn that reports what the Agent read has its sources in `citations`; one that does not (an
+    // agent not set up to report it) keeps showing the passages its searches returned.
+    const reported = answer.activities.some((activity) => activity.type === PASSAGES_ACTIVITY);
+    answer.sources = reported ? [] : sourcesFromToolResults(results);
     answer = null;
     texts = [];
     results = [];
@@ -86,7 +106,7 @@ export function buildChatItems(messages: Message[]): ChatItem[] {
 
   const openAnswer = (id: string) => {
     if (!answer) {
-      answer = { kind: "assistant", id, text: "", toolCalls: [], activities: [], sources: [] };
+      answer = { kind: "assistant", id, text: "", toolCalls: [], activities: [], citations: [], sources: [] };
       items.push(answer);
     }
     return answer;

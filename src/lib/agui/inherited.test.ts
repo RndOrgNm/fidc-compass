@@ -2,7 +2,7 @@ import type { Message } from "@ag-ui/core";
 import { describe, expect, it } from "vitest";
 
 import { buildChatItems } from "./chatItems";
-import { splitInherited } from "./inherited";
+import { conversationItems, splitInherited } from "./inherited";
 
 const mark = { inherited: true, from_thread_id: "task-1" };
 
@@ -50,5 +50,51 @@ describe("splitInherited", () => {
     expect(before[1].kind === "assistant" && before[1].toolCalls.map((c) => c.status)).toEqual(["done"]);
     expect(after.map((i) => i.kind)).toEqual(["user", "assistant"]);
     expect(after[1].kind === "assistant" && after[1].toolCalls).toEqual([]);
+  });
+});
+
+describe("conversationItems", () => {
+  const read = {
+    id: "task-passages",
+    role: "activity",
+    activityType: "passages",
+    content: {
+      passages: [{ ref: "c33", label: null, text: "A prestação de contas é mensal.", page_start: 5, page_end: 6 }],
+    },
+    metadata: mark,
+  };
+
+  it("resolves a marker of the conversation against a passage the task read before the person asked", () => {
+    const thread = [
+      ...messages.slice(0, 3),
+      read,
+      { id: "q1", role: "user", content: "De onde veio o prazo?" },
+      { id: "a1", role: "assistant", content: "Da cláusula sobre prestação de contas [c33]." },
+    ] as unknown as Message[];
+
+    const { inheritedItems, items } = conversationItems(thread);
+
+    const answer = items[1];
+    expect(answer.kind === "assistant" && answer.text).toBe("Da cláusula sobre prestação de contas [[1]](#cite-1).");
+    expect(answer.kind === "assistant" && answer.citations).toMatchObject([{ n: 1, ref: "c33", pageStart: 5, pageEnd: 6 }]);
+    expect(inheritedItems.map((i) => i.kind)).toEqual(["user", "assistant"]);
+  });
+
+  it("resolves the markers of the inherited history too, with the same table", () => {
+    const thread = [
+      { id: "task-q", role: "user", content: "Execute.", metadata: mark },
+      read,
+      { id: "task-a", role: "assistant", content: "Propus o prazo [c33].", metadata: mark },
+    ] as unknown as Message[];
+
+    const { inheritedItems } = conversationItems(thread);
+
+    expect(inheritedItems[1].kind === "assistant" && inheritedItems[1].text).toBe("Propus o prazo [[1]](#cite-1).");
+  });
+
+  it("is the same as building each side by hand for a thread that read nothing", () => {
+    const { inherited, own } = splitInherited(messages);
+
+    expect(conversationItems(messages)).toEqual({ inheritedItems: buildChatItems(inherited), items: buildChatItems(own) });
   });
 });
