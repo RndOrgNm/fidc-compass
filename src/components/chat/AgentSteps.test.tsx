@@ -14,7 +14,7 @@ describe("AgentSteps", () => {
     render(<AgentSteps steps={steps} answered={false} />);
     expect(screen.getByText("Trabalhando…")).toBeInTheDocument();
     expect(screen.getByText("Vou listar os prazos.")).toBeInTheDocument();
-    expect(screen.getByText("funds__listar")).toBeInTheDocument();
+    expect(screen.getByText("listar")).toBeInTheDocument();
   });
 
   it("is closed once the answer is there, and a click opens it", () => {
