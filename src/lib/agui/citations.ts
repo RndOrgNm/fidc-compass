@@ -26,8 +26,8 @@ export interface Citation extends CitedPassage {
 }
 
 // A search result's id is an `s` and base-36 digits; a chunk of the document is `c` and a number.
-// The model sometimes copies an id short by a character or two, so the shape allows a shorter `s…`.
-const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]{4,}|c\d+)\]/g;
+// The model sometimes copies an id short, even down to `s4`, so the shape allows any `s…`.
+const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]+|c\d+)\]/g;
 // Below this many characters after the `s`, a marker is dropped only if it has a digit, which a
 // plain word such as `[sobre]` does not.
 const FULL_ID_DIGITS = 6;

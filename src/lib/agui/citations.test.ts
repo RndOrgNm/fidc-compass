@@ -98,6 +98,11 @@ describe("resolveMarkers", () => {
     expect(resolveMarkers("A [sj6td] e B [s9x2k1].", two)).toEqual({ text: "A e B.", citations: [] });
   });
 
+  it("drops an id cut down to a letter and a digit, which names no passage", () => {
+    const text = "A denominação deve incluir a expressão [s4][s5]. Outra regra [s4].";
+    expect(resolveMarkers(text, table)).toEqual({ text: "A denominação deve incluir a expressão. Outra regra.", citations: [] });
+  });
+
   it("does not take a plain short word for an id", () => {
     const text = "Veja [sobre] e [segue].";
     expect(resolveMarkers(text, table)).toEqual({ text, citations: [] });

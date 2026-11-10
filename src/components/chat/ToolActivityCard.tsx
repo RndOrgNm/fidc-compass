@@ -9,10 +9,13 @@ export function toolLabel(name: string): string {
   return tool.replace(/_/g, " ");
 }
 
+/** A result longer than this is cut where it is shown: a search returns pages of text. */
+const RESULT_LIMIT = 8000;
+
 /** One tool the answer called, as a line: running until its result arrives, and a click shows what it did. */
 function ToolLine({ item }: { item: ToolCallView }) {
   const [open, setOpen] = useState(false);
-  const details = item.progress || item.logs.length > 0 || item.args;
+  const details = item.progress || item.logs.length > 0 || item.args || item.result;
 
   return (
     <div className="text-sm">
@@ -53,6 +56,14 @@ function ToolLine({ item }: { item: ToolCallView }) {
             <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted/50 px-3 py-2 font-mono text-[11px] text-muted-foreground">
               {item.args}
             </pre>
+          )}
+          {item.result && (
+            <div>
+              <div className="mb-1 text-[11px] font-medium text-muted-foreground">Resultado</div>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted/50 px-3 py-2 font-mono text-[11px] text-muted-foreground">
+                {item.result.length > RESULT_LIMIT ? `${item.result.slice(0, RESULT_LIMIT)}…` : item.result}
+              </pre>
+            </div>
           )}
         </div>
       )}
