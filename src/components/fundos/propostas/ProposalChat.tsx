@@ -3,7 +3,7 @@ import { ChevronDown, Loader2, MessageSquare, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { citationTitle, markdownComponents } from "@/components/chat/markdown";
-import { ToolActivityCard } from "@/components/chat/ToolActivityCard";
+import { AgentSteps } from "@/components/chat/AgentSteps";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -59,7 +59,7 @@ function Bubbles({ items, onOpenCitation }: { items: ChatItem[]; onOpenCitation:
       {items.map((item) => (
         <div key={item.id} className={`flex ${item.kind === "user" ? "justify-end" : "justify-start"}`}>
           <div className="min-w-0 max-w-[92%]">
-            {item.kind === "assistant" && <ToolActivityCard items={item.toolCalls} />}
+            {item.kind === "assistant" && <AgentSteps steps={item.steps} answered={Boolean(item.text)} />}
             {(item.kind === "user" || item.text) && (
               <div
                 className={`${

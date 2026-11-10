@@ -28,7 +28,7 @@ import { FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { apiFetch } from "@/lib/api/client";
 import { useChat } from "@/contexts/ChatContext";
 import { citationTitle, markdownComponents } from "@/components/chat/markdown";
-import { ToolActivityCard } from "@/components/chat/ToolActivityCard";
+import { AgentSteps } from "@/components/chat/AgentSteps";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import type { Citation } from "@/lib/agui/citations";
 
@@ -569,7 +569,7 @@ export default function Agent() {
                   )}
 
                   <div className="flex-1 max-w-[75%] min-w-0">
-                    {message.kind === "assistant" && <ToolActivityCard items={message.toolCalls} />}
+                    {message.kind === "assistant" && <AgentSteps steps={message.steps} answered={Boolean(message.text)} />}
                     {(message.kind === "user" || message.text) && (
                     <div
                       className={`${

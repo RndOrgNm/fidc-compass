@@ -22,12 +22,21 @@ export interface ActivityView {
   content: Record<string, unknown>;
 }
 
+/** One thing the Agent did on the way to its answer, in the order it happened. */
+export type ChatStep = { kind: "note"; id: string; text: string } | { kind: "tool"; call: ToolCallView };
+
 export type ChatItem =
   | { kind: "user"; id: string; text: string }
   | {
       kind: "assistant";
       id: string;
+      /** The answer: what the Agent wrote in the steps that called no tool. */
       text: string;
+      /**
+       * What came before the answer: the text the Agent wrote while it called tools ("Vou listar
+       * os prazos…") and the calls themselves, in order.
+       */
+      steps: ChatStep[];
       toolCalls: ToolCallView[];
       activities: ActivityView[];
       /**
@@ -106,7 +115,9 @@ export function buildChatItems(messages: Message[], options: { passages?: Passag
 
   const openAnswer = (id: string) => {
     if (!answer) {
-      answer = { kind: "assistant", id, text: "", toolCalls: [], activities: [], citations: [], sources: [] };
+      answer = {
+        kind: "assistant", id, text: "", steps: [], toolCalls: [], activities: [], citations: [], sources: [],
+      };
       items.push(answer);
     }
     return answer;
@@ -119,15 +130,21 @@ export function buildChatItems(messages: Message[], options: { passages?: Passag
     } else if (message.role === "assistant") {
       const current = openAnswer(message.id);
       const text = textOf(message.content);
-      if (text) texts.push(text);
-      for (const call of message.toolCalls ?? []) {
-        current.toolCalls.push({
+      const calls = message.toolCalls ?? [];
+      // A step that calls tools is the Agent narrating its work; the answer is what it writes in a
+      // step that calls none.
+      if (text && calls.length) current.steps.push({ kind: "note", id: message.id, text });
+      else if (text) texts.push(text);
+      for (const call of calls) {
+        const view: ToolCallView = {
           id: call.id,
           name: call.function.name,
           args: call.function.arguments,
           status: "running",
           logs: [],
-        });
+        };
+        current.toolCalls.push(view);
+        current.steps.push({ kind: "tool", call: view });
       }
     } else if (message.role === "tool") {
       const call = answer?.toolCalls.find((c) => c.id === message.toolCallId);

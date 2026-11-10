@@ -15,6 +15,12 @@ const SEARCH_RESULT = JSON.stringify({
   ],
 });
 
+const answerOf = (items: ReturnType<typeof buildChatItems>, at: number) => {
+  const item = items[at];
+  if (item.kind !== "assistant") throw new Error("not an answer");
+  return item;
+};
+
 describe("buildChatItems", () => {
   it("shows a question and one answer with its tool call, activity and text", () => {
     const items = buildChatItems(RUN_SNAPSHOT);
@@ -22,7 +28,11 @@ describe("buildChatItems", () => {
     expect(items[0]).toEqual({ kind: "user", id: "u1", text: "Como está o FIDC X?" });
     expect(items[1]).toMatchObject({
       kind: "assistant",
-      text: "Vou consultar.\n\nO FIDC X está ok.",
+      text: "O FIDC X está ok.",
+      steps: [
+        { kind: "note", text: "Vou consultar." },
+        { kind: "tool", call: { id: "c1", name: "funds__get_fund" } },
+      ],
       toolCalls: [
         { id: "c1", name: "funds__get_fund", args: '{"id":"F1"}', result: '{"name":"FIDC X"}', status: "done" },
       ],
@@ -40,6 +50,33 @@ describe("buildChatItems", () => {
     const answer = buildChatItems(midRun)[1];
     expect(answer).toMatchObject({ toolCalls: [{ id: "c1", status: "running" }] });
     expect(answer.kind === "assistant" && answer.toolCalls[0].result).toBeUndefined();
+  });
+
+  it("keeps what the Agent wrote while calling tools out of the answer, in order with its calls", () => {
+    const call = (id: string, name: string) => ({ id, type: "function" as const, function: { name, arguments: "{}" } });
+    const messages: Message[] = [
+      { id: "u1", role: "user", content: "Prazos do mês?" },
+      { id: "a1", role: "assistant", content: "Vou achar o fundo.", toolCalls: [call("c1", "f__achar")] },
+      { id: "t1", role: "tool", toolCallId: "c1", content: "{}" },
+      { id: "a2", role: "assistant", content: "Agora listo os prazos.", toolCalls: [call("c2", "f__listar")] },
+      { id: "t2", role: "tool", toolCallId: "c2", content: "{}" },
+      { id: "a3", role: "assistant", content: "Há 1 prazo." },
+    ];
+    const answer = answerOf(buildChatItems(messages), 1);
+    expect(answer.text).toBe("Há 1 prazo.");
+    expect(answer.steps.map((s) => (s.kind === "note" ? s.text : s.call.name))).toEqual([
+      "Vou achar o fundo.", "f__achar", "Agora listo os prazos.", "f__listar",
+    ]);
+  });
+
+  it("has no answer yet while the Agent has only narrated and called tools", () => {
+    const messages: Message[] = [
+      { id: "u1", role: "user", content: "x" },
+      { id: "a1", role: "assistant", content: "Vou ver.", toolCalls: [{ id: "c1", type: "function", function: { name: "f__a", arguments: "" } }] },
+    ];
+    const answer = answerOf(buildChatItems(messages), 1);
+    expect(answer.text).toBe("");
+    expect(answer.steps).toHaveLength(2);
   });
 
   it("starts a new answer for each question", () => {
@@ -141,12 +178,6 @@ describe("buildChatItems: the sources an answer cites", () => {
       toolCalls: [{ id: `${turn}-c`, type: "function", function: { name: "regulatory-search__retrieve", arguments: "{}" } }],
     },
   ];
-  const answerOf = (items: ReturnType<typeof buildChatItems>, at: number) => {
-    const item = items[at];
-    if (item.kind !== "assistant") throw new Error("not an answer");
-    return item;
-  };
-
   it("turns the markers into numbered links and keeps only the passages the answer cites", () => {
     const messages: Message[] = [
       { id: "u1", role: "user", content: "Limite por devedor?" },
