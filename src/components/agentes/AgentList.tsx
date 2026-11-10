@@ -58,7 +58,7 @@ export function AgentList({ configs }: { configs: AgentConfig[] }) {
         })}
       </div>
       <p className="mt-4 text-[13px] text-muted-foreground">
-        Hoje só o Proposal está disponível. Novos agentes aparecem aqui quando forem liberados.
+        Aparecem aqui os agentes liberados para configuração. Novos agentes entram quando forem liberados.
       </p>
     </div>
   );

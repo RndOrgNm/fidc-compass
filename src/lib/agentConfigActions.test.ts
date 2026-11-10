@@ -15,7 +15,7 @@ let publishSkillStatus = 200;
 /** What GET /models answers; null is a registry that has no such route yet. */
 let registryModels: { provider: string; model: string; label: string }[] | null;
 
-const AGENT = { id: "a1", name: "Proposal", description: "d", engine: "langgraph", provider: "anthropic", mcps: ["m1"], middlewares: [{ name: "citations", config: {} }], output_schema: null, visible_in_chat: true, created_at: "2026-11-01T00:00:00Z", created_by: null };
+const AGENT = { id: "a1", name: "Proposal", description: "d", engine: "langgraph", provider: "anthropic", mcps: ["m1"], managed_in_page: true, middlewares: [{ name: "citations", config: {} }], output_schema: null, visible_in_chat: true, created_at: "2026-11-01T00:00:00Z", created_by: null };
 const SKILL = { id: "s1", name: "Obrigações", description: "when", active: true, created_at: "2026-11-01T00:00:00Z", created_by: null };
 
 function agentRow(version: number, status: string, instructions: string, model = "claude-sonnet-5-5", skillVersion = 1) {
@@ -96,7 +96,7 @@ describe("loading", () => {
     const loaded = await config();
     expect(loaded.slug).toBe("proposal");
     expect(loaded.versions).toHaveLength(1);
-    expect(loaded.versions[0].skill?.instructions).toBe("skill 1");
+    expect(loaded.versions[0].skills.map((s) => s.instructions)).toEqual(["skill 1"]);
     expect(loaded.mcps.map((m) => m.name)).toEqual(["funds"]);
   });
 
@@ -110,8 +110,8 @@ describe("loading", () => {
     expect((await config()).models).toEqual(MODEL_OPTIONS);
   });
 
-  it("leaves out an agent the page does not own", async () => {
-    agents = [{ ...agentRow(1, "published", "p"), name: "Search" }];
+  it("leaves out an agent the registry does not mark as the page's", async () => {
+    agents = [{ ...agentRow(1, "published", "p"), managed_in_page: false }];
     expect(await loadAgentConfigs()).toEqual([]);
   });
 });
@@ -119,7 +119,7 @@ describe("loading", () => {
 describe("saving", () => {
   it("sends the skill's text to the skill and points the new draft at the skill's new version", async () => {
     const loaded = await config();
-    await saveDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skill: "skill 2" });
+    await saveDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skills: { s1: "skill 2" } });
 
     expect(writes()).toEqual([
       `PATCH /skills/s1 ${JSON.stringify({ instructions: "skill 2" })}`,
@@ -146,10 +146,41 @@ describe("saving", () => {
   });
 });
 
+describe("saving an agent with two skills", () => {
+  it("writes only the skill that changed, and points the draft at the other as it was", async () => {
+    const skill = (id: string, name: string, version: number, instructions: string) => ({
+      id, version, name, instructions, status: "published" as const, description: "d", active: true,
+      created_at: "2026-11-01T00:00:00Z", created_by: null,
+    });
+    const first = skill("s1", "Obrigações", 3, "skill one");
+    const second = skill("s2", "Outra", 5, "skill two");
+    const { agentRow: row } = { agentRow };
+    const config: AgentConfig = {
+      id: "a1", slug: "proposal", name: "Proposal", description: "d", mcps: [], models: [],
+      versions: [{
+        agent: { ...row(1, "published", "prompt 1"), skills: [{ id: "s1", version: 3 }, { id: "s2", version: 5 }] } as never,
+        skills: [first, second],
+      }],
+    };
+    const seen: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      seen.push(`${init?.method} ${url.replace(BASE, "")} ${init?.body ?? ""}`);
+      return json(url.includes("/skills/s2") ? { ...second, version: 6, status: "draft" } : { ok: true });
+    }));
+
+    await saveDraft(config, { provider: "anthropic", model: "claude-sonnet-5-5", prompt: "prompt 1", skills: { s1: "skill one", s2: "skill two changed" } });
+
+    expect(seen).toEqual([
+      `PATCH /skills/s2 ${JSON.stringify({ instructions: "skill two changed" })}`,
+      `PATCH /agents/a1 ${JSON.stringify({ provider: "anthropic", model: "claude-sonnet-5-5", instructions: "prompt 1", skills: [{ id: "s1", version: 3 }, { id: "s2", version: 6 }] })}`,
+    ]);
+  });
+});
+
 describe("publishing", () => {
   it("publishes the skill before the agent that points at it", async () => {
     const loaded = await config();
-    const published = await publishDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skill: "skill 2" }, 2);
+    const published = await publishDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skills: { s1: "skill 2" } }, 2);
 
     expect(published).toMatchObject({ version: 2, status: "published" });
     expect(writes().map((c) => c.split(" ").slice(0, 2).join(" "))).toEqual([
@@ -172,7 +203,7 @@ describe("publishing", () => {
   it("goes on when someone published the skill in the meantime", async () => {
     const loaded = await config();
     publishSkillStatus = 409;
-    await expect(publishDraft(loaded, { ...contentOf(loaded.versions[0]), skill: "skill 2" }, 2)).resolves.toMatchObject({ status: "published" });
+    await expect(publishDraft(loaded, { ...contentOf(loaded.versions[0]), skills: { s1: "skill 2" } }, 2)).resolves.toMatchObject({ status: "published" });
   });
 
   it("publishes nothing when the agent moved on since the dialog was opened", async () => {
@@ -199,7 +230,7 @@ describe("publishing", () => {
 describe("discarding", () => {
   it("takes the draft back to what is in use, and then there is no draft", async () => {
     const loaded = await config();
-    await saveDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skill: "skill 2" });
+    await saveDraft(loaded, { ...contentOf(loaded.versions[0]), prompt: "prompt 2", skills: { s1: "skill 2" } });
     await discardDraft(await config());
 
     expect(agents.at(-1)).toMatchObject({ version: 2, status: "draft", instructions: "prompt 1", skills: [{ id: "s1", version: 1 }] });
@@ -220,7 +251,7 @@ describe("a version read from the history", () => {
     agents = [agentRow(1, "published", "prompt 1"), agentRow(2, "published", "prompt 2", "claude-opus-5-5", 2)];
     const loaded = await config();
     const byVersion = (n: number): VersionView => loaded.versions.find((v) => v.agent.version === n)!;
-    expect(contentOf(byVersion(1))).toMatchObject({ prompt: "prompt 1", skill: "skill 1", model: "claude-sonnet-5-5" });
-    expect(contentOf(byVersion(2))).toMatchObject({ prompt: "prompt 2", skill: "skill 2", model: "claude-opus-5-5" });
+    expect(contentOf(byVersion(1))).toMatchObject({ prompt: "prompt 1", skills: { s1: "skill 1" }, model: "claude-sonnet-5-5" });
+    expect(contentOf(byVersion(2))).toMatchObject({ prompt: "prompt 2", skills: { s1: "skill 2" }, model: "claude-opus-5-5" });
   });
 });

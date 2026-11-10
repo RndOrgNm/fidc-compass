@@ -30,6 +30,8 @@ export interface AgentVersion {
   middlewares: MiddlewareSpec[];
   output_schema: Record<string, unknown> | null;
   visible_in_chat: boolean;
+  /** The configuration page owns this agent's model, prompt and skills. */
+  managed_in_page: boolean;
   created_at: string;
   created_by: string | null;
 }

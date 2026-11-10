@@ -31,20 +31,23 @@ function version(n: number, status: "draft" | "published", prompt: string, skill
       middlewares: [{ name: "citations", config: {} }],
       output_schema: null,
       visible_in_chat: true,
+      managed_in_page: true,
       created_at: "2026-11-01T00:00:00Z",
       created_by: null,
     },
-    skill: {
-      id: "s1",
-      version: n,
-      status,
-      name: "Obrigações",
-      description: "when",
-      instructions: skill,
-      active: true,
-      created_at: "2026-11-01T00:00:00Z",
-      created_by: null,
-    },
+    skills: [
+      {
+        id: "s1",
+        version: n,
+        status,
+        name: "Obrigações",
+        description: "when",
+        instructions: skill,
+        active: true,
+        created_at: "2026-11-01T00:00:00Z",
+        created_by: null,
+      },
+    ],
   };
 }
 
@@ -89,7 +92,7 @@ describe("AgentEditor", () => {
     expect(screen.getByText("Alterações não salvas")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(actions.saveDraft).toHaveBeenCalled());
-    expect(actions.saveDraft.mock.calls[0][1]).toMatchObject({ prompt: "a better prompt", skill: "the skill" });
+    expect(actions.saveDraft.mock.calls[0][1]).toMatchObject({ prompt: "a better prompt", skills: { s1: "the skill" } });
   });
 
   it("an empty prompt can be saved but not published, and says why", () => {
@@ -145,6 +148,19 @@ describe("AgentEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sair da edição" }));
     expect(screen.getByText("Sair sem salvar?")).toBeInTheDocument();
     expect(actions.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it("an agent with two skills has a field for each, and saving sends both", async () => {
+    const one = version(1, "published", "the prompt", "the skill");
+    one.skills.push({ ...one.skills[0], id: "s2", name: "Outra", instructions: "other skill" });
+    renderEditor({ ...inUse, versions: [one] });
+
+    expect(screen.getByLabelText("Instruções da skill Obrigações")).toHaveValue("the skill");
+    fireEvent.change(screen.getByLabelText("Instruções da skill Outra"), { target: { value: "other changed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => expect(actions.saveDraft).toHaveBeenCalled());
+    expect(actions.saveDraft.mock.calls[0][1].skills).toEqual({ s1: "the skill", s2: "other changed" });
   });
 
   it("shows the changes against the version in use", () => {

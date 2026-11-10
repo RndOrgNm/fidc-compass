@@ -2,24 +2,18 @@ import type { AgentVersion, McpServer, ModelOption, SkillVersion } from "@/lib/a
 
 export type { ModelOption };
 
-/** The agents the configuration page offers: only these are owned by the page. */
-export const CONFIGURABLE_AGENTS = ["Proposal"];
-
-/** The skill whose instructions the page edits; the agent's other skills are not shown. */
-export const EDITABLE_SKILL = "Obrigações";
-
-/** What the page edits of one version of an agent. */
+/** What the page edits of one version of an agent; the skills' instructions are by the skill's id. */
 export interface ConfigContent {
   provider: string;
   model: string;
   prompt: string;
-  skill: string;
+  skills: Record<string, string>;
 }
 
-/** One version of the agent with the version of the editable skill it points at. */
+/** One version of the agent with the version of each skill it points at. */
 export interface VersionView {
   agent: AgentVersion;
-  skill: SkillVersion | null;
+  skills: SkillVersion[];
 }
 
 export interface AgentConfig {
@@ -43,12 +37,17 @@ export function contentOf(view: VersionView): ConfigContent {
     provider: view.agent.provider,
     model: view.agent.model,
     prompt: view.agent.instructions,
-    skill: view.skill?.instructions ?? "",
+    skills: Object.fromEntries(view.skills.map((s) => [s.id, s.instructions])),
   };
 }
 
+function sameSkills(a: Record<string, string>, b: Record<string, string>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => k in b && a[k] === b[k]);
+}
+
 export function sameContent(a: ConfigContent, b: ConfigContent): boolean {
-  return a.provider === b.provider && a.model === b.model && a.prompt === b.prompt && a.skill === b.skill;
+  return a.provider === b.provider && a.model === b.model && a.prompt === b.prompt && sameSkills(a.skills, b.skills);
 }
 
 /** The version a new run uses: the latest published one. */

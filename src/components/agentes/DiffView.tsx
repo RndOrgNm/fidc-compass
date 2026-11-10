@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { diffLines, modelLabel, type ConfigContent, type DiffRow, type ModelOption } from "@/lib/agentConfig";
 import { cn } from "@/lib/utils";
 
-type Item = "model" | "prompt" | "skill";
+/** "model", "prompt", or the id of a skill. */
+type Item = string;
 
 const ROW_STYLES: Record<DiffRow["kind"], string> = {
   same: "",
@@ -29,7 +30,7 @@ export function DiffView({
   draft,
   inUseVersion,
   draftVersion,
-  hasSkill,
+  skills,
   models,
 }: {
   models: ModelOption[];
@@ -37,19 +38,27 @@ export function DiffView({
   draft: ConfigContent;
   inUseVersion: number;
   draftVersion: number;
-  hasSkill: boolean;
+  /** The skills of the draft, by id, with the name the tab shows. */
+  skills: { id: string; name: string }[];
 }) {
   const [item, setItem] = useState<Item>("prompt");
   const prompt = useMemo(() => diffLines(inUse.prompt, draft.prompt), [inUse.prompt, draft.prompt]);
-  const skill = useMemo(() => diffLines(inUse.skill, draft.skill), [inUse.skill, draft.skill]);
+  const skillDiffs = useMemo(
+    () => Object.fromEntries(skills.map((s) => [s.id, diffLines(inUse.skills[s.id] ?? "", draft.skills[s.id] ?? "")])),
+    [skills, inUse.skills, draft.skills],
+  );
   const modelChanged = inUse.provider !== draft.provider || inUse.model !== draft.model;
 
   const tabs: { id: Item; label: string; sum: string }[] = [
     { id: "model", label: "Modelo", sum: modelChanged ? "alterado" : "sem mudança" },
     { id: "prompt", label: "Prompt", sum: summary(prompt.added, prompt.removed) },
-    ...(hasSkill ? [{ id: "skill" as const, label: "Skill Obrigações", sum: summary(skill.added, skill.removed) }] : []),
+    ...skills.map((s) => ({
+      id: s.id,
+      label: `Skill ${s.name}`,
+      sum: summary(skillDiffs[s.id].added, skillDiffs[s.id].removed),
+    })),
   ];
-  const diff = item === "skill" ? skill : prompt;
+  const diff = item === "prompt" ? prompt : skillDiffs[item] ?? prompt;
 
   return (
     <div>

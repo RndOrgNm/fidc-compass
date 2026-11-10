@@ -74,7 +74,6 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
   const draft = draftOf(config);
   const base = `/agentes/${config.slug}`;
   const inUse = contentOf(published);
-  const hasSkill = Boolean(latest.skill);
   const next = nextVersionOf(config);
 
   const [startedFrom] = useState(published.agent.version);
@@ -87,9 +86,18 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
   const changedFromUse = !sameContent(local, inUse);
   const modelChanged = local.provider !== inUse.provider || local.model !== inUse.model;
   const promptDiff = useMemo(() => diffLines(inUse.prompt, local.prompt), [inUse.prompt, local.prompt]);
-  const skillDiff = useMemo(() => diffLines(inUse.skill, local.skill), [inUse.skill, local.skill]);
+  const skillNames = new Map(config.versions.flatMap((v) => v.skills.map((s) => [s.id, s.name] as const)));
+  const skillDescriptions = new Map(config.versions.flatMap((v) => v.skills.map((s) => [s.id, s.description] as const)));
+  const skillList = Object.keys(local.skills).map((id) => ({ id, name: skillNames.get(id) ?? id }));
+  const skillDiffs = useMemo(
+    () => skillList.map((s) => ({ ...s, diff: diffLines(inUse.skills[s.id] ?? "", local.skills[s.id]) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [inUse.skills, local.skills],
+  );
+  const added = promptDiff.added + skillDiffs.reduce((n, s) => n + s.diff.added, 0);
+  const removed = promptDiff.removed + skillDiffs.reduce((n, s) => n + s.diff.removed, 0);
   const emptyPrompt = local.prompt.trim() === "";
-  const emptySkill = hasSkill && local.skill.trim() === "";
+  const emptySkill = skillList.some((s) => local.skills[s.id].trim() === "");
   const canPublish = !emptyPrompt && !emptySkill && changedFromUse;
 
   useEffect(() => {
@@ -193,8 +201,8 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
             <GitCompare className="mr-2 h-4 w-4" />
             {showDiff ? "Voltar à edição" : "Mostrar mudanças"}
             <span className="ml-2 rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground">
-              {promptDiff.added || promptDiff.removed || skillDiff.added || skillDiff.removed
-                ? `+${promptDiff.added + skillDiff.added} −${promptDiff.removed + skillDiff.removed}`
+              {added || removed
+                ? `+${added} −${removed}`
                 : modelChanged
                   ? "modelo"
                   : "0"}
@@ -240,7 +248,7 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
       </div>
 
       {showDiff ? (
-        <DiffView inUse={inUse} draft={local} models={config.models} inUseVersion={published.agent.version} draftVersion={next} hasSkill={hasSkill} />
+        <DiffView inUse={inUse} draft={local} models={config.models} inUseVersion={published.agent.version} draftVersion={next} skills={skillList} />
       ) : (
         <div>
           <div className="py-6">
@@ -287,26 +295,31 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
             </div>
           </div>
 
-          {hasSkill && (
-            <div className="py-6">
-              <label htmlFor="f-skill" className="mb-1 block text-sm font-semibold">
-                Instruções da skill Obrigações
-              </label>
-              <p className="mb-2.5 text-[13px] text-muted-foreground">Como o agente deve padronizar cada obrigação proposta. Aceita markdown.</p>
-              <Textarea
-                id="f-skill"
-                rows={22}
-                spellCheck={false}
-                value={local.skill}
-                onChange={(e) => set({ skill: e.target.value })}
-                className={cn("min-h-[26rem] resize-y p-4 font-mono text-[13px] leading-relaxed", emptySkill && "border-red-400")}
-              />
-              <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
-                <span className="font-medium text-red-700 dark:text-red-300">{emptySkill ? "As instruções da skill não podem ficar vazias para publicar." : ""}</span>
-                <span>{countText(local.skill)}</span>
+          {skillList.map((skill) => {
+            const empty = local.skills[skill.id].trim() === "";
+            return (
+              <div key={skill.id} className="py-6">
+                <label htmlFor={`f-skill-${skill.id}`} className="mb-1 block text-sm font-semibold">
+                  Instruções da skill {skill.name}
+                </label>
+                <p className="mb-2.5 text-[13px] text-muted-foreground">
+                  {skillDescriptions.get(skill.id) ?? "Instruções extras que o agente consulta."} Aceita markdown.
+                </p>
+                <Textarea
+                  id={`f-skill-${skill.id}`}
+                  rows={22}
+                  spellCheck={false}
+                  value={local.skills[skill.id]}
+                  onChange={(e) => set({ skills: { ...local.skills, [skill.id]: e.target.value } })}
+                  className={cn("min-h-[26rem] resize-y p-4 font-mono text-[13px] leading-relaxed", empty && "border-red-400")}
+                />
+                <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
+                  <span className="font-medium text-red-700 dark:text-red-300">{empty ? "As instruções da skill não podem ficar vazias para publicar." : ""}</span>
+                  <span>{countText(local.skills[skill.id])}</span>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })}
 
           <div className="mt-2 border-t border-border/50 pt-6">
             <h3 className="text-sm font-semibold">Somente leitura</h3>
@@ -349,7 +362,9 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
           <div className="rounded-lg border border-border/70 text-[13px]">
             <SummaryRow label="Modelo" value={modelChanged ? `${labelOf(inUse)} → ${labelOf(local)}` : "Sem mudança"} />
             <SummaryRow label="Prompt" value={diffSummary(promptDiff)} />
-            {hasSkill && <SummaryRow label="Skill Obrigações" value={diffSummary(skillDiff)} />}
+            {skillDiffs.map((s) => (
+              <SummaryRow key={s.id} label={`Skill ${s.name}`} value={diffSummary(s.diff)} />
+            ))}
           </div>
           {dialogError && <Alert>{dialogError}</Alert>}
           <DialogFooter className="gap-2 sm:gap-0">

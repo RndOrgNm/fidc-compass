@@ -36,7 +36,7 @@ function view(
 ): VersionView {
   const s = skill(version, skillText, status);
   return {
-    skill: s,
+    skills: [s],
     agent: {
       id: "a1",
       version,
@@ -52,6 +52,7 @@ function view(
       middlewares: [],
       output_schema: null,
       visible_in_chat: true,
+      managed_in_page: true,
       created_at: "2026-11-01T00:00:00Z",
       created_by: null,
     } satisfies AgentVersion,

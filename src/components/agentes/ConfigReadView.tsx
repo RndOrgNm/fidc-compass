@@ -5,7 +5,6 @@ import { FIXED_NOTE, ReadArea, Section } from "@/components/agentes/parts";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  EDITABLE_SKILL,
   contentOf,
   middlewareLabel,
   modelLabel,
@@ -13,12 +12,34 @@ import {
   type AgentConfig,
   type VersionView,
 } from "@/lib/agentConfig";
+import type { SkillVersion } from "@/lib/api/agentConfigService";
 import { cn } from "@/lib/utils";
+
+/** A skill of the version: its name and when it applies, and its instructions when it is opened. */
+function SkillCard({ skill }: { skill: SkillVersion }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border border-border/70 bg-card/50">
+      <CollapsibleTrigger className="flex w-full items-center gap-3 rounded-lg px-5 py-4 text-left hover:bg-accent/40">
+        <ChevronRight className={cn("h-4 w-4 flex-none text-muted-foreground transition-transform", open && "rotate-90")} />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">{skill.name}</span>
+          <span className="block text-[13px] text-muted-foreground">{skill.description}</span>
+        </span>
+        <span className="rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground">
+          {skill.instructions.split("\n").length} linhas
+        </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-5 pb-5">
+        <ReadArea text={skill.instructions} label={`Instruções da skill ${skill.name}`} tall />
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
 /** One version of the agent, read only: what the page edits first, then what it only shows. */
 export function ConfigReadView({ config, view }: { config: AgentConfig; view: VersionView }) {
   const content = contentOf(view);
-  const [skillOpen, setSkillOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function copyPrompt() {
@@ -53,23 +74,13 @@ export function ConfigReadView({ config, view }: { config: AgentConfig; view: Ve
         <ReadArea text={content.prompt} label="Texto do prompt" />
       </Section>
 
-      {view.skill && (
+      {view.skills.length > 0 && (
         <Section title="Skills" hint="Instruções extras que o agente consulta quando precisa.">
-          <Collapsible open={skillOpen} onOpenChange={setSkillOpen} className="rounded-lg border border-border/70 bg-card/50">
-            <CollapsibleTrigger className="flex w-full items-center gap-3 rounded-lg px-5 py-4 text-left hover:bg-accent/40">
-              <ChevronRight className={cn("h-4 w-4 flex-none text-muted-foreground transition-transform", skillOpen && "rotate-90")} />
-              <span className="min-w-0 flex-1">
-                <span className="block font-semibold">{view.skill.name || EDITABLE_SKILL}</span>
-                <span className="block text-[13px] text-muted-foreground">{view.skill.description}</span>
-              </span>
-              <span className="rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground">
-                {content.skill.split("\n").length} linhas
-              </span>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-5 pb-5">
-              <ReadArea text={content.skill} label={`Instruções da skill ${view.skill.name}`} tall />
-            </CollapsibleContent>
-          </Collapsible>
+          <div className="space-y-3">
+            {view.skills.map((skill) => (
+              <SkillCard key={skill.id} skill={skill} />
+            ))}
+          </div>
         </Section>
       )}
 

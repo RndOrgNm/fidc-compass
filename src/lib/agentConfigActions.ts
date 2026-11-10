@@ -9,12 +9,11 @@ import {
   publishAgent,
   publishSkill,
   type AgentVersion,
+  type SkillRef,
   type SkillVersion,
 } from "@/lib/api/agentConfigService";
 import { ApiRequestError } from "@/lib/api/threadsService";
 import {
-  CONFIGURABLE_AGENTS,
-  EDITABLE_SKILL,
   MODEL_OPTIONS,
   contentOf,
   publishedOf,
@@ -44,10 +43,9 @@ async function configOf(latest: AgentVersion): Promise<AgentConfig> {
 
   const views: VersionView[] = versions.map((agent) => ({
     agent,
-    skill:
-      agent.skills
-        .map((ref) => skills.get(`${ref.id}@${ref.version}`))
-        .find((s): s is SkillVersion => s?.name === EDITABLE_SKILL) ?? null,
+    skills: agent.skills
+      .map((ref) => skills.get(`${ref.id}@${ref.version}`))
+      .filter((s): s is SkillVersion => s !== undefined),
   }));
   const newest = versions.at(-1) ?? latest;
   return {
@@ -61,24 +59,30 @@ async function configOf(latest: AgentVersion): Promise<AgentConfig> {
   };
 }
 
-/** The agents the page offers, with every version, its skill and its MCP servers. */
+/** The agents the registry marks as the page's, with every version, their skills and MCP servers. */
 export async function loadAgentConfigs(): Promise<AgentConfig[]> {
   const agents = await listAgents();
-  const offered = agents.filter((a) => CONFIGURABLE_AGENTS.includes(a.name));
-  return Promise.all(offered.map(configOf));
+  return Promise.all(agents.filter((a) => a.managed_in_page).map(configOf));
 }
 
 /**
- * Keeps what was typed as the draft: the skill's instructions go to the skill (a new draft of it
- * when its latest version is published), then the draft of the agent points at that version.
+ * Keeps what was typed as the draft: the instructions of each skill that changed go to the skill (a
+ * new draft of it when its latest version is published), then the draft of the agent points at
+ * those versions, and at the ones it had for the skills that did not change.
  */
 export async function saveDraft(config: AgentConfig, content: ConfigContent): Promise<void> {
   const latest = config.versions.at(-1);
   if (!latest) throw new Error("The agent has no version");
-  let skills = latest.agent.skills;
-  if (latest.skill && content.skill !== latest.skill.instructions) {
-    const saved = await patchSkill(latest.skill.id, { instructions: content.skill });
-    skills = skills.map((ref) => (ref.id === saved.id ? { id: saved.id, version: saved.version } : ref));
+  const had = new Map(latest.skills.map((s) => [s.id, s]));
+  const skills: SkillRef[] = [];
+  for (const [id, text] of Object.entries(content.skills)) {
+    const ref = latest.agent.skills.find((r) => r.id === id);
+    if (ref && had.get(id)?.instructions === text) {
+      skills.push(ref);
+      continue;
+    }
+    const saved = await patchSkill(id, { instructions: text });
+    skills.push({ id: saved.id, version: saved.version });
   }
   await patchAgent(config.id, {
     provider: content.provider,
