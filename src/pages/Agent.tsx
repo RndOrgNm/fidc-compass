@@ -541,11 +541,11 @@ export default function Agent() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
+                <div className="px-1 py-3">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                   </div>
                 </div>
               </div>
@@ -574,9 +574,9 @@ export default function Agent() {
                     <div
                       className={`${
                         message.kind === "assistant"
-                          ? "bg-primary text-primary-foreground rounded-2xl rounded-bl-none"
-                          : "bg-muted text-foreground rounded-2xl rounded-br-none"
-                      } px-4 py-3 break-words ${message.kind === "assistant" && message.toolCalls.length ? "mt-2" : ""}`}
+                          ? "text-foreground px-1 py-2"
+                          : "bg-primary text-primary-foreground rounded-2xl rounded-br-none px-4 py-3"
+                      } break-words ${message.kind === "assistant" && message.toolCalls.length ? "mt-2" : ""}`}
                     >
                       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                         <ReactMarkdown
@@ -670,11 +670,11 @@ export default function Agent() {
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                   <Bot className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className="bg-primary text-primary-foreground rounded-2xl rounded-bl-none px-4 py-3">
+                <div className="px-1 py-3">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-primary-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
                   </div>
                 </div>
               </div>

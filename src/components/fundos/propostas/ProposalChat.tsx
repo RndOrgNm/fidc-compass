@@ -64,9 +64,9 @@ function Bubbles({ items, onOpenCitation }: { items: ChatItem[]; onOpenCitation:
               <div
                 className={`${
                   item.kind === "assistant"
-                    ? "rounded-2xl rounded-bl-none bg-primary text-primary-foreground"
-                    : "rounded-2xl rounded-br-none bg-muted text-foreground"
-                } break-words px-3.5 py-2.5 text-[13px] ${
+                    ? "px-1 py-1.5 text-foreground"
+                    : "rounded-2xl rounded-br-none bg-primary px-3.5 py-2.5 text-primary-foreground"
+                } break-words text-[13px] ${
                   item.kind === "assistant" && item.toolCalls.length ? "mt-2" : ""
                 }`}
               >

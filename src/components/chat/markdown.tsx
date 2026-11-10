@@ -57,7 +57,7 @@ export function markdownComponents(citations: Citation[], onOpen: (citation: Cit
           aria-label={`Fonte ${citation.n}: ${citationTitle(citation)}`}
           title={citationTitle(citation)}
           onClick={() => onOpen(citation)}
-          className="mx-0.5 rounded bg-primary-foreground px-1 align-baseline font-semibold text-primary no-underline hover:opacity-80"
+          className="mx-0.5 align-baseline font-medium text-primary underline-offset-2 hover:underline dark:text-[hsl(14,59%,62%)]"
         >
           {children}
         </button>
