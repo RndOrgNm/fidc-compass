@@ -26,7 +26,12 @@ export interface Citation extends CitedPassage {
 }
 
 // A search result's id is an `s` and base-36 digits; a chunk of the document is `c` and a number.
-const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]{6,}|c\d+)\]/g;
+// The model sometimes copies an id short by a character or two, so the shape allows a shorter `s…`.
+const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]{4,}|c\d+)\]/g;
+// Below this many characters after the `s`, a marker is dropped only if it has a digit, which a
+// plain word such as `[sobre]` does not.
+const FULL_ID_DIGITS = 6;
+const MIN_PREFIX_DIGITS = 4;
 // A marker that has only half arrived while the answer streams: `[sj6` at the very end.
 const HALF_MARKER_AT_END = /\[(?:s[0-9a-z]*|c\d*)$/;
 
@@ -57,19 +62,31 @@ export function passagesFromMessages(messages: Message[]): PassageTable {
   return table;
 }
 
+/** The passage a marker names: the id itself, or, for an id the model cut short, the one passage
+ *  whose id starts with it. Two passages starting alike is no answer, so it is none. */
+function passageOf(ref: string, table: PassageTable): CitedPassage | undefined {
+  const exact = table.get(ref);
+  if (exact || !ref.startsWith("s") || ref.length <= MIN_PREFIX_DIGITS) return exact;
+  const starting = [...table.values()].filter((p) => p.ref.startsWith(ref));
+  return starting.length === 1 ? starting[0] : undefined;
+}
+
 /**
  * The answer's text with each known marker turned into a Markdown link, `[[n]](#cite-n)`, and the
  * sources they point to. The same passage cited twice is the same number and one source.
  */
 export function resolveMarkers(text: string, table: PassageTable): { text: string; citations: Citation[] } {
   const numbered = new Map<string, Citation>();
-  const resolved = text.replace(HALF_MARKER_AT_END, "").replace(PASSAGE_MARKER, (_marker, lead: string, ref: string) => {
-    const passage = table.get(ref);
-    if (!passage) return "";
-    let citation = numbered.get(ref);
+  const resolved = text.replace(HALF_MARKER_AT_END, "").replace(PASSAGE_MARKER, (marker, lead: string, ref: string) => {
+    const passage = passageOf(ref, table);
+    if (!passage) {
+      const shortWord = ref.startsWith("s") && ref.length - 1 < FULL_ID_DIGITS && !/\d/.test(ref);
+      return shortWord ? marker : "";
+    }
+    let citation = numbered.get(passage.ref);
     if (!citation) {
       citation = { ...passage, n: numbered.size + 1 };
-      numbered.set(ref, citation);
+      numbered.set(passage.ref, citation);
     }
     return `${lead}[[${citation.n}]](#cite-${citation.n})`;
   });

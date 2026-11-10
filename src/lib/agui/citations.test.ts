@@ -84,6 +84,25 @@ describe("resolveMarkers", () => {
     expect(citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
+  it("resolves an id the model cut short when it starts exactly one passage", () => {
+    const { text, citations } = resolveMarkers("Vale 20% [sj6tds] e de novo [sj6tdsf].", table);
+    expect(text).toBe("Vale 20% [[1]](#cite-1) e de novo [[1]](#cite-1).");
+    expect(citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
+  });
+
+  it("drops a short id that starts no passage or more than one", () => {
+    const two: PassageTable = new Map([
+      ["sj6tdsf", { ref: "sj6tdsf", label: null, text: "a", pageStart: 1, pageEnd: 1 }],
+      ["sj6tdxy", { ref: "sj6tdxy", label: null, text: "b", pageStart: 2, pageEnd: 2 }],
+    ]);
+    expect(resolveMarkers("A [sj6td] e B [s9x2k1].", two)).toEqual({ text: "A e B.", citations: [] });
+  });
+
+  it("does not take a plain short word for an id", () => {
+    const text = "Veja [sobre] e [segue].";
+    expect(resolveMarkers(text, table)).toEqual({ text, citations: [] });
+  });
+
   it("leaves other bracketed text alone", () => {
     const text = "Veja [Artigo 10] e a lista [1] e [nota] e [link](http://x.org).";
     expect(resolveMarkers(text, table)).toEqual({ text, citations: [] });
