@@ -11,6 +11,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import Home from "./pages/Home";
 // import Pipeline from "./pages/Pipeline"; // hidden for now — re-enable with /pipeline routes below
 import Agent from "./pages/Agent";
+import Agentes from "./pages/Agentes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -66,6 +67,22 @@ const App = () => (
                   </RequireAuth>
                 }
               />
+              {[
+                "/agentes",
+                "/agentes/:slug",
+                "/agentes/:slug/:section",
+                "/agentes/:slug/:section/:version",
+              ].map((path) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <RequireAuth>
+                      <Agentes />
+                    </RequireAuth>
+                  }
+                />
+              ))}
               <Route path="/graficos" element={<Navigate to="/fundos/graficos" replace />} />
               <Route
                 path="/fundos"

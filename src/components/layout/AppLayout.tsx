@@ -73,7 +73,8 @@ export function AppLayout({ children, title, headerRight }: AppLayoutProps) {
             </div>
           </header>
 
-          <main className="flex-1 p-6 bg-muted/30 overflow-x-hidden">
+          {/* overflow-x-clip hides the overflow like -hidden does, but is no scroll container: a sticky bar inside still sticks to the header */}
+          <main className="flex-1 p-6 bg-muted/30 overflow-x-clip">
             {children}
           </main>
         </div>
