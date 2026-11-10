@@ -135,6 +135,17 @@ describe("AgentEditor", () => {
     expect(screen.getByRole("button", { name: "Publicar v2" })).toBeEnabled();
   });
 
+  it("leaving with unsaved changes asks first; with nothing to save it just leaves", () => {
+    renderEditor(inUse);
+    fireEvent.click(screen.getByRole("button", { name: "Sair da edição" }));
+    expect(screen.queryByText("Sair sem salvar?")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Prompt"), { target: { value: "changed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sair da edição" }));
+    expect(screen.getByText("Sair sem salvar?")).toBeInTheDocument();
+    expect(actions.saveDraft).not.toHaveBeenCalled();
+  });
+
   it("shows the changes against the version in use", () => {
     renderEditor(inUse);
     fireEvent.change(screen.getByLabelText("Prompt"), { target: { value: "other" } });

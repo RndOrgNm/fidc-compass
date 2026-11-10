@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, ChevronRight, GitCompare, Info, Loader2, Pencil } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronRight, GitCompare, Info, Loader2, Pencil } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { DiffView } from "@/components/agentes/DiffView";
@@ -39,7 +39,7 @@ import {
 import { ApiRequestError } from "@/lib/api/threadsService";
 import { cn } from "@/lib/utils";
 
-type Dialogs = "publish" | "discard" | null;
+type Dialogs = "publish" | "discard" | "leave" | null;
 
 function publishErrorText(error: unknown): string {
   if (error instanceof ApiRequestError) {
@@ -184,6 +184,10 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
           <span>{status}</span>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" disabled={busy} onClick={() => (dirty ? open("leave") : navigate(base))}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sair da edição
+          </Button>
           <Button variant="outline" onClick={() => setShowDiff((v) => !v)}>
             <GitCompare className="mr-2 h-4 w-4" />
             {showDiff ? "Voltar à edição" : "Mostrar mudanças"}
@@ -364,6 +368,35 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
             </Button>
             <Button disabled={publish.isPending} onClick={() => publish.mutate()}>
               {publish.isPending ? "Publicando…" : `Publicar v${next}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === "leave"} onOpenChange={(o) => !busy && setDialog(o ? "leave" : null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sair sem salvar?</DialogTitle>
+            <DialogDescription>Você tem alterações que ainda não foram salvas no rascunho.</DialogDescription>
+          </DialogHeader>
+          {dialogError && <Alert>{dialogError}</Alert>}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" disabled={save.isPending} onClick={() => setDialog(null)}>
+              Continuar editando
+            </Button>
+            <Button variant="ghost" disabled={save.isPending} onClick={() => navigate(base)}>
+              Sair sem salvar
+            </Button>
+            <Button
+              disabled={save.isPending}
+              onClick={() =>
+                save.mutate(undefined, {
+                  onSuccess: () => navigate(base),
+                  onError: () => setDialogError("Não foi possível salvar. Tente de novo."),
+                })
+              }
+            >
+              {save.isPending ? "Salvando…" : "Salvar e sair"}
             </Button>
           </DialogFooter>
         </DialogContent>
