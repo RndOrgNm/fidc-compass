@@ -35,7 +35,7 @@ export function ConfigReadView({ config, view }: { config: AgentConfig; view: Ve
     <div>
       <Section title="Modelo" first>
         <div className="flex flex-wrap items-baseline gap-2.5">
-          <b className="text-base font-semibold">{modelLabel(content.provider, content.model)}</b>
+          <b className="text-base font-semibold">{modelLabel(content.provider, content.model, config.models)}</b>
           <span className="text-muted-foreground">{providerLabel(content.provider)}</span>
         </div>
       </Section>

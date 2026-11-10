@@ -1,4 +1,6 @@
-import type { AgentVersion, McpServer, SkillVersion } from "@/lib/api/agentConfigService";
+import type { AgentVersion, McpServer, ModelOption, SkillVersion } from "@/lib/api/agentConfigService";
+
+export type { ModelOption };
 
 /** The agents the configuration page offers: only these are owned by the page. */
 export const CONFIGURABLE_AGENTS = ["Proposal"];
@@ -28,6 +30,8 @@ export interface AgentConfig {
   /** Every version, oldest first. */
   versions: VersionView[];
   mcps: McpServer[];
+  /** The models the registry offers. */
+  models: ModelOption[];
 }
 
 export function slugOf(name: string): string {
@@ -78,12 +82,7 @@ export function nextVersionOf(config: AgentConfig): number {
 
 // ── Models ──
 
-export interface ModelOption {
-  provider: string;
-  model: string;
-  label: string;
-}
-
+/** The models the menu offers when the registry does not answer GET /models. */
 export const MODEL_OPTIONS: ModelOption[] = [
   { provider: "anthropic", model: "claude-sonnet-5-5", label: "Claude Sonnet 5.5" },
   { provider: "anthropic", model: "claude-opus-5-5", label: "Claude Opus 5.5" },
@@ -96,8 +95,8 @@ export function providerLabel(provider: string): string {
   return PROVIDER_LABELS[provider] ?? provider;
 }
 
-export function modelLabel(provider: string, model: string): string {
-  return MODEL_OPTIONS.find((o) => o.provider === provider && o.model === model)?.label ?? model;
+export function modelLabel(provider: string, model: string, models: ModelOption[] = MODEL_OPTIONS): string {
+  return models.find((o) => o.provider === provider && o.model === model)?.label ?? model;
 }
 
 export function modelKey(provider: string, model: string): string {
@@ -105,9 +104,9 @@ export function modelKey(provider: string, model: string): string {
 }
 
 /** The options of the model menu: the known ones, and the one in use when it is not among them. */
-export function modelOptionsFor(provider: string, model: string): ModelOption[] {
-  if (MODEL_OPTIONS.some((o) => o.provider === provider && o.model === model)) return MODEL_OPTIONS;
-  return [{ provider, model, label: model }, ...MODEL_OPTIONS];
+export function modelOptionsFor(provider: string, model: string, models: ModelOption[] = MODEL_OPTIONS): ModelOption[] {
+  if (models.some((o) => o.provider === provider && o.model === model)) return models;
+  return [{ provider, model, label: model }, ...models];
 }
 
 // ── Protections ──

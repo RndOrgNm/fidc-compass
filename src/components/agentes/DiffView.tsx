@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { diffLines, modelLabel, type ConfigContent, type DiffRow } from "@/lib/agentConfig";
+import { diffLines, modelLabel, type ConfigContent, type DiffRow, type ModelOption } from "@/lib/agentConfig";
 import { cn } from "@/lib/utils";
 
 type Item = "model" | "prompt" | "skill";
@@ -30,7 +30,9 @@ export function DiffView({
   inUseVersion,
   draftVersion,
   hasSkill,
+  models,
 }: {
+  models: ModelOption[];
   inUse: ConfigContent;
   draft: ConfigContent;
   inUseVersion: number;
@@ -77,11 +79,11 @@ export function DiffView({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className={cn("rounded-lg border border-border/70 p-4", modelChanged && "bg-red-400/15")}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Em uso (v{inUseVersion})</span>
-            <b className="mt-1 block text-[15px]">{modelLabel(inUse.provider, inUse.model)}</b>
+            <b className="mt-1 block text-[15px]">{modelLabel(inUse.provider, inUse.model, models)}</b>
           </div>
           <div className={cn("rounded-lg border border-border/70 p-4", modelChanged && "bg-emerald-500/15")}>
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rascunho (v{draftVersion})</span>
-            <b className="mt-1 block text-[15px]">{modelLabel(draft.provider, draft.model)}</b>
+            <b className="mt-1 block text-[15px]">{modelLabel(draft.provider, draft.model, models)}</b>
           </div>
         </div>
       ) : (

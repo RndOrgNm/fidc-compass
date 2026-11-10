@@ -3,6 +3,7 @@ import {
   listAgentVersions,
   listAgents,
   listMcpServers,
+  listModels,
   patchAgent,
   patchSkill,
   publishAgent,
@@ -14,6 +15,7 @@ import { ApiRequestError } from "@/lib/api/threadsService";
 import {
   CONFIGURABLE_AGENTS,
   EDITABLE_SKILL,
+  MODEL_OPTIONS,
   contentOf,
   publishedOf,
   sameContent,
@@ -24,7 +26,12 @@ import {
 } from "@/lib/agentConfig";
 
 async function configOf(latest: AgentVersion): Promise<AgentConfig> {
-  const [versions, mcps] = await Promise.all([listAgentVersions(latest.id), listMcpServers()]);
+  const [versions, mcps, models] = await Promise.all([
+    listAgentVersions(latest.id),
+    listMcpServers(),
+    // an older registry has no /models: the menu then offers the models the page knows
+    listModels().catch(() => MODEL_OPTIONS),
+  ]);
 
   const refs = new Map<string, { id: string; version: number }>();
   for (const v of versions) for (const ref of v.skills) refs.set(`${ref.id}@${ref.version}`, ref);
@@ -50,6 +57,7 @@ async function configOf(latest: AgentVersion): Promise<AgentConfig> {
     description: newest.description,
     versions: views,
     mcps: mcps.filter((m) => newest.mcps.includes(m.id)),
+    models,
   };
 }
 

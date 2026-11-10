@@ -65,6 +65,7 @@ const inUse: AgentConfig = {
   description: "d",
   versions: [version(1, "published", "the prompt", "the skill")],
   mcps: [],
+  models: [{ provider: "anthropic", model: "claude-sonnet-5-5", label: "Claude Sonnet 5.5" }],
 };
 
 beforeEach(() => {

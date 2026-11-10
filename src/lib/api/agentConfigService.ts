@@ -53,6 +53,13 @@ export interface McpServer {
   active: boolean;
 }
 
+/** A model an agent may use, as GET /models offers it. */
+export interface ModelOption {
+  provider: string;
+  model: string;
+  label: string;
+}
+
 export interface AgentChanges {
   provider?: string;
   model?: string;
@@ -108,6 +115,11 @@ export async function getSkillVersion(skillId: string, version: number): Promise
 export async function listMcpServers(): Promise<McpServer[]> {
   const response = await apiFetch(`${FUNDS_AGENT_API_URL}/mcp-servers`);
   return (await json<{ mcp_servers: McpServer[] }>(response)).mcp_servers;
+}
+
+export async function listModels(): Promise<ModelOption[]> {
+  const response = await apiFetch(`${FUNDS_AGENT_API_URL}/models`);
+  return (await json<{ models: ModelOption[] }>(response)).models;
 }
 
 /** Edits the latest version when it is a draft; on a published one, creates the next, as a draft. */

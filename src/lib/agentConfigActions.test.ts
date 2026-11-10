@@ -12,6 +12,8 @@ let agents: Record<string, unknown>[];
 let skills: Record<string, unknown>[];
 let calls: string[];
 let publishSkillStatus = 200;
+/** What GET /models answers; null is a registry that has no such route yet. */
+let registryModels: { provider: string; model: string; label: string }[] | null;
 
 const AGENT = { id: "a1", name: "Proposal", description: "d", engine: "langgraph", provider: "anthropic", mcps: ["m1"], middlewares: [{ name: "citations", config: {} }], output_schema: null, visible_in_chat: true, created_at: "2026-11-01T00:00:00Z", created_by: null };
 const SKILL = { id: "s1", name: "Obrigações", description: "when", active: true, created_at: "2026-11-01T00:00:00Z", created_by: null };
@@ -50,6 +52,9 @@ async function route(url: string, init: RequestInit = {}): Promise<Response> {
   if (method === "GET" && path === "/agents") return json({ agents: [agents.at(-1)], total: 1 });
   if (method === "GET" && path === "/agents/a1/versions") return json({ agents: agents, total: agents.length });
   if (method === "GET" && path === "/mcp-servers") return json({ mcp_servers: [{ id: "m1", name: "funds", active: true }, { id: "m2", name: "other", active: true }], total: 2 });
+  if (method === "GET" && path === "/models") {
+    return registryModels ? json({ models: registryModels, total: registryModels.length }) : json({ detail: "not found" }, 404);
+  }
   const skillVersion = path.match(/^\/skills\/s1\/versions\/(\d+)$/);
   if (method === "GET" && skillVersion) return json(skills.find((s) => s.version === Number(skillVersion[1])));
   if (method === "PATCH" && path === "/skills/s1") return json(patch(skills, body));
@@ -70,6 +75,7 @@ beforeEach(() => {
   skills = [skillRow(1, "published", "skill 1")];
   calls = [];
   publishSkillStatus = 200;
+  registryModels = null;
   vi.stubGlobal("fetch", vi.fn(route));
   configureApiAuth({ getToken: async () => "tok" });
 });
@@ -92,6 +98,16 @@ describe("loading", () => {
     expect(loaded.versions).toHaveLength(1);
     expect(loaded.versions[0].skill?.instructions).toBe("skill 1");
     expect(loaded.mcps.map((m) => m.name)).toEqual(["funds"]);
+  });
+
+  it("takes the models of the menu from the registry", async () => {
+    registryModels = [{ provider: "openai", model: "gpt-5", label: "GPT-5" }];
+    expect((await config()).models).toEqual(registryModels);
+  });
+
+  it("offers the models the page knows when the registry has no list yet", async () => {
+    const { MODEL_OPTIONS } = await import("./agentConfig");
+    expect((await config()).models).toEqual(MODEL_OPTIONS);
   });
 
   it("leaves out an agent the page does not own", async () => {

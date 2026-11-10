@@ -33,7 +33,7 @@ export function AgentList({ configs }: { configs: AgentConfig[] }) {
                 <span className="block text-base font-semibold">{config.name}</span>
                 <span className="block text-sm text-muted-foreground">{config.description}</span>
                 <span className="mt-1 flex gap-2 text-xs text-muted-foreground">
-                  <span>{modelLabel(published.agent.provider, published.agent.model)}</span>
+                  <span>{modelLabel(published.agent.provider, published.agent.model, config.models)}</span>
                   <span>·</span>
                   <span>Versão em uso: v{published.agent.version}</span>
                 </span>

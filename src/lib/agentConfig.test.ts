@@ -59,7 +59,7 @@ function view(
 }
 
 function configOf(...versions: VersionView[]): AgentConfig {
-  return { id: "a1", slug: "proposal", name: "Proposal", description: "", versions, mcps: [] };
+  return { id: "a1", slug: "proposal", name: "Proposal", description: "", versions, mcps: [], models: [] };
 }
 
 describe("which version is in use and which is a draft", () => {

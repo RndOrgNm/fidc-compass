@@ -151,7 +151,8 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
     setDialog(kind);
   }
 
-  const options = modelOptionsFor(local.provider, local.model);
+  const options = modelOptionsFor(local.provider, local.model, config.models);
+  const labelOf = (c: ConfigContent) => modelLabel(c.provider, c.model, config.models);
 
   return (
     <div>
@@ -239,14 +240,14 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
       </div>
 
       {showDiff ? (
-        <DiffView inUse={inUse} draft={local} inUseVersion={published.agent.version} draftVersion={next} hasSkill={hasSkill} />
+        <DiffView inUse={inUse} draft={local} models={config.models} inUseVersion={published.agent.version} draftVersion={next} hasSkill={hasSkill} />
       ) : (
         <div>
           <div className="py-6">
             <label htmlFor="f-model" className="mb-1 block text-sm font-semibold">
               Modelo
             </label>
-            <p className="mb-2.5 text-[13px] text-muted-foreground">Em uso hoje: {modelLabel(inUse.provider, inUse.model)}.</p>
+            <p className="mb-2.5 text-[13px] text-muted-foreground">Em uso hoje: {labelOf(inUse)}.</p>
             <Select
               value={modelKey(local.provider, local.model)}
               onValueChange={(key) => {
@@ -346,7 +347,7 @@ export function AgentEditor({ config }: { config: AgentConfig }) {
           </DialogHeader>
           {dirty && <Alert tone="info">Inclui alterações que ainda não foram salvas no rascunho.</Alert>}
           <div className="rounded-lg border border-border/70 text-[13px]">
-            <SummaryRow label="Modelo" value={modelChanged ? `${modelLabel(inUse.provider, inUse.model)} → ${modelLabel(local.provider, local.model)}` : "Sem mudança"} />
+            <SummaryRow label="Modelo" value={modelChanged ? `${labelOf(inUse)} → ${labelOf(local)}` : "Sem mudança"} />
             <SummaryRow label="Prompt" value={diffSummary(promptDiff)} />
             {hasSkill && <SummaryRow label="Skill Obrigações" value={diffSummary(skillDiff)} />}
           </div>
