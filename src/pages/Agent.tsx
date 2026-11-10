@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw, ChevronDown, Mic, MicOff } from "lucide-react";
+import { Bot, Send, MessageSquare, Plus, Loader2, ChevronLeft, ChevronRight, X, Trash2, UserCog, RefreshCw, ChevronDown, Mic, MicOff, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -480,7 +480,17 @@ export default function Agent() {
           Atualizar
         </Button>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => navigate("/agentes")}
+            title="Configurar agentes"
+            aria-label="Configurar agentes"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" disabled={isRunning || !agents.length}>

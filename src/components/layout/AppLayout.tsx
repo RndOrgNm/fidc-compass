@@ -16,7 +16,7 @@ interface AppLayoutProps {
 const PAGE_TITLES: Record<string, string> = {
   "/": "Home",
   "/pipeline": "Pipeline de Investimentos",
-  "/agent": "Agente IA",
+  "/agent": "Agentes",
   "/graficos": "Gráficos",
   "/fundos": "Fundos",
 };
@@ -25,7 +25,7 @@ function getPageTitle(pathname: string, override?: string): string {
   if (override) return override;
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
   if (pathname.startsWith("/pipeline")) return "Pipeline de Investimentos";
-  if (pathname.startsWith("/agent")) return "Agente IA";
+  if (pathname.startsWith("/agent")) return "Agentes";
   if (pathname.startsWith("/graficos")) return "Gráficos";
   if (pathname.startsWith("/fundos")) return "Fundos";
   return "EMET Compass";
