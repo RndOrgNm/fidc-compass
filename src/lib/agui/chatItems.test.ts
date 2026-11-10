@@ -203,14 +203,14 @@ describe("buildChatItems: the sources an answer cites", () => {
     expect(answer.citations).toHaveLength(1);
   });
 
-  it("does not show a marker for a passage the Agent did not read", () => {
+  it("shows a marker for a passage the Agent did not read as an unknown source, not as one it read", () => {
     const messages: Message[] = [
       { id: "u1", role: "user", content: "x" },
       read("p", passage("sj6tdsf", "Art. 45", 158)),
       { id: "a1", role: "assistant", content: "Vale [sj6tdsf] e [szzzzzz]." },
     ];
     const answer = answerOf(buildChatItems(messages), 1);
-    expect(answer.text).toBe("Vale [[1]](#cite-1) e.");
+    expect(answer.text).toBe("Vale [[1]](#cite-1) e [[?]](#cite-unknown).");
     expect(answer.citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 

@@ -78,9 +78,9 @@ describe("resolveMarkers", () => {
     expect(citations[0]).toMatchObject({ n: 1, ref: "c33", pageStart: 5, pageEnd: 6 });
   });
 
-  it("drops a marker that is not in the table, so nothing shows as a source that was not read", () => {
+  it("shows a marker that is not in the table as an unknown source, never as one that was read, and never takes it out", () => {
     const { text, citations } = resolveMarkers("Vale 20% [sj6tdsf] e mais algo [szzzzzz], ou [c999].", table);
-    expect(text).toBe("Vale 20% [[1]](#cite-1) e mais algo, ou.");
+    expect(text).toBe("Vale 20% [[1]](#cite-1) e mais algo [[?]](#cite-unknown), ou [[?]](#cite-unknown).");
     expect(citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
@@ -90,17 +90,42 @@ describe("resolveMarkers", () => {
     expect(citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
-  it("drops a short id that starts no passage or more than one", () => {
+  it("shows a short id that starts no passage or more than one as unknown", () => {
     const two: PassageTable = new Map([
       ["sj6tdsf", { ref: "sj6tdsf", label: null, text: "a", pageStart: 1, pageEnd: 1 }],
       ["sj6tdxy", { ref: "sj6tdxy", label: null, text: "b", pageStart: 2, pageEnd: 2 }],
     ]);
-    expect(resolveMarkers("A [sj6td] e B [s9x2k1].", two)).toEqual({ text: "A e B.", citations: [] });
+    expect(resolveMarkers("A [sj6td] e B [s9x2k1].", two)).toEqual({
+      text: "A [[?]](#cite-unknown) e B [[?]](#cite-unknown).",
+      citations: [],
+    });
   });
 
-  it("drops an id cut down to a letter and a digit, which names no passage", () => {
-    const text = "A denominação deve incluir a expressão [s4][s5]. Outra regra [s4].";
-    expect(resolveMarkers(text, table)).toEqual({ text: "A denominação deve incluir a expressão. Outra regra.", citations: [] });
+  describe("`s4` for Art. 4, as the model writes it", () => {
+    const art4 = { ref: "si7faxl", label: "Art. 4 — Anexo FIDC", text: "Art. 4º Da denominação…", page_start: 138 };
+    const art5 = { ref: "ssk7zzz", label: "Art. 5 — Anexo FIDC", text: "Art. 5º As classes…", page_start: 138 };
+    const art44 = { ref: "s22rtsf", label: "Art. 44 — Anexo FIDC", text: "Art. 44. Em até 180 dias…", page_start: 158 };
+
+    it("is the one passage labelled with that article, cited as many times as it is written", () => {
+      const { text, citations } = resolveMarkers(
+        "A denominação inclui a expressão [s4][s5]. Pode usar outra [s4]. E o prazo é de 180 dias [s44].",
+        tableOf(art4, art5, art44),
+      );
+      expect(text).toBe(
+        "A denominação inclui a expressão [[1]](#cite-1)[[2]](#cite-2). Pode usar outra [[1]](#cite-1). E o prazo é de 180 dias [[3]](#cite-3).",
+      );
+      expect(citations.map((c) => c.ref)).toEqual(["si7faxl", "ssk7zzz", "s22rtsf"]);
+    });
+
+    it("is unknown when two passages carry the article, or none does", () => {
+      const twoArt4 = tableOf(art4, { ...art4, ref: "sab12cd", label: "Art. 4 — Parte Geral" });
+      expect(resolveMarkers("A [s4].", twoArt4)).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
+      expect(resolveMarkers("A [s9].", tableOf(art4))).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
+    });
+
+    it("is not looked up in a label that is no article", () => {
+      expect(resolveMarkers("A [s4].", tableOf(CHUNK_33))).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
+    });
   });
 
   it("does not take a plain short word for an id", () => {
@@ -121,6 +146,6 @@ describe("resolveMarkers", () => {
 
   it("does nothing with an answer that cites nothing, or with no table", () => {
     expect(resolveMarkers("Sem fontes.", table)).toEqual({ text: "Sem fontes.", citations: [] });
-    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale.");
+    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale [[?]](#cite-unknown).");
   });
 });

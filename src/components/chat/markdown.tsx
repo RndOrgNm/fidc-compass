@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef } from "react";
 
-import type { Citation } from "@/lib/agui/citations";
+import { UNKNOWN_SOURCE, type Citation } from "@/lib/agui/citations";
 
 /** The props react-markdown hands a component: the element's own, and the node it came from. */
 type Tag<T extends keyof JSX.IntrinsicElements> = ComponentPropsWithoutRef<T> & { node?: unknown };
@@ -42,6 +42,16 @@ export function markdownComponents(citations: Citation[], onOpen: (citation: Cit
   return {
     ...MARKDOWN_COMPONENTS,
     a: ({ node, href, children, ...props }: Tag<"a">) => {
+      if (href === `#${UNKNOWN_SOURCE}`) {
+        return (
+          <span
+            className="mx-0.5 align-baseline text-muted-foreground"
+            title="O agente citou uma fonte que não foi possível identificar"
+          >
+            {children}
+          </span>
+        );
+      }
       const number = href?.match(/^#cite-(\d+)$/)?.[1];
       const citation = number ? citations.find((c) => c.n === Number(number)) : undefined;
       if (!citation) {

@@ -28,7 +28,9 @@ export interface Citation extends CitedPassage {
 // A search result's id is an `s` and base-36 digits; a chunk of the document is `c` and a number.
 // The model sometimes copies an id short, even down to `s4`, so the shape allows any `s…`.
 const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]+|c\d+)\]/g;
-// Below this many characters after the `s`, a marker is dropped only if it has a digit, which a
+/** The link target of a citation no passage answers to, drawn as `[?]` instead of a number. */
+export const UNKNOWN_SOURCE = "cite-unknown";
+// Below this many characters after the `s`, a marker is a citation only if it has a digit, which a
 // plain word such as `[sobre]` does not.
 const FULL_ID_DIGITS = 6;
 const MIN_PREFIX_DIGITS = 4;
@@ -62,11 +64,25 @@ export function passagesFromMessages(messages: Message[]): PassageTable {
   return table;
 }
 
-/** The passage a marker names: the id itself, or, for an id the model cut short, the one passage
- *  whose id starts with it. Two passages starting alike is no answer, so it is none. */
+/** The article a passage is labelled with: `Art. 4 — Anexo FIDC` is 4. */
+function articleOf(label: string | null): string | undefined {
+  return label?.match(/^Art\.\s*(\d+)/i)?.[1];
+}
+
+/**
+ * The passage a marker names: the id itself; `s4` is how the model sometimes names Art. 4, the one
+ * passage labelled with that article; and, for an id the model cut short, the one passage whose id
+ * starts with it. Two passages answering alike is no answer, so it is none.
+ */
 function passageOf(ref: string, table: PassageTable): CitedPassage | undefined {
   const exact = table.get(ref);
-  if (exact || !ref.startsWith("s") || ref.length <= MIN_PREFIX_DIGITS) return exact;
+  if (exact || !ref.startsWith("s")) return exact;
+  const article = ref.match(/^s(\d{1,3})$/)?.[1];
+  if (article) {
+    const labelled = [...table.values()].filter((p) => articleOf(p.label) === article);
+    return labelled.length === 1 ? labelled[0] : undefined;
+  }
+  if (ref.length <= MIN_PREFIX_DIGITS) return undefined;
   const starting = [...table.values()].filter((p) => p.ref.startsWith(ref));
   return starting.length === 1 ? starting[0] : undefined;
 }
@@ -81,7 +97,8 @@ export function resolveMarkers(text: string, table: PassageTable): { text: strin
     const passage = passageOf(ref, table);
     if (!passage) {
       const shortWord = ref.startsWith("s") && ref.length - 1 < FULL_ID_DIGITS && !/\d/.test(ref);
-      return shortWord ? marker : "";
+      // A source the answer cites and that cannot be told is shown as such, never taken out.
+      return shortWord ? marker : `${lead}[[?]](#${UNKNOWN_SOURCE})`;
     }
     let citation = numbered.get(passage.ref);
     if (!citation) {
