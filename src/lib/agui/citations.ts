@@ -26,7 +26,8 @@ export interface Citation extends CitedPassage {
 }
 
 // A search result's id is an `s` and base-36 digits; a chunk of the document is `c` and a number.
-// The model sometimes copies an id short, even down to `s4`, so the shape allows any `s…`.
+// The model sometimes copies an id wrong (a character lost from the middle, or the end cut), so
+// the shape allows any `s…`.
 const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]+|c\d+)\]/g;
 /** The link target of a citation no passage answers to, drawn with what the model wrote and a `?`
  *  (`[s4?]`) instead of a number: the target ends with `:` and what the model wrote. */
@@ -85,7 +86,20 @@ function passageOf(ref: string, table: PassageTable): CitedPassage | undefined {
   }
   if (ref.length <= MIN_PREFIX_DIGITS) return undefined;
   const starting = [...table.values()].filter((p) => p.ref.startsWith(ref));
-  return starting.length === 1 ? starting[0] : undefined;
+  if (starting.length > 0) return starting.length === 1 ? starting[0] : undefined;
+  // A character dropped, added or changed anywhere in the id: with seven random base-36 characters,
+  // two passages of a thread one edit from the same text is not a thing that happens.
+  const near = [...table.values()].filter((p) => p.ref.startsWith("s") && oneEditApart(p.ref, ref));
+  return near.length === 1 ? near[0] : undefined;
+}
+
+/** Whether two ids differ by one character: one dropped, added, or changed. */
+function oneEditApart(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  while (i < a.length && i < b.length && a[i] === b[i]) i++;
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+  return a.length < b.length ? a.slice(i) === b.slice(i + 1) : a.slice(i + 1) === b.slice(i);
 }
 
 /**

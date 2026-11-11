@@ -101,6 +101,25 @@ describe("resolveMarkers", () => {
     });
   });
 
+  describe("an id the model copied with a character wrong", () => {
+    const art4 = { ref: "si7faxl", label: "Art. 4 — Anexo FIDC", text: "Art. 4º Da denominação…", page_start: 138 };
+
+    it("is the passage one character apart: one lost from the middle (the real case), added, or changed", () => {
+      for (const written of ["s7faxl", "si7faxxl", "si7fazl"]) {
+        const { text, citations } = resolveMarkers(`A denominação [${written}].`, tableOf(art4));
+        expect(text, written).toBe("A denominação [[1]](#cite-1).");
+        expect(citations.map((c) => c.ref)).toEqual(["si7faxl"]);
+      }
+    });
+
+    it("is unknown when two characters are wrong, or two passages are one character away", () => {
+      expect(resolveMarkers("A [s7fazl].", tableOf(art4)).text).toBe("A [[s7fazl?]](#cite-unknown:s7fazl).");
+      const near = tableOf(art4, { ...art4, ref: "si7fazl" });
+      expect(resolveMarkers("A [si7faql].", near).text).toBe("A [[si7faql?]](#cite-unknown:si7faql).");
+      expect(resolveMarkers("A [s7fabl].", near).text).toBe("A [[s7fabl?]](#cite-unknown:s7fabl).");
+    });
+  });
+
   describe("`s4` for Art. 4, as the model writes it", () => {
     const art4 = { ref: "si7faxl", label: "Art. 4 — Anexo FIDC", text: "Art. 4º Da denominação…", page_start: 138 };
     const art5 = { ref: "ssk7zzz", label: "Art. 5 — Anexo FIDC", text: "Art. 5º As classes…", page_start: 138 };
