@@ -163,8 +163,8 @@ describe("resolveMarkers", () => {
     expect(resolveMarkers("O limite é de 20% [", table).text).toBe("O limite é de 20% [");
   });
 
-  it("does nothing with an answer that cites nothing, or with no table", () => {
+  it("does nothing with an answer that cites nothing, and shows no marker when no passage was ever recorded", () => {
     expect(resolveMarkers("Sem fontes.", table)).toEqual({ text: "Sem fontes.", citations: [] });
-    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale [[sj6tdsf?]](#cite-unknown:sj6tdsf).");
+    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale.");
   });
 });

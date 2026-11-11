@@ -83,6 +83,25 @@ function attachReports(toolCalls: ToolCallView[], activities: ActivityView[]): v
 }
 
 /**
+ * A task agent answers with a JSON object (the Proposal's has only a `summary`), and that is what
+ * its message holds. What a person reads is the summary, as the Markdown it is.
+ */
+function readableText(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) return text;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      const fields = Object.entries(parsed);
+      if (fields.length === 1 && fields[0][0] === "summary" && typeof fields[0][1] === "string") return fields[0][1];
+    }
+  } catch {
+    // not JSON (or not all of it yet, while it streams): shown as it is
+  }
+  return text;
+}
+
+/**
  * What the chat shows for a list of messages: each question, and under it one answer that gathers
  * the turn's tool calls (running until their result arrives), their activity, the text and the
  * sources. The same function renders a run being streamed and a thread read back.
@@ -101,7 +120,7 @@ export function buildChatItems(messages: Message[], options: { passages?: Passag
   const close = () => {
     if (!answer) return;
     attachReports(answer.toolCalls, answer.activities);
-    const resolved = resolveMarkers(texts.join("\n\n"), passages);
+    const resolved = resolveMarkers(texts.map(readableText).join("\n\n"), passages);
     answer.text = resolved.text;
     answer.citations = resolved.citations;
     // A turn that reports what the Agent read has its sources in `citations`; one that does not (an

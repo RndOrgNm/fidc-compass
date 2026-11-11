@@ -214,6 +214,46 @@ describe("buildChatItems: the sources an answer cites", () => {
     expect(answer.citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
+  describe("the answer of a task agent, a JSON object with a summary", () => {
+    const task = (content: string): Message[] => [
+      { id: "u1", role: "user", content: "Analise o arquivo." },
+      { id: "a1", role: "assistant", content },
+    ];
+
+    it("is read as the summary, with its line breaks and lists", () => {
+      const summary = "Fiz duas propostas.\n\n- Prestação de contas até o dia 20.\n- Auditoria anual.";
+      const answer = answerOf(buildChatItems(task(JSON.stringify({ summary }))), 1);
+      expect(answer.text).toBe(summary);
+    });
+
+    it("has its citations resolved inside the summary", () => {
+      const messages: Message[] = [
+        { id: "u1", role: "user", content: "x" },
+        read("p", passage("c33", "Cláusula 5.6", 5)),
+        { id: "a1", role: "assistant", content: JSON.stringify({ summary: "Prestação mensal [c33]." }) },
+      ];
+      expect(answerOf(buildChatItems(messages), 1).text).toBe("Prestação mensal [[1]](#cite-1).");
+    });
+
+    it("is left as it is when it has another field, is not an object, or is not all there yet", () => {
+      for (const content of ['{"summary":"a","other":"b"}', '{"outro":"b"}', '[{"summary":"a"}]', '{"summary":"par']) {
+        expect(answerOf(buildChatItems(task(content)), 1).text).toBe(content);
+      }
+    });
+
+    it("leaves an ordinary answer alone", () => {
+      expect(answerOf(buildChatItems(task("O FIDC está ok.")), 1).text).toBe("O FIDC está ok.");
+    });
+  });
+
+  it("drops the markers of an answer from a thread that recorded no passages at all", () => {
+    const messages: Message[] = [
+      { id: "u1", role: "user", content: "x" },
+      { id: "a1", role: "assistant", content: "Prestação mensal até o dia 20 [c33]. O balancete [c37] vai junto." },
+    ];
+    expect(answerOf(buildChatItems(messages), 1).text).toBe("Prestação mensal até o dia 20. O balancete vai junto.");
+  });
+
   it("resolves, in a later turn, a passage that an earlier turn read", () => {
     const messages: Message[] = [
       { id: "u1", role: "user", content: "Art. 45?" },

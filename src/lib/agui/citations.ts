@@ -111,6 +111,9 @@ export function resolveMarkers(text: string, table: PassageTable): { text: strin
   const resolved = text.replace(HALF_MARKER_AT_END, "").replace(PASSAGE_MARKER, (marker, lead: string, ref: string) => {
     const passage = passageOf(ref, table);
     if (!passage) {
+      // No passage recorded for the whole thread: the answer is from before sources were kept, and
+      // there is nothing to point at, so the marker is not shown at all.
+      if (table.size === 0) return "";
       const shortWord = ref.startsWith("s") && ref.length - 1 < FULL_ID_DIGITS && !/\d/.test(ref);
       // A source the answer cites and that cannot be told is shown as such, never taken out.
       return shortWord ? marker : `${lead}[[${ref}?]](#${UNKNOWN_SOURCE}:${ref})`;

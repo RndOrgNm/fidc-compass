@@ -174,7 +174,8 @@ describe("ProposalChat", () => {
       const marker = await screen.findByRole("button", { name: /Fonte 1:/ });
       expect(marker).toHaveTextContent("[1]");
       expect(screen.getByText(/Da cláusula de prestação de contas/)).toBeInTheDocument();
-      expect(screen.queryByText(/c999/)).not.toBeInTheDocument();
+      // a marker nothing was read for is told apart from a source: plain text with a ?, not a button
+      expect(screen.getByText("[c999?]")).toBeInTheDocument();
       expect(screen.getAllByRole("button", { name: /Fonte \d+:/ })).toHaveLength(1);
     });
 
