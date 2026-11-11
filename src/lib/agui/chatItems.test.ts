@@ -210,7 +210,7 @@ describe("buildChatItems: the sources an answer cites", () => {
       { id: "a1", role: "assistant", content: "Vale [sj6tdsf] e [szzzzzz]." },
     ];
     const answer = answerOf(buildChatItems(messages), 1);
-    expect(answer.text).toBe("Vale [[1]](#cite-1) e [[?]](#cite-unknown:szzzzzz).");
+    expect(answer.text).toBe("Vale [[1]](#cite-1) e [[szzzzzz?]](#cite-unknown:szzzzzz).");
     expect(answer.citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
