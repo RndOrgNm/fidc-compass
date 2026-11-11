@@ -42,11 +42,12 @@ export function markdownComponents(citations: Citation[], onOpen: (citation: Cit
   return {
     ...MARKDOWN_COMPONENTS,
     a: ({ node, href, children, ...props }: Tag<"a">) => {
-      if (href === `#${UNKNOWN_SOURCE}`) {
+      if (href?.startsWith(`#${UNKNOWN_SOURCE}:`)) {
+        const written = href.slice(UNKNOWN_SOURCE.length + 2);
         return (
           <span
             className="mx-0.5 align-baseline text-muted-foreground"
-            title="O agente citou uma fonte que não foi possível identificar"
+            title={`O agente citou “${written}”, que não corresponde a nenhuma fonte lida`}
           >
             {children}
           </span>

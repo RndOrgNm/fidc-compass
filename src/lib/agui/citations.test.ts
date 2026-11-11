@@ -80,7 +80,7 @@ describe("resolveMarkers", () => {
 
   it("shows a marker that is not in the table as an unknown source, never as one that was read, and never takes it out", () => {
     const { text, citations } = resolveMarkers("Vale 20% [sj6tdsf] e mais algo [szzzzzz], ou [c999].", table);
-    expect(text).toBe("Vale 20% [[1]](#cite-1) e mais algo [[?]](#cite-unknown), ou [[?]](#cite-unknown).");
+    expect(text).toBe("Vale 20% [[1]](#cite-1) e mais algo [[?]](#cite-unknown:szzzzzz), ou [[?]](#cite-unknown:c999).");
     expect(citations.map((c) => c.ref)).toEqual(["sj6tdsf"]);
   });
 
@@ -96,7 +96,7 @@ describe("resolveMarkers", () => {
       ["sj6tdxy", { ref: "sj6tdxy", label: null, text: "b", pageStart: 2, pageEnd: 2 }],
     ]);
     expect(resolveMarkers("A [sj6td] e B [s9x2k1].", two)).toEqual({
-      text: "A [[?]](#cite-unknown) e B [[?]](#cite-unknown).",
+      text: "A [[?]](#cite-unknown:sj6td) e B [[?]](#cite-unknown:s9x2k1).",
       citations: [],
     });
   });
@@ -119,12 +119,12 @@ describe("resolveMarkers", () => {
 
     it("is unknown when two passages carry the article, or none does", () => {
       const twoArt4 = tableOf(art4, { ...art4, ref: "sab12cd", label: "Art. 4 — Parte Geral" });
-      expect(resolveMarkers("A [s4].", twoArt4)).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
-      expect(resolveMarkers("A [s9].", tableOf(art4))).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
+      expect(resolveMarkers("A [s4].", twoArt4)).toEqual({ text: "A [[?]](#cite-unknown:s4).", citations: [] });
+      expect(resolveMarkers("A [s9].", tableOf(art4))).toEqual({ text: "A [[?]](#cite-unknown:s9).", citations: [] });
     });
 
     it("is not looked up in a label that is no article", () => {
-      expect(resolveMarkers("A [s4].", tableOf(CHUNK_33))).toEqual({ text: "A [[?]](#cite-unknown).", citations: [] });
+      expect(resolveMarkers("A [s4].", tableOf(CHUNK_33))).toEqual({ text: "A [[?]](#cite-unknown:s4).", citations: [] });
     });
   });
 
@@ -146,6 +146,6 @@ describe("resolveMarkers", () => {
 
   it("does nothing with an answer that cites nothing, or with no table", () => {
     expect(resolveMarkers("Sem fontes.", table)).toEqual({ text: "Sem fontes.", citations: [] });
-    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale [[?]](#cite-unknown).");
+    expect(resolveMarkers("Vale [sj6tdsf].", new Map()).text).toBe("Vale [[?]](#cite-unknown:sj6tdsf).");
   });
 });

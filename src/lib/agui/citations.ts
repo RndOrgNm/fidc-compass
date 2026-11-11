@@ -28,7 +28,8 @@ export interface Citation extends CitedPassage {
 // A search result's id is an `s` and base-36 digits; a chunk of the document is `c` and a number.
 // The model sometimes copies an id short, even down to `s4`, so the shape allows any `s…`.
 const PASSAGE_MARKER = /(\s?)\[(s[0-9a-z]+|c\d+)\]/g;
-/** The link target of a citation no passage answers to, drawn as `[?]` instead of a number. */
+/** The link target of a citation no passage answers to, drawn as `[?]` instead of a number: the
+ *  target ends with `:` and what the model wrote, so the page can say it. */
 export const UNKNOWN_SOURCE = "cite-unknown";
 // Below this many characters after the `s`, a marker is a citation only if it has a digit, which a
 // plain word such as `[sobre]` does not.
@@ -98,7 +99,7 @@ export function resolveMarkers(text: string, table: PassageTable): { text: strin
     if (!passage) {
       const shortWord = ref.startsWith("s") && ref.length - 1 < FULL_ID_DIGITS && !/\d/.test(ref);
       // A source the answer cites and that cannot be told is shown as such, never taken out.
-      return shortWord ? marker : `${lead}[[?]](#${UNKNOWN_SOURCE})`;
+      return shortWord ? marker : `${lead}[[?]](#${UNKNOWN_SOURCE}:${ref})`;
     }
     let citation = numbered.get(passage.ref);
     if (!citation) {
