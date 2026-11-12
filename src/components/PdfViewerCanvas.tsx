@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
 
+import { loadPdf } from "@/lib/loadPdf";
+
 // Legacy build avoids "toHex is not a function" in older browsers (Uint8Array.prototype.toHex is ES2026).
 // Worker must be legacy too — copied via postinstall from pdfjs-dist/legacy/build/pdf.worker.min.mjs
 if (typeof window !== "undefined" && !GlobalWorkerOptions.workerSrc) {
@@ -36,8 +38,8 @@ export function PdfViewerCanvas({
     setLoading(true);
     setError(null);
     setDocReady(false);
-    getDocument({ data: pdfData })
-      .promise.then((doc) => {
+    loadPdf(pdfData)
+      .then((doc) => {
         if (cancelled) return;
         docRef.current = doc;
         onTotalPages?.(doc.numPages);
