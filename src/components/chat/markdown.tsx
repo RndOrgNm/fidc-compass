@@ -1,4 +1,5 @@
 import type { ComponentPropsWithoutRef } from "react";
+import remarkGfm from "remark-gfm";
 
 import { UNKNOWN_SOURCE, type Citation } from "@/lib/agui/citations";
 
@@ -18,14 +19,20 @@ export const MARKDOWN_COMPONENTS = {
   ),
   li: ({ node, ...props }: Tag<"li">) => <li className="leading-relaxed pl-2" {...props} />,
   strong: ({ node, ...props }: Tag<"strong">) => <strong className="font-semibold" {...props} />,
+  // The table scrolls on its own when it is wider than the answer (the proposal's chat is a narrow panel).
   table: ({ node, ...props }: Tag<"table">) => (
-    <table className="border-collapse border border-gray-300 my-4" {...props} />
+    <div className="my-4 w-full overflow-x-auto">
+      <table className="w-full border-collapse text-sm" {...props} />
+    </div>
   ),
   th: ({ node, ...props }: Tag<"th">) => (
-    <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold" {...props} />
+    <th className="border border-border bg-muted px-3 py-2 text-left font-semibold" {...props} />
   ),
-  td: ({ node, ...props }: Tag<"td">) => <td className="border border-gray-300 px-4 py-2" {...props} />,
+  td: ({ node, ...props }: Tag<"td">) => <td className="border border-border px-3 py-2 align-top" {...props} />,
 };
+
+/** What react-markdown needs on top of CommonMark to read what the Agents write: tables above all. */
+export const MARKDOWN_PLUGINS = [remarkGfm];
 
 /** What a source is called where it is offered: its label, or the start of its text. */
 export function citationTitle(citation: Citation): string {

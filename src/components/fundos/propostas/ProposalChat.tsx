@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Loader2, MessageSquare, Send } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-import { citationTitle, markdownComponents } from "@/components/chat/markdown";
+import { MARKDOWN_PLUGINS, citationTitle, markdownComponents } from "@/components/chat/markdown";
 import { AgentSteps } from "@/components/chat/AgentSteps";
 import { PropostaPdfViewerSheet } from "@/components/fundos/propostas/PropostaPdfViewerSheet";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,7 @@ function Bubbles({ items, onOpenCitation }: { items: ChatItem[]; onOpenCitation:
               >
                 <div className="prose prose-sm max-w-none break-words dark:prose-invert">
                   <ReactMarkdown
+                    remarkPlugins={MARKDOWN_PLUGINS}
                     components={item.kind === "assistant" ? markdownComponents(item.citations, onOpenCitation) : undefined}
                   >
                     {item.text}

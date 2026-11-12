@@ -27,7 +27,7 @@ import ReactMarkdown from "react-markdown";
 import { FUNDS_AGENT_API_URL } from "@/lib/api/config";
 import { apiFetch } from "@/lib/api/client";
 import { useChat } from "@/contexts/ChatContext";
-import { citationTitle, markdownComponents } from "@/components/chat/markdown";
+import { MARKDOWN_PLUGINS, citationTitle, markdownComponents } from "@/components/chat/markdown";
 import { AgentSteps } from "@/components/chat/AgentSteps";
 import { PdfViewerCanvas } from "@/components/PdfViewerCanvas";
 import type { Citation } from "@/lib/agui/citations";
@@ -590,6 +590,7 @@ export default function Agent() {
                     >
                       <div className="prose prose-sm dark:prose-invert max-w-none break-words">
                         <ReactMarkdown
+                          remarkPlugins={MARKDOWN_PLUGINS}
                           components={message.kind === "assistant" ? markdownComponents(message.citations, openCitation) : undefined}
                         >
                           {message.text}

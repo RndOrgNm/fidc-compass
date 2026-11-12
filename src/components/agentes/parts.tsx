@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { MARKDOWN_COMPONENTS } from "@/components/chat/markdown";
+import { MARKDOWN_COMPONENTS, MARKDOWN_PLUGINS } from "@/components/chat/markdown";
 import { cn } from "@/lib/utils";
 
 type Tone = "ok" | "draft" | "neutral";
@@ -51,7 +51,9 @@ export function ReadArea({ text, label, tall = false }: { text: string; label: s
         tall ? "max-h-96" : "max-h-80",
       )}
     >
-      <ReactMarkdown components={READ_COMPONENTS}>{text}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={MARKDOWN_PLUGINS} components={READ_COMPONENTS}>
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }
