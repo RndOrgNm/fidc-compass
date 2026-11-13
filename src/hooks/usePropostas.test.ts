@@ -38,6 +38,23 @@ describe("usePropostas", () => {
     expect(listObrigacoes).toHaveBeenCalledWith({ fundo_id: 7 }, { includeProposals: true });
   });
 
+  it("says it is refreshing while a reload runs, and not when it first loads or when it is done", async () => {
+    let finish: (value: unknown) => void = () => {};
+    const { result } = renderHook(() => usePropostas(1));
+    expect(result.current.refreshing).toBe(false);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.refreshing).toBe(false);
+    listObrigacoes.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+
+    act(() => result.current.reload());
+    expect(result.current.refreshing).toBe(true);
+    expect(result.current.loading).toBe(false);
+
+    finish({ items: [obrigacao("Depois")] });
+    await waitFor(() => expect(result.current.refreshing).toBe(false));
+    expect(result.current.prazoProposals.map((p) => p.sugestao.topico)).toEqual(["Depois"]);
+  });
+
   it("reloads without flashing the loading state, keeping the cards on screen", async () => {
     const { result } = renderHook(() => usePropostas(1));
     await waitFor(() => expect(result.current.loading).toBe(false));

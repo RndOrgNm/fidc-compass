@@ -3,6 +3,7 @@ import { RefreshCw } from "lucide-react";
 
 import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropostaReason } from "@/components/fundos/propostas/PropostaReason";
 import { ProposalChat } from "@/components/fundos/propostas/ProposalChat";
@@ -55,6 +56,10 @@ export interface PropostasContentProps {
    * The line is always shown: when the time is unknown it says so, rather than making one up.
    */
   lastSyncLabel?: string;
+  /** Loads the proposals again, for the button that asks for it; without it there is no button. */
+  onRefresh?: () => void;
+  /** The reload the button asked for is under way. */
+  refreshing?: boolean;
 }
 
 interface ViewerState {
@@ -81,6 +86,8 @@ export function PropostasContent({
   onReject,
   onChanged,
   lastSyncLabel,
+  onRefresh,
+  refreshing = false,
 }: PropostasContentProps) {
   const [decisions, setDecisions] = useState<Record<string, PropostaDecisao>>({});
   const [viewer, setViewer] = useState<ViewerState | null>(null);
@@ -148,6 +155,12 @@ export function PropostasContent({
           <RefreshCw className="h-3.5 w-3.5" />
           {lastSyncLabel ? `OneDrive verificado ${lastSyncLabel}` : "OneDrive: última verificação indisponível"}
         </span>
+        {onRefresh && (
+          <Button type="button" variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
+            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        )}
       </div>
 
       {saveError && (

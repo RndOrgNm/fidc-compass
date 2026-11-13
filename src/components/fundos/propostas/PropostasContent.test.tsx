@@ -87,6 +87,32 @@ describe("PropostasContent", () => {
     expect(screen.queryByText("Imóvel Alpha")).not.toBeInTheDocument();
   });
 
+  it("has a button to load the proposals again, which waits while the reload runs", async () => {
+    const user = userEvent.setup();
+    const onRefresh = vi.fn();
+    const { rerender } = render(
+      <PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} onRefresh={onRefresh} />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={prazoProposals}
+        onRefresh={onRefresh}
+        refreshing
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Atualizar" })).toBeDisabled();
+  });
+
+  it("has no button to reload when it is not given a way to", () => {
+    render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
+    expect(screen.queryByRole("button", { name: "Atualizar" })).not.toBeInTheDocument();
+  });
+
   it("gives each proposal the chat of the row it is about: the document, or the obligation", async () => {
     const user = userEvent.setup();
     proposalChat.mockClear();

@@ -142,6 +142,8 @@ export default function Fundos() {
                 onApprove={handleApproveProposta}
                 onReject={handleRejectProposta}
                 onChanged={propostas.reload}
+                onRefresh={propostas.reload}
+                refreshing={propostas.refreshing}
                 lastSyncLabel={syncLabelText}
               />
             )}

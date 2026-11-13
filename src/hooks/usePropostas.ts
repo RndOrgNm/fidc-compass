@@ -10,6 +10,8 @@ interface PropostasState {
   documentoProposals: DocumentoProposalEntry[];
   prazoProposals: PropostaPrazo[];
   loading: boolean;
+  /** A reload is under way: the cards stay on screen while it runs. */
+  refreshing: boolean;
   error: string | null;
 }
 
@@ -23,6 +25,7 @@ export function usePropostas(fundoId: number | null): UsePropostasResult {
     documentoProposals: [],
     prazoProposals: [],
     loading: false,
+    refreshing: false,
     error: null,
   });
   const [reloads, setReloads] = useState(0);
@@ -39,7 +42,7 @@ export function usePropostas(fundoId: number | null): UsePropostasResult {
     // the fund still shows it.
     const isReload = reloading.current;
     reloading.current = false;
-    setState((s) => ({ ...s, loading: !isReload, error: null }));
+    setState((s) => ({ ...s, loading: !isReload, refreshing: isReload, error: null }));
     // The other tabs leave a pending proposal out; this one is where it lives.
     const withProposals = { includeProposals: true };
     Promise.all([
@@ -52,6 +55,7 @@ export function usePropostas(fundoId: number | null): UsePropostasResult {
           documentoProposals: documentoProposals(docs),
           prazoProposals: prazoProposals(obrigacoes.items),
           loading: false,
+          refreshing: false,
           error: null,
         });
       })
@@ -61,6 +65,7 @@ export function usePropostas(fundoId: number | null): UsePropostasResult {
           documentoProposals: [],
           prazoProposals: [],
           loading: false,
+          refreshing: false,
           error: e instanceof Error ? e.message : "Falha ao carregar propostas",
         });
       });
