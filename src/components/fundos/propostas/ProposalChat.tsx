@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useActiveChat } from "@/components/fundos/propostas/activeChat";
 import { toast } from "@/hooks/use-toast";
 import { usePdfBytes } from "@/hooks/usePdfBytes";
 import { useThreadConversation } from "@/hooks/useThreadConversation";
@@ -193,12 +194,18 @@ function ConversationPanel({
 export function ProposalChat({ proposal, file }: { proposal: ProposalRef; file?: ProposalFile }) {
   const key = "obrigacaoId" in proposal ? `o:${proposal.obrigacaoId}` : `d:${proposal.documentoId}`;
   const [origin, setOrigin] = useState<ProposalThread | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useActiveChat(key);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
   const [source, setSource] = useState<Citation | null>(null);
   // Only a PDF can be drawn; anything else shows the cited text alone, as the proposals tab does.
   const pdf = usePdfBytes(source != null && file && /\.pdf$/i.test(file.nome) ? file.url : null);
+
+  // The viewer on the left belongs to the chat on the right: when the chat closes, or another one
+  // takes its place, a source of this proposal is not left open.
+  useEffect(() => {
+    if (!open) setSource(null);
+  }, [open]);
 
   useEffect(() => {
     let cancelled = false;
@@ -253,7 +260,9 @@ export function ProposalChat({ proposal, file }: { proposal: ProposalRef; file?:
       >
         <MessageSquare className="h-4 w-4" />
       </Button>
-      <Sheet open={open} onOpenChange={setOpen}>
+      {/* modal={false}: the rest of the site stays clickable while the chat is open; with hideOverlay
+          a click outside does not close it either (see SheetContent). */}
+      <Sheet open={open} onOpenChange={setOpen} modal={false}>
         <SheetContent side="right" hideOverlay className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b border-border px-5 py-4 text-left">
             <SheetTitle className="text-base">Conversa sobre a proposta</SheetTitle>

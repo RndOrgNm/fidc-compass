@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RUN_EVENTS } from "@/lib/agui/fixtures";
 import type { ProposalThread, Thread } from "@/lib/api/threadsService";
+import { closeActiveChat } from "./activeChat";
 import { ProposalChat } from "./ProposalChat";
 
 const service = vi.hoisted(() => ({
@@ -61,6 +62,7 @@ async function* streamed() {
 const ICON = { name: /conversar sobre esta proposta/i };
 
 beforeEach(() => {
+  closeActiveChat();
   Object.values(service).forEach((mock) => mock.mockReset());
   service.findProposalThread.mockResolvedValue(origin);
   service.listThreads.mockResolvedValue([]);
@@ -108,6 +110,43 @@ describe("ProposalChat", () => {
     expect(service.getThreadMessages).toHaveBeenCalledWith("t-chat");
     expect(await screen.findByText(/O que o Agente fez nesta análise · 1 consulta/)).toBeInTheDocument();
     expect(screen.getByText(/Pergunte o que quiser sobre esta proposta/)).toBeInTheDocument();
+  });
+
+  it("leaves the rest of the page clickable while the chat is open, and does not close for a click there", async () => {
+    const elsewhere = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <>
+        <button onClick={elsewhere}>Aprovar</button>
+        <ProposalChat proposal={{ obrigacaoId: "ob-1" }} />
+      </>,
+    );
+    await user.click(await screen.findByRole("button", ICON));
+    expect(await screen.findByText("Conversa sobre a proposta")).toBeInTheDocument();
+
+    // a modal panel puts pointer-events: none on the page, and user-event refuses to click through it
+    await user.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    expect(elsewhere).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Conversa sobre a proposta")).toBeInTheDocument();
+  });
+
+  it("keeps one chat open: opening another proposal's chat closes the first", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <ProposalChat proposal={{ obrigacaoId: "ob-1" }} />
+        <ProposalChat proposal={{ obrigacaoId: "ob-2" }} />
+      </>,
+    );
+    const [first, second] = await screen.findAllByRole("button", ICON);
+
+    await user.click(first);
+    expect(await screen.findAllByText("Conversa sobre a proposta")).toHaveLength(1);
+
+    await user.click(second);
+    await waitFor(() => expect(service.openThreadFromTask).toHaveBeenCalledTimes(2));
+    expect(await screen.findAllByText("Conversa sobre a proposta")).toHaveLength(1);
   });
 
   it("goes back to the conversation the person already has about the proposal, not a second one", async () => {
