@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { Cloud, RefreshCw } from "lucide-react";
 
 import { DocumentTable } from "@/components/fundos/DocumentTable";
 import { PrazoItem } from "@/components/fundos/PrazosContent";
@@ -150,17 +150,21 @@ export function PropostasContent({
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-end gap-3">
-        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted-foreground">
-          <RefreshCw className="h-3.5 w-3.5" />
-          {lastSyncLabel ? `OneDrive verificado ${lastSyncLabel}` : "OneDrive: última verificação indisponível"}
-        </span>
-        {onRefresh && (
+      {/* The button is on the other side of the OneDrive status, with another icon: it loads the list of
+          proposals again, and does not ask OneDrive for anything. */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        {onRefresh ? (
           <Button type="button" variant="outline" size="sm" onClick={onRefresh} disabled={refreshing}>
             <RefreshCw className={`mr-2 h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            Atualizar
+            Atualizar propostas
           </Button>
+        ) : (
+          <span />
         )}
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] text-muted-foreground">
+          <Cloud className="h-3.5 w-3.5" />
+          {lastSyncLabel ? `OneDrive verificado ${lastSyncLabel}` : "OneDrive: última verificação indisponível"}
+        </span>
       </div>
 
       {saveError && (

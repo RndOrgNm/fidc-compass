@@ -94,7 +94,7 @@ describe("PropostasContent", () => {
       <PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} onRefresh={onRefresh} />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    await user.click(screen.getByRole("button", { name: "Atualizar propostas" }));
     expect(onRefresh).toHaveBeenCalledTimes(1);
 
     rerender(
@@ -105,12 +105,30 @@ describe("PropostasContent", () => {
         refreshing
       />,
     );
-    expect(screen.getByRole("button", { name: "Atualizar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Atualizar propostas" })).toBeDisabled();
+  });
+
+  it("keeps the button for the proposals apart from the OneDrive status, so it does not read as a way to refresh OneDrive", () => {
+    render(
+      <PropostasContent
+        documentoProposals={documentoProposals}
+        prazoProposals={prazoProposals}
+        onRefresh={vi.fn()}
+        lastSyncLabel="há 3 min"
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Atualizar propostas" });
+    const status = screen.getByText("OneDrive verificado há 3 min");
+    expect(button).not.toContainElement(status);
+    expect(status.closest("button")).toBeNull();
+    // the refresh icon is the button's alone: the status has its own
+    expect(status.querySelector("svg.lucide-refresh-cw")).toBeNull();
+    expect(button.querySelector("svg.lucide-refresh-cw")).not.toBeNull();
   });
 
   it("has no button to reload when it is not given a way to", () => {
     render(<PropostasContent documentoProposals={documentoProposals} prazoProposals={prazoProposals} />);
-    expect(screen.queryByRole("button", { name: "Atualizar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Atualizar propostas" })).not.toBeInTheDocument();
   });
 
   it("gives each proposal the chat of the row it is about: the document, or the obligation", async () => {
